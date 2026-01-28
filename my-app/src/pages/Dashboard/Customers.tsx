@@ -1,10 +1,19 @@
-import { Text, Heading } from '@radix-ui/themes';
+import React from "react";
+import { Box, Heading, Card } from "@radix-ui/themes";
+import Customers from "../../modules/Customers/Customers";
 
-export default function CustomerPage() {
+const CustomersPage: React.FC = () => {
   return (
-    <div>
-      <Heading size="2" mb="2">Customers</Heading>
-      <Text size="2" color="gray">Dashboard — coming soon.</Text>
-    </div>
+    <Box p="6" width="100%">
+      <Heading size="8" mb="4">
+        Customers
+      </Heading>
+
+      <Card style={{ width: "100%", padding: 16 }}>
+        <Customers />
+      </Card>
+    </Box>
   );
-}
+};
+
+export default CustomersPage;
