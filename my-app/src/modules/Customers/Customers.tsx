@@ -308,30 +308,40 @@ export default function Customers() {
     {/* ✅ FORM (this is the key line you were missing) */}
     <Form fields={customerFields} />
 
-        <Flex mt="4" gap="3">
-          <Dialog.Close>
-            <Button variant="outline" style={{ flex: 1 }}>
-              Cancel
-            </Button>
-          
-          </Dialog.Close>
-            
-            <DynamicAlertDialog
-            title="Are you sure?"
-            description="This action cannot be undone."
-            actionText="Yes Create"
-            cancelText="No go back"
-            onAction={handleCreateCustomer}
-            >
+    {/* Actions */}
+    <Flex mt="4" gap="3">
+      <Dialog.Close>
+        <Button variant="outline" style={{ flex: 1 }}>
+          Cancel
+        </Button>
+      </Dialog.Close>
 
-          <Button className="create-btn" style={{ flex: 1 }}>
-            Create
-            </Button>
+      {/* ✅ ALERT DIALOG WRAPPING CREATE BUTTON */}
+      <DynamicAlertDialog
+        title="Are you sure?"
+        description="This action cannot be undone."
+        actionText="Yes Create"
+        cancelText="No go back"
+        onAction={handleCreateCustomer}
+      >
+        <Button style={{ flex: 1 }}>
+          Create
+        </Button>
+      </DynamicAlertDialog>
+    </Flex>
+  </Dialog.Content>
+</Dialog.Root>
 
-          </DynamicAlertDialog>
-        
-        </Flex>
-      </Dialog.Content>
-    </Dialog.Root>
-  );
+    </Flex>
+
+    {/* ---------- TABLE ---------- */}
+    <Table
+      data={customers}
+      columns={columns}
+      striped
+      hoverable
+    />
+  </Flex>
+);
+
 }
