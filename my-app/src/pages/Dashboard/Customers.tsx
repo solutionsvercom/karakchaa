@@ -1,8 +1,34 @@
 import React from "react";
-import { Box, Heading, Card } from "@radix-ui/themes";
+import { Flex, Text, Box, Heading, Card } from "@radix-ui/themes";
 import Customers from "../../modules/Customers/Customers";
+import CustomersModule from "../../modules/Customers/Customers";
 
-const CustomersPage: React.FC = () => {
+
+
+
+
+const CustomersPage = () => {
+  return (
+    <>
+      <Flex
+        align="center"
+        justify="between"
+        mb="5"
+      >
+        <Text size="3" weight="medium">
+          Customers Page Coming Soon!
+        </Text>
+
+        <CustomersModule />
+      </Flex>
+      
+
+      {/* Table / content later */}
+    </>
+  );
+};
+
+const CustomsersPage: React.FC = () => {
   return (
     <Box p="6" width="100%">
       <Heading size="8" mb="4">
@@ -14,6 +40,8 @@ const CustomersPage: React.FC = () => {
       </Card>
     </Box>
   );
-};
+}
+
+
 
 export default CustomersPage;
