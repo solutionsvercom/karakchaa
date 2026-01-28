@@ -1,6 +1,7 @@
 import { Button, Dialog, Flex } from "@radix-ui/themes";
 import { UserPlus, X } from "lucide-react";
 import Form, { FormField } from "../../components/dynamicComponents/Form";
+import DynamicAlertDialog from "../../components/dynamicComponents/DynamicAlertDialog";
 
 const customerFields: FormField[] = [
  { name: "fullName", label: "Full Name", type: "text", placeholder: "Enter full name", required: true },
@@ -12,7 +13,14 @@ const customerFields: FormField[] = [
 ];
 
 export default function CustomersModule() {
+  
+    // define functions here 
+        const handleCreateCustomer = async () => {
+        console.log("Create confirmed");
+  };
+
   return (
+  
     <Dialog.Root>
       <Dialog.Trigger>
         <Button>+ Add Customer</Button>
@@ -39,12 +47,23 @@ export default function CustomersModule() {
             <Button variant="outline" style={{ flex: 1 }}>
               Cancel
             </Button>
+          
           </Dialog.Close>
+            
+            <DynamicAlertDialog
+            title="Are you sure?"
+            description="This action cannot be undone."
+            actionText="Yes Create"
+            cancelText="No go back"
+            onAction={handleCreateCustomer}
+            >
 
           <Button className="create-btn" style={{ flex: 1 }}>
             Create
             </Button>
 
+          </DynamicAlertDialog>
+        
         </Flex>
       </Dialog.Content>
     </Dialog.Root>
