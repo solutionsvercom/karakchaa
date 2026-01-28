@@ -11,7 +11,9 @@ import {
   Truck,
   UserCog,
   Store,
-  Wallet
+  Wallet,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 
@@ -28,17 +30,38 @@ const menuItems = [
   { label: 'Employees', path: '/Dashboard/Employees', icon: <UserCog size={16} /> },
 ];
 
-const Sidebar: React.FC = () => {
+type SidebarProps = {
+  isOpen?: boolean;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+  onNavigate?: () => void;
+};
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed, onToggleCollapse, onNavigate }) => {
   const location = useLocation();
 
   return (
-    <aside className="kb-sidebar">
+    <aside
+      className={`kb-sidebar ${isOpen ? 'is-open' : ''} ${isCollapsed ? 'kb-sidebar--collapsed' : ''}`}
+    >
       <div className="kb-sidebar-header">
-        <div className="kb-sidebar-logo-circle">K</div>
-        <div>
-          <div className="kb-sidebar-brand">Karakchaa</div>
-          <div className="kb-sidebar-subtitle">Franchise MIS</div>
+        <div className="kb-sidebar-header-left">
+          <div className="kb-sidebar-logo-circle">K</div>
+          <div className="kb-sidebar-header-text">
+            <div className="kb-sidebar-brand">Karakchaa</div>
+            <div className="kb-sidebar-subtitle">Franchise MIS</div>
+          </div>
         </div>
+
+        <button
+          type="button"
+          className="kb-sidebar-collapse"
+          onClick={onToggleCollapse}
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </button>
       </div>
 
       <nav className="kb-sidebar-menu">
@@ -48,10 +71,12 @@ const Sidebar: React.FC = () => {
             <Link
               key={item.path}
               to={item.path}
+              onClick={onNavigate}
+              title={item.label}
               className={`kb-sidebar-item ${active ? 'kb-sidebar-item-active' : ''}`}
             >
               <span className="kb-sidebar-icon">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="kb-sidebar-label">{item.label}</span>
             </Link>
           );
         })}
@@ -59,7 +84,7 @@ const Sidebar: React.FC = () => {
 
       <div className="kb-sidebar-user">
         <div className="kb-sidebar-user-avatar">U</div>
-        <div>
+        <div className="kb-sidebar-user-text">
           <div className="kb-sidebar-user-name">User</div>
           <div className="kb-sidebar-user-role">Staff</div>
         </div>

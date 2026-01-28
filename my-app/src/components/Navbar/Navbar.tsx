@@ -1,13 +1,14 @@
 import React from "react";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Menu } from "lucide-react";
 import { IconButton } from "@radix-ui/themes";
 import { useThemeToggle } from "./../ThemeProvider";
 
 type NavbarProps = {
   pageTitle: string;
+  onMenuClick?: () => void;
 };
 
-const Navbar: React.FC<NavbarProps> = ({ pageTitle }) => {
+const Navbar: React.FC<NavbarProps> = ({ pageTitle, onMenuClick }) => {
   const today = new Date().toLocaleDateString("en-GB", {
     weekday: "short",
     day: "2-digit",
@@ -20,17 +21,26 @@ const Navbar: React.FC<NavbarProps> = ({ pageTitle }) => {
   return (
     <header className="kb-navbar">
       <div className="kb-navbar-left">
-        <h1 className="kb-navbar-title">{pageTitle}</h1>
+        <IconButton
+          className="kb-navbar-menu"
+          variant="ghost"
+          onClick={onMenuClick}
+          aria-label="Open sidebar"
+        >
+          <Menu size={18} />
+        </IconButton>
+        <div className="kb-navbar-titles">
+          <h1 className="kb-navbar-title">{pageTitle}</h1>
+        </div>
       </div>
 
       <div
-className="kb-navbar-right"
+        className="kb-navbar-right"
         style={{ display: "flex", alignItems: "center", gap: 12 }}
       >
-         {/* DATE */}
+        {/* DATE */}
         <span className="kb-navbar-date-value">{today}</span>
 
-        
         {/* THEME TOGGLE BUTTON */}
         <IconButton
           variant="ghost"
@@ -39,8 +49,6 @@ className="kb-navbar-right"
         >
           {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </IconButton>
-
-       
       </div>
     </header>
   );
