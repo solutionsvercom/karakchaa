@@ -1,16 +1,31 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Package,
+  TrendingUp,
+  Boxes,
+  Users,
+  Receipt,
+  Truck,
+  UserCog,
+  Store,
+  Wallet
+} from "lucide-react";
+
 
 const menuItems = [
-  { label: 'Dashboard', path: '/Dashboard', icon: '▢' },
-  { label: 'Point of Sale', path: '/Dashboard/Pos', icon: '🛒' },
-  { label: 'Products', path: '/Dashboard/Products', icon: '📦' },
-  { label: 'Sales', path: '/Dashboard/Sales', icon: '₹' },
-  { label: 'Stock Management', path: '/Dashboard/Stockmanagement', icon: '📊' },
-  { label: 'Customers', path: '/Dashboard/Customer', icon: '👥' },
-  { label: 'Expenses', path: '/Dashboard/Expenses', icon: '💸' },
-  { label: 'Suppliers', path: '/Dashboard/Suppliers', icon: '🚚' },
-  { label: 'Employees', path: '/Dashboard/Employees', icon: '🧑‍💼' },
+  { label: 'Dashboard', path: '/Dashboard', icon: <LayoutDashboard size={16} /> },
+  { label: 'Point of Sale', path: '/Dashboard/Pos', icon: <ShoppingCart size={16} /> },
+  { label: 'Products', path: '/Dashboard/Products', icon: <Package size={16} /> },
+  { label: 'Sales', path: '/Dashboard/Sales', icon: <TrendingUp size={16} /> },
+  { label: 'Stock Management', path: '/Dashboard/Stockmanagement', icon: <Store size={16} /> },
+
+  { label: 'Customers', path: '/Dashboard/Customer', icon: <Users size={16} /> },
+  { label: 'Expenses', path: '/Dashboard/Expenses', icon: <Wallet size={16} /> },
+  { label: 'Suppliers', path: '/Dashboard/Suppliers', icon: <Truck size={16} /> },
+  { label: 'Employees', path: '/Dashboard/Employees', icon: <UserCog size={16} /> },
 ];
 
 const Sidebar: React.FC = () => {
