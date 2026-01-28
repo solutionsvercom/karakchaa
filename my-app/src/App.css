@@ -354,3 +354,29 @@
 .dialog-close-icon:hover {
     color: var(--accent-10);
 }
+
+
+/* Cancel button – outline only, accent driven */
+
+.dialog-cancel-btn {
+    border-color: var(--accent-9);
+    color: var(--accent-9);
+    background: transparent;
+}
+
+
+/* Hover: slightly darker accent */
+
+.dialog-cancel-btn:hover {
+    border-color: var(--accent-10);
+    color: var(--accent-10);
+    background: transparent;
+}
+
+
+/* Active / pressed */
+
+.dialog-cancel-btn:active {
+    border-color: var(--accent-11);
+    color: var(--accent-11);
+}

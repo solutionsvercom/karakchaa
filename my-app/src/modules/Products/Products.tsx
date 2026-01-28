@@ -71,7 +71,11 @@ export default function ProductsModule() {
 
         <Flex mt="4" gap="3">
           <Dialog.Close>
-            <Button variant="outline" style={{ flex: 1 }}>
+            <Button
+    variant="outline"
+    className="dialog-cancel-btn"
+    style={{ flex: 1 }}
+  >
               Cancel
             </Button>
           </Dialog.Close>

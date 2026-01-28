@@ -18,7 +18,7 @@ const DynamicAlertDialog = ({
   cancelText = "Cancel",
   actionText = "Confirm",
   onAction,
-  color = "red",
+  color = "green",
 }: DynamicAlertDialogProps) => {
   const [loading, setLoading] = useState(false);
 
