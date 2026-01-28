@@ -10,6 +10,9 @@ import PosPage from './pages/Dashboard/Pos'
 import ProductsPage from './pages/Dashboard/Products'
 import ReportsPage from './pages/Dashboard/Reports'
 import SuppliersPage from './pages/Dashboard/Suppliers'
+import StockmanagementPage from './pages/Dashboard/Stockmanagement'
+import SalesPage from './pages/Dashboard/Sales'
+
 import Login from './pages/Login'
 
 function App() {
@@ -28,6 +31,8 @@ function App() {
           {/* <Route index element={<Navigate to="products" />} /> */}
           <Route index element={<DashboardPage />} />
           <Route path="customer" element={<CustomerPage />} />
+          <Route path="stockmanagement" element={<StockmanagementPage />} />
+          <Route path="sales" element={<SalesPage />} />
           <Route path="employees" element={<EmployeesPage />} />
           <Route path="expenses" element={<ExpensesPage />} />
           <Route path="feedback" element={<FeedbackPage />} />

@@ -15,15 +15,14 @@ const CustomersPage = () => {
         justify="between"
         mb="5"
       >
-        <Text size="3" weight="medium">
-          Customers Page Coming Soon!
-        </Text>
+        
 
         <CustomersModule />
       </Flex>
       
 
       {/* Table / content later */}
+
     </>
   );
 };
