@@ -1,10 +1,24 @@
-import { Text, Heading } from '@radix-ui/themes';
+import { Flex, Text } from "@radix-ui/themes";
+import CustomersModule from "../../modules/Customers/Customers";
 
-export default function CustomerPage() {
+const CustomersPage = () => {
   return (
-    <div>
-      <Heading size="2" mb="2">Customers</Heading>
-      <Text size="2" color="gray">Dashboard — coming soon.</Text>
-    </div>
+    <>
+      <Flex
+        align="center"
+        justify="between"
+        mb="5"
+      >
+        <Text size="3" weight="medium">
+          Customers Page Coming Soon!
+        </Text>
+
+        <CustomersModule />
+      </Flex>
+
+      {/* Table / content later */}
+    </>
   );
-}
+};
+
+export default CustomersPage;
