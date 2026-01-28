@@ -1,88 +1,61 @@
-import { UserPlus, X } from "lucide-react";
+import React from "react";
+import { Search, UserPlus, X } from "lucide-react";
+
 import Form, { FormField } from "../../components/dynamicComponents/Form";
 import DynamicAlertDialog from "../../components/dynamicComponents/DynamicAlertDialog";
-import React from "react";
 import Table, { Column } from "../../components/dynamicComponents/Table";
+
 import {
   Flex,
   Text,
   Avatar,
   DropdownMenu,
   Button,
-  Dialog
+  Dialog,
 } from "@radix-ui/themes";
+
 import {
   DotsVerticalIcon,
   EnvelopeClosedIcon,
   MobileIcon,
 } from "@radix-ui/react-icons";
 
+/* ---------- FORM FIELDS ---------- */
 const customerFields: FormField[] = [
- { name: "fullName", label: "Full Name", type: "text", placeholder: "Enter full name", required: true },
-  { name: "phone", label: "Phone Number", type: "text", placeholder: "Enter phone number", required: true },
-  { name: "email", label: "Email", type: "email", placeholder: "Enter email address" },
-  { name: "address", label: "Address", type: "textarea", placeholder: "Enter address" },
-  { name: "notes", label: "Notes", type: "textarea", placeholder: "Additional notes..." },
-
+  {
+    name: "fullName",
+    label: "Full Name",
+    type: "text",
+    placeholder: "Enter full name",
+    required: true,
+  },
+  {
+    name: "phone",
+    label: "Phone Number",
+    type: "text",
+    placeholder: "Enter phone number",
+    required: true,
+  },
+  {
+    name: "email",
+    label: "Email",
+    type: "email",
+    placeholder: "Enter email address",
+  },
+  {
+    name: "address",
+    label: "Address",
+    type: "textarea",
+    placeholder: "Enter address",
+  },
+  {
+    name: "notes",
+    label: "Notes",
+    type: "textarea",
+    placeholder: "Additional notes...",
+  },
 ];
 
-export default function CustomersModule() {
-  
-    // define functions here 
-        const handleCreateCustomer = async () => {
-        console.log("Create confirmed");
-  };
-
-  return (
-  
-    <Dialog.Root>
-      <Dialog.Trigger>
-        <Button>+ Add Customer</Button>
-      </Dialog.Trigger>
-
-      <Dialog.Content maxWidth="420px">
-        <Flex justify="between" align="center" mb="4">
-          <Flex align="center" gap="2">
-            <UserPlus size={18} />
-            <Dialog.Title style={{ fontSize: 18, fontWeight: 500 }}>Add New Customer</Dialog.Title>
-          </Flex>
-
-          <Dialog.Close>
-            <Button className="dialog-close-icon">
-    <X size={18} />
-  </Button>
-          </Dialog.Close>
-        </Flex>
-
-        <Form fields={customerFields} />
-
-        <Flex mt="4" gap="3">
-          <Dialog.Close>
-            <Button variant="outline" style={{ flex: 1 }}>
-              Cancel
-            </Button>
-          
-          </Dialog.Close>
-            
-            <DynamicAlertDialog
-            title="Are you sure?"
-            description="This action cannot be undone."
-            actionText="Yes Create"
-            cancelText="No go back"
-            onAction={handleCreateCustomer}
-            >
-
-          <Button className="create-btn" style={{ flex: 1 }}>
-            Create
-            </Button>
-
-          </DynamicAlertDialog>
-        
-        </Flex>
-      </Dialog.Content>
-    </Dialog.Root>
-  );
-}
 /* ---------- CUSTOMER TYPE ---------- */
 interface Customer {
   id: number;
@@ -94,7 +67,7 @@ interface Customer {
   loyaltyPoints: number;
 }
 
-/* ---------- DATA ---------- */
+/* ---------- STATIC DATA (TEMP) ---------- */
 const customers: Customer[] = [
   {
     id: 1,
@@ -143,7 +116,7 @@ const customers: Customer[] = [
   },
 ];
 
-/* ---------- COLUMNS ---------- */
+/* ---------- TABLE COLUMNS ---------- */
 const columns: Column<Customer>[] = [
   {
     key: "customer",
@@ -182,22 +155,22 @@ const columns: Column<Customer>[] = [
   {
     key: "totalSpent",
     header: "Total Spent",
+    align: "center",
     render: (_, row) => (
       <Text weight="medium" color="green">
         ₹{row.totalSpent.toLocaleString()}
       </Text>
     ),
-    align: "center",
   },
   {
     key: "loyaltyPoints",
     header: "Loyalty Points",
+    align: "center",
     render: (_, row) => (
       <Text weight="medium" color="orange">
         {row.loyaltyPoints}
       </Text>
     ),
-    align: "center",
   },
   {
     key: "actions",
@@ -205,7 +178,7 @@ const columns: Column<Customer>[] = [
     align: "center",
     render: () => (
       <DropdownMenu.Root>
-        <DropdownMenu.Trigger>
+        <DropdownMenu.Trigger >
           <Button variant="ghost" size="1">
             <DotsVerticalIcon />
           </Button>
@@ -220,13 +193,155 @@ const columns: Column<Customer>[] = [
   },
 ];
 
-/* ---------- COMPONENT ---------- */
-const Customers = () => {
-  return <Table data={customers} columns={columns} striped hoverable />;
-};
+/* ---------- MAIN COMPONENT ---------- */
+export default function Customers() {
+  const handleCreateCustomer = async () => {
+    console.log("Create confirmed");
+  };
 
+  return (
+  <Flex direction="column" gap="5" width="100%">
+    {/* ---------- STATS ROW ---------- */}
+    <Flex gap="4">
+      <Flex
+        direction="column"
+        justify="center"
+        style={{
+          flex: 1,
+          background: "#7c4dff",
+          color: "white",
+          padding: "20px",
+          borderRadius: 12,
+        }}
+      >
+        <Text size="2">Total Customers</Text>
+        <Text size="6" weight="bold">
+          {customers.length}
+        </Text>
+      </Flex>
 
+      <Flex
+        direction="column"
+        justify="center"
+        style={{
+          flex: 1,
+          background: "white",
+          padding: "20px",
+          borderRadius: 12,
+          border: "1px solid #eee",
+        }}
+      >
+        <Text size="2" color="gray">
+          Total Revenue
+        </Text>
+        <Text size="6" weight="bold">
+          ₹12,720
+        </Text>
+      </Flex>
 
+      <Flex
+        direction="column"
+        justify="center"
+        style={{
+          flex: 1,
+          background: "white",
+          padding: "20px",
+          borderRadius: 12,
+          border: "1px solid #eee",
+        }}
+      >
+        <Text size="2" color="gray">
+          Avg per Customer
+        </Text>
+        <Text size="6" weight="bold">
+          ₹2,120
+        </Text>
+      </Flex>
+    </Flex>
 
+    {/* ---------- TOOLBAR ---------- */}
+    <Flex justify="between" align="center">
+      {/* Search */}
+      <Flex
+        align="center"
+        gap="2"
+        style={{
+          border: "1px solid #e5e7eb",
+          borderRadius: 8,
+          padding: "6px 10px",
+          width: 300,
+          background: "white",
+        }}
+      >
+        <Search size={16} />
+        <input
+          placeholder="Search customers..."
+          style={{
+            border: "none",
+            outline: "none",
+            width: "100%",
+            fontSize: 14,
+          }}
+        />
+      </Flex>
 
-// export default CustomersModule;
+      {/* Add Customer */}
+      <Dialog.Root>
+  <Dialog.Trigger>
+    <Button>
+      + Add Customer
+    </Button>
+  </Dialog.Trigger>
+
+  <Dialog.Content maxWidth="420px">
+    {/* Header */}
+    <Flex justify="between" align="center" mb="4">
+      <Text weight="bold" size="4">
+        Add New Customer
+      </Text>
+
+      <Dialog.Close>
+        <Button variant="ghost">✕</Button>
+      </Dialog.Close>
+    </Flex>
+
+    {/* ✅ FORM (this is the key line you were missing) */}
+    <Form fields={customerFields} />
+
+    {/* Actions */}
+    <Flex mt="4" gap="3">
+      <Dialog.Close>
+        <Button variant="outline" style={{ flex: 1 }}>
+          Cancel
+        </Button>
+      </Dialog.Close>
+
+      {/* ✅ ALERT DIALOG WRAPPING CREATE BUTTON */}
+      <DynamicAlertDialog
+        title="Are you sure?"
+        description="This action cannot be undone."
+        actionText="Yes Create"
+        cancelText="No go back"
+        onAction={handleCreateCustomer}
+      >
+        <Button style={{ flex: 1 }}>
+          Create
+        </Button>
+      </DynamicAlertDialog>
+    </Flex>
+  </Dialog.Content>
+</Dialog.Root>
+
+    </Flex>
+
+    {/* ---------- TABLE ---------- */}
+    <Table
+      data={customers}
+      columns={columns}
+      striped
+      hoverable
+    />
+  </Flex>
+);
+
+}
