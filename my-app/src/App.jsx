@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
+import DashboardLayout from './components/DashboardLayout';
 import DashboardPage from './pages/Dashboard/Dashboard'
 import CustomerPage from './pages/Dashboard/Customers'
 import EmployeesPage from './pages/Dashboard/Employees'
@@ -23,9 +24,9 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         {/* Dashboard Parent */}
-        <Route path="/dashboard" element={<DashboardPage />}>
+        <Route path="/dashboard" element={<DashboardLayout />}>
           {/* <Route index element={<Navigate to="products" />} /> */}
-
+          <Route index element={<DashboardPage />} />
           <Route path="customer" element={<CustomerPage />} />
           <Route path="employees" element={<EmployeesPage />} />
           <Route path="expenses" element={<ExpensesPage />} />
