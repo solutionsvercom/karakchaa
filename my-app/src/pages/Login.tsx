@@ -81,7 +81,7 @@ const Login = () => {
                     size="1"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? <EyeClosedIcon /> : <EyeOpenIcon />}
+                    {showPassword ? <EyeOpenIcon /> : <EyeClosedIcon />}
                   </IconButton>
                 </TextField.Slot>
               </TextField.Root>
