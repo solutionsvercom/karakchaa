@@ -532,6 +532,24 @@
     background-color: var(--accent-8);
 }
 
+
+/* Cancel / outline button */
+
+.rt-Button.outline,
+.button.outline {
+    background-color: transparent !important;
+    color: var(--accent-9);
+    border: 1px solid var(--accent-7);
+}
+
+
+/* Hover */
+
+.rt-Button.outline:hover,
+.button.outline:hover {
+    background-color: var(--accent-3);
+}
+
 .dialog-close-icon {
     all: unset;
     cursor: pointer;

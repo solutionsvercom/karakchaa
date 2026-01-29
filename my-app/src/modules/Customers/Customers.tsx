@@ -178,11 +178,22 @@ const columns: Column<Customer>[] = [
     align: "center",
     render: () => (
       <DropdownMenu.Root>
-        <DropdownMenu.Trigger >
-          <Button variant="ghost" size="1">
-            <DotsVerticalIcon />
-          </Button>
-        </DropdownMenu.Trigger>
+       <DropdownMenu.Trigger>
+  <Button
+    variant="soft"
+    radius="full"
+    style={{
+      top: 10,
+      right: 10,
+      zIndex: 10,
+      backgroundColor: "var(--accent-3)",
+      color: "var(--accent-9)",
+    }}
+  >
+    <DotsVerticalIcon />
+  </Button>
+</DropdownMenu.Trigger>
+
 
         <DropdownMenu.Content align="end">
           <DropdownMenu.Item>Edit</DropdownMenu.Item>
@@ -208,8 +219,8 @@ export default function Customers() {
         justify="center"
         style={{
           flex: 1,
-          background: "#7c4dff",
-          color: "white",
+          backgroundColor: "var(--accent-9)",
+    color: "var(--accent-contrast)",
           padding: "20px",
           borderRadius: 12,
         }}
@@ -225,13 +236,14 @@ export default function Customers() {
         justify="center"
         style={{
           flex: 1,
-          background: "white",
+          backgroundColor: "var(--accent-9)",
+    color: "var(--accent-contrast)",
           padding: "20px",
           borderRadius: 12,
           border: "1px solid #eee",
         }}
       >
-        <Text size="2" color="gray">
+        <Text size="2">
           Total Revenue
         </Text>
         <Text size="6" weight="bold">
@@ -244,13 +256,14 @@ export default function Customers() {
         justify="center"
         style={{
           flex: 1,
-          background: "white",
+          backgroundColor: "var(--accent-9)",
+    color: "var(--accent-contrast)",
           padding: "20px",
           borderRadius: 12,
           border: "1px solid #eee",
         }}
       >
-        <Text size="2" color="gray">
+        <Text size="2">
           Avg per Customer
         </Text>
         <Text size="6" weight="bold">
@@ -266,11 +279,11 @@ export default function Customers() {
         align="center"
         gap="2"
         style={{
-          border: "1px solid #e5e7eb",
+          border:"1px solid var(--gray-7)",
           borderRadius: 8,
           padding: "6px 10px",
           width: 300,
-          background: "white",
+          background:"var(--gray-1)",
         }}
       >
         <Search size={16} />
@@ -281,6 +294,7 @@ export default function Customers() {
             outline: "none",
             width: "100%",
             fontSize: 14,
+            background: "transparent",
           }}
         />
       </Flex>
@@ -301,7 +315,9 @@ export default function Customers() {
       </Text>
 
       <Dialog.Close>
-        <Button variant="ghost">✕</Button>
+        <Button className="dialog-close-icon">
+                  <X size={18} />
+                </Button>
       </Dialog.Close>
     </Flex>
 
@@ -311,7 +327,7 @@ export default function Customers() {
     {/* Actions */}
     <Flex mt="4" gap="3">
       <Dialog.Close>
-        <Button variant="outline" style={{ flex: 1 }}>
+        <Button className="button outline" style={{ flex: 1 }}>
           Cancel
         </Button>
       </Dialog.Close>
