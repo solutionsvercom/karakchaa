@@ -538,16 +538,13 @@
 .rt-Button.outline,
 .button.outline {
     background-color: transparent !important;
-    color: var(--accent-9);
-    border: 1px solid var(--accent-7);
+    color: var(--red-9);
+    border: 1px solid var(--red-7);
 }
-
-
-/* Hover */
 
 .rt-Button.outline:hover,
 .button.outline:hover {
-    background-color: var(--accent-3);
+    background-color: var(--red-3);
 }
 
 .dialog-close-icon {
@@ -559,4 +556,12 @@
 
 .dialog-close-icon:hover {
     color: var(--accent-10);
+}
+
+.rt-Card img {
+    transition: transform 0.25s ease;
+}
+
+.rt-Card:hover img {
+    transform: scale(1.08);
 }
