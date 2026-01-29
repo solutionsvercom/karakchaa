@@ -91,19 +91,18 @@ export default function ProductsModule() {
 
             <Form fields={ProductsFields} />
 
-            <Flex mt="4" gap="3">
-              <Dialog.Close>
-                <Button variant="outline" style={{ flex: 1 }}>
-                  Cancel
-                </Button>
-              </Dialog.Close>
+        <Flex mt="4" gap="3">
+          <Dialog.Close>
+            <Button className="button outline" style={{ flex: 1 }}>
+                      Cancel
+                    </Button>
+          </Dialog.Close>
 
               <DynamicAlertDialog
                 title="Are you absolutely sure?"
                 description="This action cannot be undone."
                 cancelText="No, go back"
                 actionText="Yes, Create"
-                color="red"
                 onAction={handleCreateProduct}
               >
                 <Button className="create-btn" style={{ flex: 1 }}>

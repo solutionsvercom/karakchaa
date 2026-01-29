@@ -35,7 +35,7 @@ export default function ThemeProvider({
   return (
   <Theme
     appearance={isDark ? "dark" : "light"}
-    accentColor={isDark ? "pink" : "violet"}
+    accentColor={isDark ? "red" : "violet"}
     grayColor="slate"
     radius="large"
     scaling="100%"

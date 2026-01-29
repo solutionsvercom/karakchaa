@@ -227,45 +227,39 @@
     opacity: 0.85;
 }
 
+
 /* Desktop: allow collapsing sidebar into icon rail */
+
 @media (min-width: 1024px) {
     .kb-sidebar {
         transition: width 0.18s ease, padding 0.18s ease;
     }
-
     .kb-sidebar-collapse {
         display: inline-flex;
         align-items: center;
         justify-content: center;
     }
-
     .kb-sidebar.kb-sidebar--collapsed {
         width: 76px;
         padding: 16px 8px;
     }
-
     .kb-sidebar.kb-sidebar--collapsed .kb-sidebar-header {
         padding-left: 6px;
         padding-right: 6px;
     }
-
     .kb-sidebar.kb-sidebar--collapsed .kb-sidebar-header-text {
         display: none;
     }
-
     .kb-sidebar.kb-sidebar--collapsed .kb-sidebar-item {
         justify-content: center;
         padding: 10px;
     }
-
     .kb-sidebar.kb-sidebar--collapsed .kb-sidebar-label {
         display: none;
     }
-
     .kb-sidebar.kb-sidebar--collapsed .kb-sidebar-user {
         justify-content: center;
     }
-
     .kb-sidebar.kb-sidebar--collapsed .kb-sidebar-user-text {
         display: none;
     }
@@ -413,25 +407,28 @@
     font-size: 14px;
 }
 
+
 /* Mobile drawer backdrop (only visible on small screens via media queries) */
+
 .kb-sidebar-backdrop {
     display: none;
 }
+
 
 /* =========================
    RESPONSIVE OVERRIDES
    ========================= */
 
+
 /* Mobile: < 768px */
+
 @media (max-width: 767px) {
     .kb-shell {
         overflow-x: hidden;
     }
-
     .kb-main {
         width: 100%;
     }
-
     .kb-sidebar {
         position: fixed;
         top: 0;
@@ -444,16 +441,13 @@
         transition: transform 0.22s ease;
         box-shadow: 0 18px 40px rgba(15, 23, 42, 0.25);
     }
-
     .kb-sidebar.is-open {
         transform: translateX(0);
     }
-
     .kb-sidebar-menu {
         overflow-y: auto;
         min-height: 0;
     }
-
     .kb-sidebar-backdrop {
         display: block;
         position: fixed;
@@ -466,64 +460,54 @@
         pointer-events: none;
         transition: opacity 0.22s ease;
     }
-
     .kb-shell--sidebar-open .kb-sidebar-backdrop {
         opacity: 1;
         pointer-events: auto;
     }
-
     .kb-navbar {
         height: 56px;
         padding: 0 12px;
     }
-
     .kb-navbar-menu {
         display: inline-flex;
     }
-
     .kb-navbar-title {
         font-size: 16px;
     }
-
     .kb-navbar-date-value {
         font-size: 12px;
     }
-
     .kb-content {
         padding: 12px 12px 20px;
     }
-
     .kb-summary-row {
         grid-template-columns: repeat(1, minmax(0, 1fr));
         gap: 12px;
         margin-bottom: 16px;
     }
-
     .kb-summary-card {
         padding: 14px 14px;
         border-radius: 16px;
     }
-
     .kb-summary-card-value {
         font-size: 20px;
     }
-
     .kb-summary-card-icon-wrapper {
         width: 52px;
         height: 52px;
     }
 }
 
+
 /* Tablet: 768px–1023px */
+
 @media (min-width: 768px) and (max-width: 1023px) {
     .kb-navbar {
         padding: 0 18px;
     }
-
     .kb-content {
         padding: 18px 18px 28px;
     }
-
     .kb-summary-row {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -548,6 +532,24 @@
     background-color: var(--accent-8);
 }
 
+
+/* Cancel / outline button */
+
+.rt-Button.outline,
+.button.outline {
+    background-color: transparent !important;
+    color: var(--accent-9);
+    border: 1px solid var(--accent-7);
+}
+
+
+/* Hover */
+
+.rt-Button.outline:hover,
+.button.outline:hover {
+    background-color: var(--accent-3);
+}
+
 .dialog-close-icon {
     all: unset;
     cursor: pointer;
@@ -558,57 +560,3 @@
 .dialog-close-icon:hover {
     color: var(--accent-10);
 }
-
-html, body {
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-
-/* ===============================
-   PRODUCT CARD HOVER EFFECT
-================================ */
-
-/* Card base */
-.product-card {
-  position: relative;
-  overflow: hidden;
-  transition: box-shadow 0.25s ease, transform 0.25s ease;
-}
-
-/* Lift effect */
-.product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12);
-}
-
-/* Image wrapper (only image animates) */
-.product-card-image {
-  overflow: hidden;
-}
-
-/* Image zoom effect */
-.product-card-image img {
-  transition: transform 0.35s ease;
-}
-
-.product-card:hover .product-card-image img {
-  transform: scale(1.08);
-}
-
-/* Icon fallback */
-.product-card-icon {
-  transition: transform 0.35s ease, opacity 0.25s ease;
-}
-
-.product-card:hover .product-card-icon {
-  transform: scale(1.1);
-  opacity: 0.9;
-}
-
-/* Keep menu always on top */
-.product-card button {
-  position: relative;
-  z-index: 10;
-}
-
