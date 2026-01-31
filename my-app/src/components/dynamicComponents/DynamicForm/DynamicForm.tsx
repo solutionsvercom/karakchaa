@@ -3,15 +3,36 @@ import { Text } from "@radix-ui/themes";
 import FieldRenderer from "./FieldRenderer";
 import { FormField } from "./types";
 import type { ReactNode } from "react";
+import { Flex,  Button } from "@radix-ui/themes";
+import * as Dialog from "@radix-ui/react-dialog";
+import DynamicAlertDialog from "../DynamicAlertDialog";
+import { X } from "lucide-react";
+
 
 type Props<T extends string> = {
+  title?: string;
   fields: FormField<T>[];
   onSubmit: (values: Record<T, any>) => void;
+  submitText?: string;
+  cancelText?: string;
+  onCancel?: () => void;
+
+  confirm?: {
+    title: string;
+    description: string;
+    confirmText?: string;
+    cancelText?: string;
+  };
 };
 
 const DynamicForm = <T extends string>({
-  fields,
+  title,
+fields,
   onSubmit,
+  submitText,
+  cancelText,
+  onCancel,
+  confirm,
 }: Props<T>) => {
   const [values, setValues] = useState<Record<T, any>>({} as Record<T, any>);
 
@@ -26,12 +47,27 @@ const DynamicForm = <T extends string>({
         onSubmit(values);
       }}
     >
+      {/* FORM HEADER */}
+{title && (
+  <Flex justify="between" align="center" mb="4">
+    <Text weight="bold" size="4">
+      {title}
+    </Text>
+
+    <Dialog.Close asChild>
+      <Button className="dialog-close-icon">
+        <X size={18} />
+      </Button>
+    </Dialog.Close>
+  </Flex>
+)}
+
       {/* MAIN GRID */}
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(2, 1fr)",
-          gap: 16,
+          gap: 12,
         }}
       >
         {(() => {
@@ -55,7 +91,7 @@ const DynamicForm = <T extends string>({
                     gridColumn: "span 2",
                     display: "grid",
                     gridTemplateColumns: "repeat(3, 1fr)",
-                    gap: 16,
+                    gap: 12,
                   }}
                 >
                   {tripleFields.map((f) => (
@@ -65,7 +101,7 @@ const DynamicForm = <T extends string>({
                         htmlFor={f.name}
                         size="2"
                         weight="medium"
-                        style={{ marginBottom: 6, display: "block" }}
+                        style={{ marginBottom: 4, display: "block" }}
                       >
                         {f.label}
                         {f.required && <Text color="red"> *</Text>}
@@ -123,7 +159,7 @@ const DynamicForm = <T extends string>({
           htmlFor={field.name}
           size="2"
           weight="medium"
-          style={{ marginBottom: 6, display: "block" }}
+          style={{ marginBottom: 4, display: "block" }}
         >
           {field.label}
           {field.required && <Text color="red"> *</Text>}
@@ -145,8 +181,42 @@ const DynamicForm = <T extends string>({
 
           return elements;
         })()}
-      </div>
+           </div>
+
+      {/* FORM FOOTER */}
+      <Flex mt="3" gap="2">
+        {onCancel && (
+          <Dialog.Close asChild>
+            <Button className="button outline" style={{ flex: 1 }}>
+              {cancelText ?? "Cancel"}
+            </Button>
+          </Dialog.Close>
+        )}
+
+        {confirm ? (
+          <DynamicAlertDialog
+            title={confirm.title}
+            description={confirm.description}
+            cancelText={confirm.cancelText ?? "Cancel"}
+            actionText={confirm.confirmText ?? submitText ?? "Create"}
+            onAction={() => onSubmit(values)}
+          >
+            <Button className="create-btn" style={{ flex: 1 }}>
+              {submitText ?? "Create"}
+            </Button>
+          </DynamicAlertDialog>
+        ) : (
+          <Button
+            className="create-btn"
+            style={{ flex: 1 }}
+            type="submit"
+          >
+            {submitText ?? "Create"}
+          </Button>
+        )}
+      </Flex>
     </form>
+
   );
 };
 

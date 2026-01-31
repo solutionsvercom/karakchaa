@@ -271,43 +271,12 @@ export default function Customers() {
     </Button>
   </Dialog.Trigger>
 
-  <Dialog.Content maxWidth="420px">
-    {/* Header */}
-    <Flex justify="between" align="center" mb="4">
-      <Text weight="bold" size="4">
-        Add New Customer
-      </Text>
-
-      <Dialog.Close>
-        <Button className="dialog-close-icon">
-                  <X size={18} />
-                </Button>
-      </Dialog.Close>
-    </Flex>
-
-    <AddCustomer />
+  <Dialog.Content maxWidth="380px">
+   
+ <AddCustomer />
 
     {/* Actions */}
-    <Flex mt="4" gap="3">
-      <Dialog.Close>
-        <Button className="button outline" style={{ flex: 1 }}>
-          Cancel
-        </Button>
-      </Dialog.Close>
-
-      {/* ✅ ALERT DIALOG WRAPPING CREATE BUTTON */}
-      <DynamicAlertDialog
-        title="Are you sure?"
-        description="This action cannot be undone."
-        actionText="Yes Create"
-        cancelText="No go back"
-        onAction={handleCreateCustomer}
-      >
-        <Button style={{ flex: 1 }}>
-          Create
-        </Button>
-      </DynamicAlertDialog>
-    </Flex>
+    
   </Dialog.Content>
 </Dialog.Root>
 

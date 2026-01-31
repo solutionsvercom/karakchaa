@@ -11,6 +11,7 @@ import { Button } from "@radix-ui/themes";
 import { DotsVerticalIcon, CubeIcon } from "@radix-ui/react-icons";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useState } from "react";
+import AddProducts from "../../modules/Products/AddProduct";
 
 
 
@@ -94,9 +95,15 @@ export default function ProductCard({
   </DropdownMenu.Trigger>
 
   <DropdownMenu.Content align="end">
-   <DropdownMenu.Item onSelect={() => setEditOpen(true)}>
-               <Button>Edit</Button>
-             </DropdownMenu.Item>
+   <DropdownMenu.Item
+  onSelect={(e) => {
+    e.preventDefault();  
+    setEditOpen(true);
+  }}
+>
+  Edit
+</DropdownMenu.Item>
+
     <DropdownMenu.Item color="red">
       Delete
     </DropdownMenu.Item>
@@ -113,25 +120,16 @@ export default function ProductCard({
       }}
     />
 
-    <Dialog.Content
-      style={{
-        position: "fixed",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        background: "white",
-        padding: 24,
-        borderRadius: 12,
-        width: 520,
-        zIndex: 1000,
-      }}
-    >
-      <Dialog.Title>Edit Product</Dialog.Title>
+   <Dialog.Content
+  style={{
+    maxWidth: 380,
+    width: "100%",
+    padding: 20,
+  }}
+>
+  <AddProducts />
+</Dialog.Content>
 
-      {/* ✅ THIS IS YOUR FORM */}
-      
-
-    </Dialog.Content>
   </Dialog.Portal>
 </Dialog.Root>
 

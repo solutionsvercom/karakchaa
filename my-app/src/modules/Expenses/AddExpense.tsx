@@ -15,6 +15,7 @@ const AddExpense = () => {
     {
       name: "title",
       label: "Title",
+      placeholder: "Enter expense title",
       type: "text",
       required: true,
       span: 2,
@@ -24,6 +25,7 @@ const AddExpense = () => {
       name: "category",
       label: "Category",
       type: "select",
+      placeholder: "Select category",
       options: [
         { label: "Miscellaneous", value: "misc" },
         { label: "Rent", value: "rent" },
@@ -35,12 +37,16 @@ const AddExpense = () => {
       name: "amount",
       label: "Amount (₹)",
       type: "number",
+      required: true,
+      placeholder: "Enter amount",
     },
 
     {
       name: "paymentMethod",
       label: "Payment Method",
       type: "select",
+      required: true,
+      placeholder: "Select payment method",
       options: [
         { label: "Cash", value: "cash" },
         { label: "UPI", value: "upi" },
@@ -51,12 +57,16 @@ const AddExpense = () => {
     {
       name: "date",
       label: "Date",
+      required: true,
+      placeholder: "Select date",
       type: "text", // can be date picker later
     },
 
     {
       name: "vendor",
       label: "Vendor / Payee",
+      required: true,
+      placeholder: "Enter vendor or payee",
       type: "text",
       span: 2,
     },
@@ -64,6 +74,7 @@ const AddExpense = () => {
     {
       name: "notes",
       label: "Notes",
+      placeholder: "Enter notes",
       type: "textarea",
       span: 2,
     },
@@ -71,9 +82,25 @@ const AddExpense = () => {
 
   return (
     <DynamicForm
-      fields={fields}
-      onSubmit={(data) => console.log("Expense:", data)}
-    />
+    title="Add Expense"
+    fields={fields}
+    submitText="Create"
+    cancelText="Cancel"
+    onCancel={() => {
+      // close dialog if this form is inside Dialog
+      // or just console.log for now
+      console.log("Cancel clicked");
+    }}
+    confirm={{
+      title: "Are you absolutely sure?",
+      description: "This action cannot be undone.",
+      confirmText: "Yes, Create",
+      cancelText: "No, go back",
+    }}
+    onSubmit={(data) => {
+      console.log("Expense:", data);
+    }}
+  />
   );
 };
 
