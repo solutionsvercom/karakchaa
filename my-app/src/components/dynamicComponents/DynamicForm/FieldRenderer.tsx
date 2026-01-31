@@ -29,7 +29,7 @@ const FieldRenderer = <T extends string>({
         alignItems: "center",
         border: "1px solid #e5e7eb",   // 👈 light border (same as inputs)
         borderRadius: 10,
-        height: 36,
+        height: 35,
         overflow: "hidden",
         
       }}
@@ -96,10 +96,14 @@ const FieldRenderer = <T extends string>({
   type={field.type}
   placeholder={field.placeholder}
   value={value ?? ""}
-  size="3"
+  size="2"
   radius="large"
   variant="surface"
   onChange={(e) => onChange(e.target.value)}
+  style={{
+    height: 30,         
+    fontSize: 13,        
+  }}
 />
 
       );
@@ -107,11 +111,12 @@ const FieldRenderer = <T extends string>({
     case "textarea":
       return (
         <TextArea
+        style={{ fontSize: 13, resize: "none" }}
   id={id}
-  rows={field.rows ?? 3}
+  rows={field.rows ?? 2}
   placeholder={field.placeholder}
   value={value ?? ""}
-  size="3"
+  size="2"
   radius="large"
   variant="surface"
   onChange={(e) => onChange(e.target.value)}
@@ -126,11 +131,11 @@ const FieldRenderer = <T extends string>({
         id={id}
         placeholder={field.placeholder || "Select"}
         style={{
-          width: "100%",
-          height: 40,
+          width: "95%",
+          height: 35,
           padding: "0 12px",
           borderRadius: 10,
-          border: "1px solid #d1d5db",
+        
           
         }}
       />
@@ -164,9 +169,9 @@ case "switch":
       htmlFor={id}
       style={{
         border: "1.5px dashed #c7c7d1",
-        borderRadius: 12,
-        width: 96,
-        height: 96,
+        borderRadius: 10,
+        width: 90,
+        height: 90,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -184,7 +189,7 @@ case "switch":
       />
 
       {/* Upload Icon + Text */}
-      <div style={{ textAlign: "center", fontSize: 12 }}>
+      <div style={{ textAlign: "center", fontSize: 10 }}>
         <svg
           width="20"
           height="20"
@@ -197,7 +202,7 @@ case "switch":
           <polyline points="17 8 12 3 7 8" />
           <line x1="12" y1="3" x2="12" y2="15" />
         </svg>
-        <div style={{ marginTop: 6 }}>Upload</div>
+        <div style={{ marginTop: 4 }}>Upload</div>
       </div>
     </label>
   );

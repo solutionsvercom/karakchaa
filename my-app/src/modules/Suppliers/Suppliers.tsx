@@ -1,7 +1,9 @@
 import React from "react";
-import { Flex, Button, Text } from "@radix-ui/themes";
+import { Flex, Button,Dialog, Text } from "@radix-ui/themes";
 import { Plus } from "lucide-react";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
+import AddSupplier from "./AddSupplier";
+
 
 /* ---------------- SUPPLIERS PAGE ---------------- */
 
@@ -10,10 +12,11 @@ export default function Suppliers() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* 🔝 HEADER */}
+    
+      {/* ================= HEADER ================= */}
       <Flex justify="between" align="center">
         <div>
-          <Text size="5" weight="bold">
+         <Text size="5" weight="bold">
             Suppliers
           </Text>
           <br />
@@ -22,10 +25,15 @@ export default function Suppliers() {
           </Text>
         </div>
 
-        <Button variant="solid" color="violet">
-          <Plus size={16} />
-          Add Supplier
-        </Button>
+        <Dialog.Root>
+          <Dialog.Trigger>
+            <Button>+ Add Supplier</Button>
+          </Dialog.Trigger>
+
+          <Dialog.Content maxWidth="380px">
+          <AddSupplier />
+          </Dialog.Content>
+        </Dialog.Root>
       </Flex>
 
       {/*  SEARCH */}
