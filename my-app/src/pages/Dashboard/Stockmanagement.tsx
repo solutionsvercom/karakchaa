@@ -1,8 +1,12 @@
+import { Flex } from "@radix-ui/themes";
+import StockManagementModule from "../../modules/Stockmanagement/Stockmanagement";
 
-export default function StockmanagementPage() {
+const StockmanagementPage = () => {
   return (
-    <div>
-      This is Stock Management
-    </div>
+    <Flex direction="column" gap="5">
+      <StockManagementModule />
+    </Flex>
   );
-}
+};
+
+export default StockmanagementPage;

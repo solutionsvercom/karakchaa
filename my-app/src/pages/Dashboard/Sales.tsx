@@ -1,8 +1,12 @@
+import { Flex } from "@radix-ui/themes";
+import SalesModule from "../../modules/Sales/Sales";
 
-export default function SalesPage() {
+const SalesPage = () => {
   return (
-    <div>
-      This is Sales
-    </div>
+    <Flex direction="column" gap="5">
+      <SalesModule />
+    </Flex>
   );
-}
+};
+
+export default SalesPage;
