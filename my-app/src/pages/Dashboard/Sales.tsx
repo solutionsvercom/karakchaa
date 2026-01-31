@@ -1,8 +1,6 @@
+import React from "react";
+import Sales from "../../modules/Sales/Sales";
 
-export default function SalesPage() {
-  return (
-    <div>
-      This is Sales
-    </div>
-  );
+export default function DashboardSalesPage() {
+  return <Sales />;
 }
