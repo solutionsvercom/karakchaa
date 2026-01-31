@@ -2,6 +2,7 @@ import React from "react";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import { Button, Dialog, Flex, Badge, DropdownMenu } from "@radix-ui/themes";
 import { ChevronDown, UserPlus, X, MoreVertical } from "lucide-react";
+// import Form from "../../components/dynamicComponents/DynamicForm";
 // import Form from "../../components/dynamicComponents/Form";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
@@ -246,7 +247,7 @@ export default function Sales() {
           background: "var(--gray-1)",
         }}
       >
-        <Flex align="center" gap="3" >
+        <Flex align="center" gap="3" wrap="wrap">
           <Searchbar
             searchValue={searchValue}
             onSearchChange={setSearchValue}

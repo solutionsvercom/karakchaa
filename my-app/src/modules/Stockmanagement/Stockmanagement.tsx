@@ -281,7 +281,7 @@ export default function Stockmanagement() {
           background: "var(--gray-1)",
         }}
       >
-        <Flex align="center" gap="3">
+        <Flex align="center" gap="3" >
           <Searchbar
             searchValue={searchValue}
             onSearchChange={setSearchValue}
