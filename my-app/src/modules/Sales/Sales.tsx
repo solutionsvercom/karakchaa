@@ -2,7 +2,7 @@ import React from "react";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import { Button, Dialog, Flex, Badge, DropdownMenu } from "@radix-ui/themes";
 import { ChevronDown, UserPlus, X, MoreVertical } from "lucide-react";
-import Form from "../../components/dynamicComponents/DynamicForm";
+// import Form from "../../components/dynamicComponents/DynamicForm";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
 
@@ -246,7 +246,7 @@ export default function Sales() {
           background: "var(--gray-1)",
         }}
       >
-        <Flex align="center" gap="3" wrap="wrap">
+        <Flex align="center" gap="3">
           <Searchbar
             searchValue={searchValue}
             onSearchChange={setSearchValue}
@@ -312,7 +312,7 @@ export default function Sales() {
                 </Dialog.Close>
               </Flex>
 
-              <Form fields={SalesFields} />
+              {/* <Form fields={SalesFields} /> */}
 
               <Flex mt="4" gap="3">
                 <Dialog.Close>
