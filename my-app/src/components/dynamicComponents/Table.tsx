@@ -146,7 +146,10 @@ function Table<T extends Record<string, any> = Record<string, any>>({
               {columns.map((column) => (
                 <RadixTable.Cell
                   key={column.key}
-                  style={{ textAlign: column.align || 'left' }}
+                  style={{ 
+                    textAlign: column.align || 'left',
+                    width: column.width,
+                  }}
                 >
                   {getCellValue(row, column)}
                 </RadixTable.Cell>
