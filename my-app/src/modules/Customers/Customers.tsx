@@ -1,7 +1,7 @@
 import React from "react";
 import { Search, UserPlus, X } from "lucide-react";
 
-import Form, { FormField } from "../../components/dynamicComponents/Form";
+import AddCustomer from "./AddCustomer";
 import DynamicAlertDialog from "../../components/dynamicComponents/DynamicAlertDialog";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 
@@ -19,42 +19,6 @@ import {
   EnvelopeClosedIcon,
   MobileIcon,
 } from "@radix-ui/react-icons";
-
-/* ---------- FORM FIELDS ---------- */
-const customerFields: FormField[] = [
-  {
-    name: "fullName",
-    label: "Full Name",
-    type: "text",
-    placeholder: "Enter full name",
-    required: true,
-  },
-  {
-    name: "phone",
-    label: "Phone Number",
-    type: "text",
-    placeholder: "Enter phone number",
-    required: true,
-  },
-  {
-    name: "email",
-    label: "Email",
-    type: "email",
-    placeholder: "Enter email address",
-  },
-  {
-    name: "address",
-    label: "Address",
-    type: "textarea",
-    placeholder: "Enter address",
-  },
-  {
-    name: "notes",
-    label: "Notes",
-    type: "textarea",
-    placeholder: "Additional notes...",
-  },
-];
 
 /* ---------- CUSTOMER TYPE ---------- */
 interface Customer {
@@ -321,8 +285,7 @@ export default function Customers() {
       </Dialog.Close>
     </Flex>
 
-    {/* ✅ FORM (this is the key line you were missing) */}
-    <Form fields={customerFields} />
+    <AddCustomer />
 
     {/* Actions */}
     <Flex mt="4" gap="3">

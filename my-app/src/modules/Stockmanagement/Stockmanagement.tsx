@@ -1,7 +1,7 @@
-
-import { Button, Flex, Box, Text, Badge, Select } from "@radix-ui/themes";
-import { Package2, AlertCircle, ShoppingCart, TrendingUp, History, Plus, Minus } from "lucide-react";
-import { useState } from "react";
+import React from "react";
+import Searchbar from "../../components/dynamicComponents/Searchbar";
+import { Button, Flex, Badge, DropdownMenu } from "@radix-ui/themes";
+import { ChevronDown, History, Plus, Minus } from "lucide-react";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 
 /* ================= TYPES ================= */
@@ -69,12 +69,51 @@ const calculateStockStats = (data: StockItem[]) => {
   const totalProducts = data.length;
   const lowStock = data.filter((item) => item.status === "low-stock").length;
   const outOfStock = data.filter((item) => item.status === "out-of-stock").length;
-  const stockValue = data.reduce((sum, item) => sum + item.currentStock * 100, 0); // Assuming avg price 100
+  const stockValue = data.reduce((sum, item) => sum + item.currentStock * 100, 0);
 
   return { totalProducts, lowStock, outOfStock, stockValue };
 };
 
-/* ================= COLUMNS ================= */
+/* ================= SUMMARY CARD COMPONENT ================= */
+
+type SummaryCardProps = {
+  title: string;
+  value: string;
+  accentColor: string;
+  softColor: string;
+  icon: string;
+};
+
+const SummaryCard: React.FC<SummaryCardProps> = ({
+  title,
+  value,
+  accentColor,
+  softColor,
+  icon,
+}) => {
+  return (
+    <div className="kb-summary-card">
+      <div>
+        <div className="kb-summary-card-title">{title}</div>
+        <div className="kb-summary-card-value">{value}</div>
+      </div>
+
+      <div
+        className="kb-summary-card-icon-wrapper"
+        style={{ backgroundColor: softColor }}
+      >
+        <div
+          className="kb-summary-card-icon-circle"
+          style={{ backgroundColor: accentColor }}
+        >
+          <span className="kb-summary-card-icon">{icon}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ================= TABLE COLUMNS ================= */
 
 const columns: Column<StockItem>[] = [
   {
@@ -99,11 +138,7 @@ const columns: Column<StockItem>[] = [
     key: "currentStock",
     header: "Current Stock",
     accessor: "currentStock",
-    render: (value) => (
-      <Text weight="bold" size="2">
-        {value} piece
-      </Text>
-    ),
+    render: (value) => <span style={{ fontWeight: "bold" }}>{value} piece</span>,
     width: "14%",
     align: "center",
   },
@@ -154,175 +189,140 @@ const columns: Column<StockItem>[] = [
   },
 ];
 
-/* ================= COMPONENT ================= */
+const historyColumns: Column<StockHistory>[] = [
+  { key: "product", header: "Product", accessor: "product", width: "25%" },
+  {
+    key: "type",
+    header: "Type",
+    accessor: "type",
+    render: (value) => (
+      <Badge color={value === "in" ? "green" : "red"} variant="soft">
+        {value === "in" ? "Stock In" : "Stock Out"}
+      </Badge>
+    ),
+    width: "15%",
+  },
+  {
+    key: "quantity",
+    header: "Quantity",
+    accessor: "quantity",
+    render: (value) => <span style={{ fontWeight: "bold" }}>+{value}</span>,
+    width: "15%",
+    align: "center",
+  },
+  { key: "reason", header: "Reason", accessor: "reason", width: "20%" },
+  { key: "date", header: "Date", accessor: "date", width: "25%" },
+];
 
-export default function StockManagementModule() {
-  const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [showHistory, setShowHistory] = useState(false);
-  const [stock] = useState<StockItem[]>(mockStockData);
+/* ================= MAIN COMPONENT ================= */
+
+export default function Stockmanagement() {
+  const [searchValue, setSearchValue] = React.useState("");
+  const [category, setCategory] = React.useState("All Products");
+  const [showHistory, setShowHistory] = React.useState(false);
+  const [stock] = React.useState<StockItem[]>(mockStockData);
 
   const filteredStock = stock.filter((item) => {
-    const matchesSearch = item.product.toLowerCase().includes(search.toLowerCase()) ||
-      item.sku.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = categoryFilter === "all" || item.category.toLowerCase() === categoryFilter.toLowerCase();
+    const matchesSearch =
+      item.product.toLowerCase().includes(searchValue.toLowerCase()) ||
+      item.sku.toLowerCase().includes(searchValue.toLowerCase());
+    const matchesCategory =
+      category === "All Products" ||
+      (category === "Low Stock" && item.status === "low-stock") ||
+      (category === "Out of Stock" && item.status === "out-of-stock");
     return matchesSearch && matchesCategory;
   });
 
   const { totalProducts, lowStock, outOfStock, stockValue } = calculateStockStats(stock);
 
-  const categories = ["all", ...new Set(stock.map((item) => item.category))];
-
   return (
-    <Flex direction="column" gap="5">
-      {/* ================= STATS SECTION ================= */}
-      <Flex gap="4" wrap="wrap">
-        {/* Total Products */}
-        <Box
-          style={{
-            flex: "1 1 200px",
-            padding: "20px",
-            background: "linear-gradient(135deg, #e0d5ff 0%, #f0e7ff 100%)",
-            borderRadius: "12px",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-          }}
-        >
-          <Box style={{ fontSize: "32px" }}>
-            <Package2 size={32} color="#a855f7" />
-          </Box>
-          <Flex direction="column">
-            <Text size="2" color="gray" style={{ marginBottom: "4px" }}>
-              Total Products
-            </Text>
-            <Text size="7" weight="bold" style={{ fontSize: "28px", margin: 0 }}>
-              {totalProducts}
-            </Text>
-          </Flex>
-        </Box>
-
-        {/* Low Stock */}
-        <Box
-          style={{
-            flex: "1 1 200px",
-            padding: "20px",
-            background: "linear-gradient(135deg, #fef3c7 0%, #fef08a 100%)",
-            borderRadius: "12px",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-          }}
-        >
-          <Box style={{ fontSize: "32px" }}>
-            <AlertCircle size={32} color="#eab308" />
-          </Box>
-          <Flex direction="column">
-            <Text size="2" color="gray" style={{ marginBottom: "4px" }}>
-              Low Stock
-            </Text>
-            <Text size="7" weight="bold" style={{ fontSize: "28px", margin: 0 }}>
-              {lowStock}
-            </Text>
-          </Flex>
-        </Box>
-
-        {/* Out of Stock */}
-        <Box
-          style={{
-            flex: "1 1 200px",
-            padding: "20px",
-            background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
-            borderRadius: "12px",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-          }}
-        >
-          <Box style={{ fontSize: "32px" }}>
-            <ShoppingCart size={32} color="#ef4444" />
-          </Box>
-          <Flex direction="column">
-            <Text size="2" color="gray" style={{ marginBottom: "4px" }}>
-              Out of Stock
-            </Text>
-            <Text size="7" weight="bold" style={{ fontSize: "28px", margin: 0 }}>
-              {outOfStock}
-            </Text>
-          </Flex>
-        </Box>
-
-        {/* Stock Value */}
-        <Box
-          style={{
-            flex: "1 1 200px",
-            padding: "20px",
-            background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)",
-            borderRadius: "12px",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-          }}
-        >
-          <Box style={{ fontSize: "32px" }}>
-            <TrendingUp size={32} color="#10b981" />
-          </Box>
-          <Flex direction="column">
-            <Text size="2" color="gray" style={{ marginBottom: "4px" }}>
-              Stock Value
-            </Text>
-            <Text size="7" weight="bold" style={{ fontSize: "28px", margin: 0, color: "#059669" }}>
-              ₹{stockValue.toLocaleString()}
-            </Text>
-          </Flex>
-        </Box>
-      </Flex>
-
-      {/* ================= HEADER ================= */}
-      <Flex justify="between" align="center" gap="3" wrap="wrap">
-        <input
-          type="text"
-          placeholder="Search products..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            flex: 1,
-            minWidth: "250px",
-            padding: "8px 12px",
-            borderRadius: "8px",
-            border: "1px solid var(--gray-7)",
-            fontSize: "14px",
-          }}
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* SUMMARY CARDS with Dynamic Data */}
+      <section className="kb-summary-row">
+        <SummaryCard
+          title="Total Products"
+          value={String(totalProducts)}
+          accentColor="#7C4DFF"
+          softColor="#EDE7FF"
+          icon="📦"
         />
 
-        <Select.Root value={categoryFilter} onValueChange={setCategoryFilter}>
-          <Select.Trigger placeholder="All Products" style={{ minWidth: "140px" }} />
-          <Select.Content>
-            {categories.map((cat) => (
-              <Select.Item key={cat} value={cat}>
-                {cat === "all" ? "All Products" : cat}
-              </Select.Item>
-            ))}
-          </Select.Content>
-        </Select.Root>
+        <SummaryCard
+          title="Low Stock"
+          value={String(lowStock)}
+          accentColor="#FF9100"
+          softColor="#FFF3E0"
+          icon="⚠️"
+        />
 
-        <Button
-          variant={showHistory ? "solid" : "outline"}
-          onClick={() => setShowHistory(!showHistory)}
-          style={{ display: "flex", alignItems: "center", gap: "6px" }}
-        >
-          <History size={16} />
-          Stock History
-        </Button>
-      </Flex>
+        <SummaryCard
+          title="Out of Stock"
+          value={String(outOfStock)}
+          accentColor="#D50000"
+          softColor="#FDECEA"
+          icon="❌"
+        />
 
-      {/* ================= TABLE SECTION ================= */}
+        <SummaryCard
+          title="Stock Value"
+          value={`₹${stockValue.toLocaleString()}`}
+          accentColor="#00C853"
+          softColor="#E5F9EE"
+          icon="📈"
+        />
+      </section>
+
+      {/* FILTER BAR */}
+      <div
+        style={{
+          padding: 12,
+          borderRadius: 12,
+          border: "1px solid var(--gray-6)",
+          background: "var(--gray-1)",
+        }}
+      >
+        <Flex align="center" gap="3" wrap="wrap">
+          <Searchbar
+            searchValue={searchValue}
+            onSearchChange={setSearchValue}
+            placeholder="Search products..."
+          />
+
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              <Button variant="soft">
+                {category}
+                <ChevronDown size={16} />
+              </Button>
+            </DropdownMenu.Trigger>
+
+            <DropdownMenu.Content>
+              {["All Products", "Low Stock", "Out of Stock"].map((item) => (
+                <DropdownMenu.Item
+                  key={item}
+                  onClick={() => setCategory(item)}
+                >
+                  {item}
+                </DropdownMenu.Item>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+
+          <Button
+            variant={showHistory ? "solid" : "soft"}
+            onClick={() => setShowHistory(!showHistory)}
+            style={{ display: "flex", alignItems: "center", gap: "6px" }}
+          >
+            <History size={16} />
+            Stock History
+          </Button>
+        </Flex>
+      </div>
+
+      {/* INVENTORY TABLE */}
       {!showHistory && (
-        <Flex direction="column" gap="3">
-          <Flex align="center" gap="2">
-            <Text size="4" weight="bold">Inventory Status</Text>
-          </Flex>
-
+        <div>
+          <h2 style={{ marginBottom: 16 }}>Inventory Status</h2>
           <Table<StockItem>
             data={filteredStock}
             columns={columns}
@@ -330,48 +330,22 @@ export default function StockManagementModule() {
             hoverable
             striped
           />
-        </Flex>
+        </div>
       )}
 
-      {/* ================= HISTORY SECTION ================= */}
+      {/* STOCK HISTORY TABLE */}
       {showHistory && (
-        <Flex direction="column" gap="3">
-          <Flex align="center" gap="2">
-            <Text size="4" weight="bold">Stock History</Text>
-          </Flex>
-
+        <div>
+          <h2 style={{ marginBottom: 16 }}>Stock History</h2>
           <Table<StockHistory>
             data={mockStockHistory}
-            columns={[
-              { key: "product", header: "Product", accessor: "product", width: "25%" },
-              {
-                key: "type",
-                header: "Type",
-                accessor: "type",
-                render: (value) => (
-                  <Badge color={value === "in" ? "green" : "red"} variant="soft">
-                    {value === "in" ? "Stock In" : "Stock Out"}
-                  </Badge>
-                ),
-                width: "15%",
-              },
-              {
-                key: "quantity",
-                header: "Quantity",
-                accessor: "quantity",
-                render: (value) => <Text weight="bold">+{value}</Text>,
-                width: "15%",
-                align: "center",
-              },
-              { key: "reason", header: "Reason", accessor: "reason", width: "20%" },
-              { key: "date", header: "Date", accessor: "date", width: "25%" },
-            ]}
+            columns={historyColumns}
             emptyMessage="No stock history found"
             hoverable
             striped
           />
-        </Flex>
+        </div>
       )}
-    </Flex>
+    </div>
   );
 }

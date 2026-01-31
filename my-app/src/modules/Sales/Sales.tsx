@@ -1,8 +1,10 @@
-import { Button, Dialog, Flex, Box, Text, Badge, DropdownMenu, Select } from "@radix-ui/themes";
-import { UserPlus, X, MoreVertical } from "lucide-react";
-import { useState } from "react";
-import Form, { FormField } from "../../components/dynamicComponents/Form";
+import React from "react";
+import Searchbar from "../../components/dynamicComponents/Searchbar";
+import { Button, Dialog, Flex, Badge, DropdownMenu } from "@radix-ui/themes";
+import { ChevronDown, UserPlus, X, MoreVertical } from "lucide-react";
+import Form from "../../components/dynamicComponents/DynamicForm";
 import Table, { Column } from "../../components/dynamicComponents/Table";
+import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
 
 /* ================= TYPES ================= */
 
@@ -13,7 +15,7 @@ type SaleTransaction = {
   id: number;
   invoice: string;
   customer: string;
-  items: string; // "3 items" or similar
+  items: string;
   type: SaleType;
   amount: number;
   payment: PaymentStatus;
@@ -66,7 +68,51 @@ const calculateTotals = (data: SaleTransaction[]) => {
   return { totalRevenue, totalOrders, averageOrder };
 };
 
-/* ================= COLUMNS ================= */
+/* ================= SUMMARY CARD COMPONENT ================= */
+
+type SummaryCardProps = {
+  title: string;
+  value: string;
+  subtitle?: string;
+  accentColor: string;
+  softColor: string;
+  icon: string;
+};
+
+const SummaryCard: React.FC<SummaryCardProps> = ({
+  title,
+  value,
+  subtitle,
+  accentColor,
+  softColor,
+  icon,
+}) => {
+  return (
+    <div className="kb-summary-card">
+      <div>
+        <div className="kb-summary-card-title">{title}</div>
+        <div className="kb-summary-card-value">{value}</div>
+        {subtitle && (
+          <div className="kb-summary-card-subtitle">{subtitle}</div>
+        )}
+      </div>
+
+      <div
+        className="kb-summary-card-icon-wrapper"
+        style={{ backgroundColor: softColor }}
+      >
+        <div
+          className="kb-summary-card-icon-circle"
+          style={{ backgroundColor: accentColor }}
+        >
+          <span className="kb-summary-card-icon">{icon}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ================= TABLE COLUMNS ================= */
 
 const columns: Column<SaleTransaction>[] = [
   {
@@ -91,18 +137,14 @@ const columns: Column<SaleTransaction>[] = [
     key: "type",
     header: "Type",
     accessor: "type",
-    render: (value) => (
-      <Text size="2" weight="medium" style={{ textTransform: "capitalize" }}>
-        {value}
-      </Text>
-    ),
+    render: (value) => <span style={{ textTransform: "capitalize" }}>{value}</span>,
     width: "12%",
   },
   {
     key: "amount",
     header: "Amount",
     accessor: "amount",
-    render: (value) => <Text weight="bold">₹{value}</Text>,
+    render: (value) => <span style={{ fontWeight: "bold" }}>₹{value}</span>,
     width: "12%",
     align: "right",
   },
@@ -145,163 +187,154 @@ const columns: Column<SaleTransaction>[] = [
   },
 ];
 
-/* ================= COMPONENT ================= */
+/* ================= MAIN COMPONENT ================= */
 
-export default function SalesModule() {
-  const [search, setSearch] = useState("");
-  const [dateFilter, setDateFilter] = useState("today");
-  const [paymentFilter, setPaymentFilter] = useState<"all" | PaymentStatus>("all");
-  const [sales] = useState<SaleTransaction[]>(mockSalesData);
+export default function Sales() {
+  const [searchValue, setSearchValue] = React.useState("");
+  const [dateFilter, setDateFilter] = React.useState("Today");
+  const [paymentFilter, setPaymentFilter] = React.useState("All Payments");
+  const [sales] = React.useState<SaleTransaction[]>(mockSalesData);
 
   const filteredSales = sales.filter((sale) => {
-    const matchesSearch = sale.invoice.toLowerCase().includes(search.toLowerCase()) ||
-      sale.customer.toLowerCase().includes(search.toLowerCase());
-    const matchesPayment = paymentFilter === "all" || sale.payment === paymentFilter;
+    const matchesSearch =
+      sale.invoice.toLowerCase().includes(searchValue.toLowerCase()) ||
+      sale.customer.toLowerCase().includes(searchValue.toLowerCase());
+    const matchesPayment =
+      paymentFilter === "All Payments" ||
+      sale.type === paymentFilter.toLowerCase();
     return matchesSearch && matchesPayment;
   });
 
   const { totalRevenue, totalOrders, averageOrder } = calculateTotals(filteredSales);
 
   return (
-    <Flex direction="column" gap="5">
-      {/* ================= STATS SECTION ================= */}
-      <Flex gap="4" wrap="wrap">
-        {/* Total Revenue */}
-        <Box
-          style={{
-            flex: "1 1 300px",
-            padding: "24px",
-            background: "linear-gradient(135deg, #a855f7 0%, #9333ea 100%)",
-            borderRadius: "12px",
-            color: "white",
-          }}
-        >
-          <Text size="2" style={{ opacity: 0.9, marginBottom: "8px" }}>
-            Total Revenue
-          </Text>
-          <Text size="8" weight="bold" style={{ fontSize: "36px", margin: 0 }}>
-            ₹{totalRevenue}
-          </Text>
-        </Box>
-
-        {/* Total Orders */}
-        <Box
-          style={{
-            flex: "1 1 300px",
-            padding: "24px",
-            background: "var(--gray-2)",
-            borderRadius: "12px",
-          }}
-        >
-          <Text size="2" color="gray" style={{ marginBottom: "8px" }}>
-            Total Orders
-          </Text>
-          <Text size="8" weight="bold" style={{ fontSize: "36px", margin: 0 }}>
-            {totalOrders}
-          </Text>
-        </Box>
-
-        {/* Average Order */}
-        <Box
-          style={{
-            flex: "1 1 300px",
-            padding: "24px",
-            background: "var(--gray-2)",
-            borderRadius: "12px",
-          }}
-        >
-          <Text size="2" color="gray" style={{ marginBottom: "8px" }}>
-            Average Order
-          </Text>
-          <Text size="8" weight="bold" style={{ fontSize: "36px", margin: 0 }}>
-            ₹{averageOrder}
-          </Text>
-        </Box>
-      </Flex>
-
-      {/* ================= HEADER ================= */}
-      <Flex justify="between" align="center" gap="3" wrap="wrap">
-        <input
-          type="text"
-          placeholder="Search by invoice or customer..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            flex: 1,
-            minWidth: "250px",
-            padding: "8px 12px",
-            borderRadius: "8px",
-            border: "1px solid var(--gray-7)",
-            fontSize: "14px",
-          }}
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* SUMMARY CARDS with Dynamic Data */}
+      <section className="kb-summary-row">
+        <SummaryCard
+          title="Total Revenue"
+          value={`₹${totalRevenue}`}
+          subtitle={`${totalOrders} orders`}
+          accentColor="#00C853"
+          softColor="#E5F9EE"
+          icon="₹"
         />
 
-        <Select.Root value={dateFilter} onValueChange={setDateFilter}>
-          <Select.Trigger placeholder="Today" style={{ minWidth: "120px" }} />
-          <Select.Content>
-            <Select.Item value="today">Today</Select.Item>
-            <Select.Item value="week">This Week</Select.Item>
-            <Select.Item value="month">This Month</Select.Item>
-            <Select.Item value="all">All Time</Select.Item>
-          </Select.Content>
-        </Select.Root>
+        <SummaryCard
+          title="Total Orders"
+          value={String(totalOrders)}
+          accentColor="#2962FF"
+          softColor="#E3F2FD"
+          icon="📦"
+        />
 
-        <Select.Root value={paymentFilter} onValueChange={(val) => setPaymentFilter(val as typeof paymentFilter)}>
-          <Select.Trigger placeholder="All Payments" style={{ minWidth: "140px" }} />
-          <Select.Content>
-            <Select.Item value="all">All Payments</Select.Item>
-            <Select.Item value="completed">Completed</Select.Item>
-            <Select.Item value="pending">Pending</Select.Item>
-            <Select.Item value="cancelled">Cancelled</Select.Item>
-          </Select.Content>
-        </Select.Root>
+        <SummaryCard
+          title="Average Order"
+          value={`₹${averageOrder}`}
+          accentColor="#FF9100"
+          softColor="#FFF3E0"
+          icon="📊"
+        />
+      </section>
 
-        <Dialog.Root>
-          <Dialog.Trigger>
-            <Button>+ Add Sale</Button>
-          </Dialog.Trigger>
+      {/* FILTER BAR */}
+      <div
+        style={{
+          padding: 12,
+          borderRadius: 12,
+          border: "1px solid var(--gray-6)",
+          background: "var(--gray-1)",
+        }}
+      >
+        <Flex align="center" gap="3" wrap="wrap">
+          <Searchbar
+            searchValue={searchValue}
+            onSearchChange={setSearchValue}
+            placeholder="Search by invoice or customer..."
+          />
 
-          <Dialog.Content maxWidth="420px">
-            <Flex justify="between" align="center" mb="4">
-              <Flex align="center" gap="2">
-                <UserPlus size={18} />
-                <Dialog.Title style={{ fontSize: 18, fontWeight: 500 }}>
-                  Add New Sale
-                </Dialog.Title>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              <Button variant="soft">
+                {dateFilter}
+                <ChevronDown size={16} />
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              {["Today", "This Week", "This Month"].map((item) => (
+                <DropdownMenu.Item
+                  key={item}
+                  onClick={() => setDateFilter(item)}
+                >
+                  {item}
+                </DropdownMenu.Item>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              <Button variant="soft">
+                {paymentFilter}
+                <ChevronDown size={16} />
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              {["All Payments", "cash", "card", "upi"].map((item) => (
+                <DropdownMenu.Item
+                  key={item}
+                  onClick={() => setPaymentFilter(item)}
+                >
+                  {item.charAt(0).toUpperCase() + item.slice(1)}
+                </DropdownMenu.Item>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+
+          <Dialog.Root>
+            <Dialog.Trigger>
+              <Button>+ Add Sale</Button>
+            </Dialog.Trigger>
+
+            <Dialog.Content maxWidth="420px">
+              <Flex justify="between" align="center" mb="4">
+                <Flex align="center" gap="2">
+                  <UserPlus size={18} />
+                  <Dialog.Title style={{ fontSize: 18, fontWeight: 500 }}>
+                    Add New Sale
+                  </Dialog.Title>
+                </Flex>
+
+                <Dialog.Close>
+                  <Button className="dialog-close-icon">
+                    <X size={18} />
+                  </Button>
+                </Dialog.Close>
               </Flex>
 
-              <Dialog.Close>
-                <Button className="dialog-close-icon">
-                  <X size={18} />
-                </Button>
-              </Dialog.Close>
-            </Flex>
+              <Form fields={SalesFields} />
 
-            <Form fields={SalesFields} />
+              <Flex mt="4" gap="3">
+                <Dialog.Close>
+                  <Button className="button outline" style={{ flex: 1 }}>
+                    Cancel
+                  </Button>
+                </Dialog.Close>
 
-            <Flex mt="4" gap="3">
-              <Dialog.Close>
-                <Button className="button outline" style={{ flex: 1 }}>
-                  Cancel
-                </Button>
-              </Dialog.Close>
-
-              <Dialog.Close>
-                <Button style={{ flex: 1 }} onClick={() => console.log("Sale created")}>
-                  Create Sale
-                </Button>
-              </Dialog.Close>
-            </Flex>
-          </Dialog.Content>
-        </Dialog.Root>
-      </Flex>
-
-      {/* ================= TABLE SECTION ================= */}
-      <Flex direction="column" gap="3">
-        <Flex align="center" gap="2">
-          <Text size="4" weight="bold">Sales Transactions</Text>
+                <Dialog.Close>
+                  <Button style={{ flex: 1 }} onClick={() => console.log("Sale created")}>
+                    Create Sale
+                  </Button>
+                </Dialog.Close>
+              </Flex>
+            </Dialog.Content>
+          </Dialog.Root>
         </Flex>
+      </div>
 
+      {/* SALES TABLE */}
+      <div style={{ marginTop: 12 }}>
+        <h2 style={{ marginBottom: 16 }}>Sales Transactions</h2>
         <Table<SaleTransaction>
           data={filteredSales}
           columns={columns}
@@ -309,7 +342,7 @@ export default function SalesModule() {
           hoverable
           striped
         />
-      </Flex>
-    </Flex>
+      </div>
+    </div>
   );
 }
