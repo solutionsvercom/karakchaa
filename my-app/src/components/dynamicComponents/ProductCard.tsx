@@ -3,11 +3,16 @@ import {
   Flex,
   Text,
   Badge,
-  DropdownMenu,
   IconButton,
   Box,
 } from "@radix-ui/themes";
+import { DropdownMenu } from "@radix-ui/themes";
+import { Button } from "@radix-ui/themes";
 import { DotsVerticalIcon, CubeIcon } from "@radix-ui/react-icons";
+import * as Dialog from "@radix-ui/react-dialog";
+import { useState } from "react";
+
+
 
 /* ---------------- TYPES ---------------- */
 
@@ -50,6 +55,7 @@ export default function ProductCard({
   category,
   image,
 }: ProductCardProps) {
+  const [editOpen, setEditOpen] = useState(false);
   const safeCategory: Category =
     category && categoryColorMap[category] ? category : "other";
 
@@ -70,28 +76,67 @@ export default function ProductCard({
       }}
     >
       {/* MENU */}
-      <DropdownMenu.Root>
-        <DropdownMenu.Trigger>
-          <IconButton
-            variant="soft"
-            radius="full"
-            style={{
-              position: "absolute",
-              top: 10,
-              right: 10,
-              zIndex: 10,
-              background: "white",
-            }}
-          >
-            <DotsVerticalIcon />
-          </IconButton>
-        </DropdownMenu.Trigger>
+     <DropdownMenu.Root>
+  <DropdownMenu.Trigger>
+    <IconButton
+      variant="soft"
+      radius="full"
+      style={{
+        position: "absolute",
+        top: 10,
+        right: 10,
+        zIndex: 10,
+        background: "white",
+      }}
+    >
+      <DotsVerticalIcon />
+    </IconButton>
+  </DropdownMenu.Trigger>
 
-        <DropdownMenu.Content>
-          <DropdownMenu.Item>Edit</DropdownMenu.Item>
-          <DropdownMenu.Item color="red">Delete</DropdownMenu.Item>
-        </DropdownMenu.Content>
-      </DropdownMenu.Root>
+  <DropdownMenu.Content align="end">
+   <DropdownMenu.Item onSelect={() => setEditOpen(true)}>
+               <Button>Edit</Button>
+             </DropdownMenu.Item>
+    <DropdownMenu.Item color="red">
+      Delete
+    </DropdownMenu.Item>
+  </DropdownMenu.Content>
+</DropdownMenu.Root>
+
+<Dialog.Root open={editOpen} onOpenChange={setEditOpen}>
+  <Dialog.Portal>
+    <Dialog.Overlay
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
+      }}
+    />
+
+    <Dialog.Content
+      style={{
+        position: "fixed",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        background: "white",
+        padding: 24,
+        borderRadius: 12,
+        width: 520,
+        zIndex: 1000,
+      }}
+    >
+      <Dialog.Title>Edit Product</Dialog.Title>
+
+      {/* ✅ THIS IS YOUR FORM */}
+      
+
+    </Dialog.Content>
+  </Dialog.Portal>
+</Dialog.Root>
+
+
+
 
       {/* IMAGE */}
       <Box
