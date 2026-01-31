@@ -1,7 +1,8 @@
 import React from "react";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
-import { Flex, Button, DropdownMenu } from "@radix-ui/themes";
+import { Flex, Button, DropdownMenu, Dialog } from "@radix-ui/themes";
 import { ChevronDown, Plus } from "lucide-react";
+import AddExpense from "./AddExpense";
 
 /* ---------------- SUMMARY CARD ---------------- */
 
@@ -126,10 +127,15 @@ export default function Expenses() {
           </DropdownMenu.Root>
 
           {/* Add Expense */}
-          <Button variant="solid" color="violet">
-            <Plus size={16} />
-            Add Expense
-          </Button>
+          <Dialog.Root>
+          <Dialog.Trigger>
+            <Button>+ Add Expense</Button>
+          </Dialog.Trigger>
+
+          <Dialog.Content maxWidth="380px">
+          <AddExpense />
+          </Dialog.Content>
+        </Dialog.Root>
         </Flex>
       </div>
 

@@ -17,7 +17,10 @@ type ProductField =
 
 const AddProducts = () => {
   const fields: FormField<ProductField>[] = [
-    { name: "image", label: "Product Image", type: "file", span: 2 },
+    { name: "image", 
+      label: "Product Image", 
+      type: "file", 
+      span: 2 },
 
     {
       name: "name",
@@ -28,7 +31,10 @@ const AddProducts = () => {
       placeholder: "Enter product name",
     },
 
-    { name: "sku", label: "SKU", type: "text", placeholder: "e.g. BEV-001" },
+    { name: "sku", 
+      label: "SKU", 
+      type: "text",
+     placeholder: "e.g. BEV-001" },
 
   {
   name: "category",
@@ -69,6 +75,8 @@ const AddProducts = () => {
   name: "unit",
   label: "Unit",
   type: "select",
+  required: true,
+  placeholder: "Select unit",
   group: "triple",
      options: [
       { label: "Piece", value: "piece" },
@@ -88,7 +96,7 @@ const AddProducts = () => {
       type: "textarea",
       span: 2,
       rows: 2,
-      placeholder: "Enter product description",
+      placeholder: "Enter product description...",
     },
 
     {
@@ -101,9 +109,25 @@ const AddProducts = () => {
 
   return (
     <DynamicForm
-      fields={fields}
-      onSubmit={(data) => console.log("Product:", data)}
-    />
+    title="Add New Product"
+    fields={fields}
+    submitText="Create"
+    cancelText="Cancel"
+    onCancel={() => {
+      // close dialog if this form is inside Dialog
+      // or just console.log for now
+      console.log("Cancel clicked");
+    }}
+    confirm={{
+      title: "Are you absolutely sure?",
+      description: "This action cannot be undone.",
+      confirmText: "Yes, Create",
+      cancelText: "No, go back",
+    }}
+    onSubmit={(data) => {
+      console.log("Product:", data);
+    }}
+  />
   );
 };
 

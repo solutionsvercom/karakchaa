@@ -64,42 +64,8 @@ export default function ProductsModule() {
             <Button>+ Add Product</Button>
           </Dialog.Trigger>
 
-          <Dialog.Content maxWidth="420px">
-            <Flex justify="between" align="center" mb="4">
-              <Flex align="center" gap="2">
-                <Dialog.Title style={{ fontSize: 18, fontWeight: 500 }}>
-                  Add New Product
-                </Dialog.Title>
-              </Flex>
-
-              <Dialog.Close>
-                <Button className="dialog-close-icon">
-                  <X size={18} />
-                </Button>
-              </Dialog.Close>
-            </Flex>
-
-            <AddProducts />
-
-        <Flex mt="4" gap="3">
-          <Dialog.Close>
-            <Button className="button outline" style={{ flex: 1 }}>
-                      Cancel
-                    </Button>
-          </Dialog.Close>
-
-              <DynamicAlertDialog
-                title="Are you absolutely sure?"
-                description="This action cannot be undone."
-                cancelText="No, go back"
-                actionText="Yes, Create"
-                onAction={handleCreateProduct}
-              >
-                <Button className="create-btn" style={{ flex: 1 }}>
-                  Create
-                </Button>
-              </DynamicAlertDialog>
-            </Flex>
+          <Dialog.Content maxWidth="380px">
+          <AddProducts />
           </Dialog.Content>
         </Dialog.Root>
       </Flex>
