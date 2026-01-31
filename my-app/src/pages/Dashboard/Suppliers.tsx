@@ -1,7 +1,6 @@
+import React from "react";
+import Suppliers from "../../modules/Suppliers/Suppliers";
+
 export default function SuppliersPage() {
-  return (
-    <div>
-      This is Suppliers
-    </div>
-  );
+  return <Suppliers />;
 }
