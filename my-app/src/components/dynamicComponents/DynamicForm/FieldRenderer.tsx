@@ -5,11 +5,27 @@ import {
   Switch,
 } from "@radix-ui/themes";
 import { FormField } from "./types";
+import "react-day-picker/dist/style.css";
 
 type Props<T extends string> = {
   field: FormField<T>;
   value: any;
   onChange: (value: any) => void;
+};
+
+
+const formatDate = (date: Date) => {
+  const d = String(date.getDate()).padStart(2, "0");
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const y = date.getFullYear();
+  return `${d}/${m}/${y}`;
+};
+
+const parseDateString = (value?: string) => {
+  if (!value) return undefined;
+  const [d, m, y] = value.split("/").map(Number);
+  if (!d || !m || !y) return undefined;
+  return new Date(y, m - 1, d);
 };
 
 const FieldRenderer = <T extends string>({
@@ -159,6 +175,37 @@ case "switch":
       onCheckedChange={onChange}
     />
   );
+  case "date":
+  return (
+    <TextField.Root
+      id={id}
+      placeholder="dd/mm/yyyy"
+      value={value ?? ""}
+      size="2"
+      radius="large"
+      variant="surface"
+      inputMode="numeric"
+      maxLength={10}
+      onChange={(e) => {
+        let v = e.target.value;
+
+        // remove invalid chars
+        v = v.replace(/[^\d/]/g, "");
+
+        // handle auto-slash only when typing forward
+        if (
+          v.length === 2 && value?.length === 1 ||
+          v.length === 5 && value?.length === 4
+        ) {
+          v += "/";
+        }
+
+        onChange(v);
+      }}
+    />
+  );
+
+
 
 
 

@@ -5,7 +5,8 @@ export type FieldType =
   | "textarea"
   | "select"
   | "switch"
-  | "file";
+  | "file"
+  | "date"
 
 export type Option = {
   label: string;
