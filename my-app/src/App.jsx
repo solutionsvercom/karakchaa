@@ -28,18 +28,18 @@ function App() {
 
         {/* Dashboard Parent */}
         <Route path="/dashboard" element={<DashboardLayout />}>
-          {/* <Route index element={<Navigate to="products" />} /> */}
           <Route index element={<DashboardPage />} />
-          <Route path="customer" element={<CustomerPage />} />
-          <Route path="stockmanagement" element={<StockmanagementPage />} />
+          {/* <Route path="customer" element={<CustomerPage />} /> */}
+          <Route path="customer/*" element={<CustomerPage />} />
+          <Route path="stockmanagement/*" element={<StockmanagementPage />} />
           <Route path="sales" element={<SalesPage />} />
-          <Route path="employees" element={<EmployeesPage />} />
-          <Route path="expenses" element={<ExpensesPage />} />
+          <Route path="employees/*" element={<EmployeesPage />} />
+          <Route path="expenses/*" element={<ExpensesPage />} />
           <Route path="feedback" element={<FeedbackPage />} />
           <Route path="pos" element={<PosPage />} />
-          <Route path="products" element={<ProductsPage />} />
+          <Route path="products/*" element={<ProductsPage />} />
           <Route path="reports" element={<ReportsPage />} />
-          <Route path="suppliers" element={<SuppliersPage />} />
+          <Route path="suppliers/*" element={<SuppliersPage />} />
         </Route>
 
       </Routes>

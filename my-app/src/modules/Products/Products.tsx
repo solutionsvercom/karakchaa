@@ -1,7 +1,6 @@
 import { Button, Dialog, Flex } from "@radix-ui/themes";
-import { UserPlus, X } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import DynamicAlertDialog from "../../components/dynamicComponents/DynamicAlertDialog";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import ProductCard from "../../components/dynamicComponents/ProductCard";
 import AddProducts from "./AddProduct";
@@ -18,8 +17,9 @@ type Product = {
   stock: number;
   category: Category;
   image?: string;
+  onEdit?: () => void;
+  
 };
-
 
 /* ---------------- MOCK DATA ---------------- */
 
@@ -34,13 +34,32 @@ const mockProducts: Product[] = [
 /* ---------------- COMPONENT ---------------- */
 
 export default function ProductsModule() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  /* ---------- URL MODE DETECTION ---------- */
+
+  const isAddMode = location.pathname.includes("/add-product");
+  const isEditMode = /\/dashboard\/products\/\d+\/edit-product/.test(
+    location.pathname
+  );
+  const isDialogOpen = isAddMode || isEditMode;
+
+  /* ---------- STATE ---------- */
+
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<"all" | Category>("all");
   const [products] = useState<Product[]>(mockProducts);
 
-  const handleCreateProduct = async () => {
-    console.log("Create confirmed");
-  };
+  /* ---------- STEP 3: EDIT PRODUCT DATA ---------- */
+
+  const editingProduct = isEditMode
+    ? products.find((p) =>
+        location.pathname.includes(`/${p.id}/edit-product`)
+      )
+    : undefined;
+
+  /* ---------- FILTER ---------- */
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
@@ -59,13 +78,29 @@ export default function ProductsModule() {
           </p>
         </div>
 
-        <Dialog.Root>
-          <Dialog.Trigger>
-            <Button>+ Add Product</Button>
-          </Dialog.Trigger>
+        <Button onClick={() => navigate("/dashboard/products/add-product")}>
+          + Add Product
+        </Button>
 
+        {/* ================= DIALOG ================= */}
+        <Dialog.Root
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) navigate("/dashboard/products");
+          }}
+        >
           <Dialog.Content maxWidth="380px">
-          <AddProducts />
+            {/* REQUIRED for Radix */}
+            <Dialog.Title>
+              {isAddMode ? "Add Product" : "Edit Product"}
+            </Dialog.Title>
+
+            {isDialogOpen && (
+              <AddProducts
+                mode={isAddMode ? "create" : "edit"}
+                initialValues={editingProduct}
+              />
+            )}
           </Dialog.Content>
         </Dialog.Root>
       </Flex>
@@ -109,6 +144,14 @@ export default function ProductsModule() {
             stock={product.stock}
             category={product.category}
             image={product.image}
+            onEdit={() =>
+              navigate(`/dashboard/products/${product.id}/edit-product`)
+              
+            }
+            onDelete={() => {
+                console.log("Delete product:", product.id);
+      
+            }}
           />
         ))}
       </Flex>

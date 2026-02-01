@@ -3,6 +3,7 @@ import Searchbar from "../../components/dynamicComponents/Searchbar";
 import { Button, Dialog, Flex, Badge, DropdownMenu } from "@radix-ui/themes";
 import { ChevronDown, UserPlus, X, MoreVertical } from "lucide-react";
 // import Form from "../../components/dynamicComponents/DynamicForm";
+// import Form from "../../components/dynamicComponents/Form";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
 
@@ -146,7 +147,7 @@ const columns: Column<SaleTransaction>[] = [
     accessor: "amount",
     render: (value) => <span style={{ fontWeight: "bold" }}>₹{value}</span>,
     width: "12%",
-    align: "right",
+    align: "left",
   },
   {
     key: "payment",
