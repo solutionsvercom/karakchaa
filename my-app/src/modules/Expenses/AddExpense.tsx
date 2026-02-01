@@ -59,7 +59,7 @@ const AddExpense = () => {
       label: "Date",
       required: true,
       placeholder: "Select date",
-      type: "text", // can be date picker later
+      type: "date", // can be date picker later
     },
 
     {
