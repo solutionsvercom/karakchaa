@@ -6,6 +6,12 @@ import {
 } from "@radix-ui/themes";
 import { FormField } from "./types";
 import "react-day-picker/dist/style.css";
+import * as Popover from "@radix-ui/react-popover";
+import { DayPicker } from "react-day-picker";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import "react-day-picker/dist/style.css";
+
 
 type Props<T extends string> = {
   field: FormField<T>;
@@ -39,68 +45,36 @@ const FieldRenderer = <T extends string>({
 
   case "number":
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        border: "1px solid #e5e7eb",   // 👈 light border (same as inputs)
-        borderRadius: 10,
-        height: 35,
-        overflow: "hidden",
-        
+    <input
+      type="number"
+      value={value === 0 ? "" : value}
+      placeholder="0"
+      onChange={(e) => {
+        const val = e.target.value;
+
+        // empty → treat as 0
+        if (val === "") {
+          onChange(0);
+        } else {
+          onChange(Number(val));
+        }
       }}
-    >
-      {/* Minus */}
-      <button
-        type="button"
-        onClick={() => onChange(Math.max((value ?? 0) - 1, 0))}
-        style={{
-          width: 32,
-          height: "100%",
-          border: "none",
-          background: "transparent",
-          color: "#6b7280",            // 👈 soft gray
-          cursor: "pointer",
-          fontSize: 16,
-        }}
-      >
-        −
-      </button>
-
-      {/* Value */}
-      <input
-        id={id}
-        type="number"
-        value={value ?? 0}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{
-          width: 44,
-          border: "none",
-          outline: "none",
-          textAlign: "center",
-          fontSize: 14,
-          color: "#6b7280",            // 👈 normal text
-          background: "transparent",
-        }}
-      />
-
-      {/* Plus */}
-      <button
-        type="button"
-        onClick={() => onChange((value ?? 0) + 1)}
-        style={{
-          width: 32,
-          height: "100%",
-          border: "none",
-          background: "transparent",
-          color: "#6b7280",            // 👈 soft gray
-          cursor: "pointer",
-          fontSize: 16,
-        }}
-      >
-        +
-      </button>
-    </div>
+      onBlur={() => {
+        // when user leaves field empty, reset to 0
+        if (value === "" || value === null) {
+          onChange(0);
+        }
+      }}
+      style={{
+        width: "100%",
+        height: 40,
+        border: "1px solid #e5e7eb",
+        borderRadius: 10,
+        padding: "0 12px",
+        fontSize: 14,
+        outline: "none",
+      }}
+    />
   );
 
 
@@ -177,33 +151,93 @@ case "switch":
   );
   case "date":
   return (
-    <TextField.Root
-      id={id}
-      placeholder="dd/mm/yyyy"
-      value={value ?? ""}
-      size="2"
-      radius="large"
-      variant="surface"
-      inputMode="numeric"
-      maxLength={10}
-      onChange={(e) => {
-        let v = e.target.value;
+    <Popover.Root>
+      <Popover.Trigger asChild>
+        <button
+          type="button"
+          style={{
+            width: "100%",
+            height: 40,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 12px",
+            border: "1px solid #e5e7eb",
+            borderRadius: 10,
+            background: "#fff",
+            cursor: "pointer",
+          }}
+        >
+          <span
+            style={{
+              fontSize: 14,
+              color: value ? "#111827" : "#9ca3af",
+            }}
+          >
+            {value ? format(value, "dd-MMM-yyyy") : "Select date"}
+          </span>
 
-        // remove invalid chars
-        v = v.replace(/[^\d/]/g, "");
+          <CalendarIcon size={16} color="#6b7280" />
+        </button>
+      </Popover.Trigger>
 
-        // handle auto-slash only when typing forward
-        if (
-          v.length === 2 && value?.length === 1 ||
-          v.length === 5 && value?.length === 4
-        ) {
-          v += "/";
-        }
+      <Popover.Content
+        side="bottom"
+        align="start"
+        sideOffset={6}
+        style={{
+          background: "#fff",
+          borderRadius: 12,
+          padding: 12,
+          boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+        }}
+      >
+        <DayPicker
+          mode="single"
+          selected={value}
+          onSelect={onChange}
+          
+        />
 
-        onChange(v);
-      }}
-    />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginTop: 8,
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => onChange(undefined)}
+            style={{
+              fontSize: 12,
+              color: "#2563eb",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Clear
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onChange(new Date())}
+            style={{
+              fontSize: 12,
+              color: "#2563eb",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Today
+          </button>
+        </div>
+      </Popover.Content>
+    </Popover.Root>
   );
+
 
 
 

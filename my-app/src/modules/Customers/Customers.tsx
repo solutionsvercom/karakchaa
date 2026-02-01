@@ -13,6 +13,7 @@ import {
   DropdownMenu,
   Button,
   Dialog,
+  IconButton,
 } from "@radix-ui/themes";
 
 import {
@@ -20,7 +21,7 @@ import {
   EnvelopeClosedIcon,
   MobileIcon,
 } from "@radix-ui/react-icons";
-import { Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 
 /* ---------- CUSTOMER TYPE ---------- */
 interface Customer {
@@ -162,9 +163,9 @@ export default function Customers() {
       render: (_, row) => (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
-            <Button variant="soft" radius="full">
-              <DotsVerticalIcon />
-            </Button>
+            <IconButton variant="soft" radius="full">
+              <MoreVertical size={16} />
+            </IconButton>
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Content align="end">
@@ -235,7 +236,7 @@ export default function Customers() {
             style={{ whiteSpace: "nowrap" }}
             onClick={() => navigate("/dashboard/customer/add-customer")}
           >
-            + Add Customer
+            <Plus size={16} /> Add Customer
           </Button>
         </Flex>
       </div>

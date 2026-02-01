@@ -193,16 +193,19 @@ export default function Employees() {
             Employees
           </Text>
 
-          <Button
-            onClick={() =>
-              navigate("/dashboard/employees/add-employee")
-            }
-          >
-            <Plus size={16} /> Add Employee
-          </Button>
+          
         </Flex>
 
         {/* ===== SEARCH ===== */}
+        <div
+        style={{
+          padding: 12,
+          borderRadius: 12,
+          border: "1px solid var(--gray-6)",
+          background: "var(--gray-1)",
+        }}
+      >
+        <Flex align="center" gap="3">
         <Flex style={{ flex: 1, minWidth: 0 }}>
           <Searchbar
             searchValue={search}
@@ -210,6 +213,15 @@ export default function Employees() {
             placeholder="Search employees..."
           />
         </Flex>
+        <Button
+            onClick={() =>
+              navigate("/dashboard/employees/add-employee")
+            }
+          >
+            <Plus size={16} /> Add Employee
+          </Button>
+          </Flex>
+          </div>
 
         {/* ===== TABLE ===== */}
         <Table
