@@ -1,7 +1,8 @@
 import React from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { Search } from "lucide-react";
 
+import Searchbar from "../../components/dynamicComponents/Searchbar";
+import { SummaryCard } from "../../components/dynamicComponents/Cards";
 import AddCustomer from "./AddCustomer";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 
@@ -31,7 +32,7 @@ interface Customer {
   loyaltyPoints: number;
 }
 
-/* ---------- STATIC DATA (TEMP) ---------- */
+/* ---------- STATIC DATA ---------- */
 const customers: Customer[] = [
   {
     id: 1,
@@ -86,17 +87,22 @@ export default function Customers() {
   const location = useLocation();
   const { id } = useParams();
 
-  /* ---------- URL MODE DETECTION ---------- */
+  const [searchValue, setSearchValue] = React.useState("");
+
   const isAddMode = location.pathname.endsWith("/add-customer");
   const isEditMode = location.pathname.endsWith("/edit-customer");
   const isDialogOpen = isAddMode || isEditMode;
 
-  /* ---------- EDIT CUSTOMER DATA ---------- */
   const customerToEdit = customers.find(
     (c) => c.id === Number(id)
   );
 
-  /* ---------- TABLE COLUMNS ---------- */
+  const filteredCustomers = customers.filter((customer) =>
+    customer.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+    customer.phone.includes(searchValue) ||
+    customer.email.toLowerCase().includes(searchValue.toLowerCase())
+  );
+
   const columns: Column<Customer>[] = [
     {
       key: "customer",
@@ -130,12 +136,10 @@ export default function Customers() {
       key: "purchases",
       header: "Purchases",
       accessor: "purchases",
-      align: "left",
     },
     {
       key: "totalSpent",
       header: "Total Spent",
-      align: "left",
       render: (_, row) => (
         <Text weight="medium" color="green">
           ₹{row.totalSpent.toLocaleString()}
@@ -145,7 +149,6 @@ export default function Customers() {
     {
       key: "loyaltyPoints",
       header: "Loyalty Points",
-      align: "left",
       render: (_, row) => (
         <Text weight="medium" color="orange">
           {row.loyaltyPoints}
@@ -155,7 +158,6 @@ export default function Customers() {
     {
       key: "actions",
       header: "Actions",
-      align: "left",
       render: (_, row) => (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
@@ -172,10 +174,7 @@ export default function Customers() {
             >
               Edit
             </DropdownMenu.Item>
-
-            <DropdownMenu.Item color="red">
-              Delete
-            </DropdownMenu.Item>
+            <DropdownMenu.Item color="red">Delete</DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
       ),
@@ -185,90 +184,56 @@ export default function Customers() {
   return (
     <Flex direction="column" gap="5" width="100%">
       {/* ---------- STATS ---------- */}
-      <Flex gap="4">
-        <Flex
-          direction="column"
-          justify="center"
-          style={{
-            flex: 1,
-            backgroundColor: "var(--accent-9)",
-            color: "var(--accent-contrast)",
-            padding: "20px",
-            borderRadius: 12,
-          }}
-        >
-          <Text size="2">Total Customers</Text>
-          <Text size="6" weight="bold">
-            {customers.length}
-          </Text>
-        </Flex>
-        <Flex
-          direction="column"
-          justify="center"
-          style={{
-            flex: 1,
-            backgroundColor: "var(--accent-9)",
-            color: "var(--accent-contrast)",
-            padding: "20px",
-            borderRadius: 12,
-          }}
-        >
-          <Text size="2">Total Customers</Text>
-          <Text size="6" weight="bold">
-            {customers.length}
-          </Text>
-        </Flex>
-        <Flex
-          direction="column"
-          justify="center"
-          style={{
-            flex: 1,
-            backgroundColor: "var(--accent-9)",
-            color: "var(--accent-contrast)",
-            padding: "20px",
-            borderRadius: 12,
-          }}
-        >
-          <Text size="2">Total Customers</Text>
-          <Text size="6" weight="bold">
-            {customers.length}
-          </Text>
-        </Flex>
-      </Flex>
-      
+      <section className="kb-summary-row">
+        <SummaryCard
+          title="Total Customers"
+          value={String(customers.length)}
+          accentColor="#2962FF"
+          softColor="#E3F2FD"
+          icon="👥"
+        />
+        <SummaryCard
+          title="Total Purchases"
+          value={String(customers.reduce((s, c) => s + c.purchases, 0))}
+          accentColor="#00C853"
+          softColor="#E5F9EE"
+          icon="🛒"
+        />
+        <SummaryCard
+          title="Total Revenue"
+          value={`₹${customers.reduce((s, c) => s + c.totalSpent, 0).toLocaleString()}`}
+          accentColor="#FF9100"
+          softColor="#FFF3E0"
+          icon="₹"
+        />
+      </section>
 
-      {/* ---------- TOOLBAR ---------- */}
-      <Flex justify="between" align="center">
-        {/* Search */}
-        <Flex
-          align="center"
-          gap="2"
-          style={{
-            border: "1px solid var(--gray-7)",
-            borderRadius: 8,
-            padding: "6px 10px",
-            width: 300,
-            background: "var(--gray-1)",
-          }}
-        >
-          <Search size={16} />
-          <input
-            placeholder="Search customers..."
-            style={{
-              border: "none",
-              outline: "none",
-              width: "100%",
-              fontSize: 14,
-              background: "transparent",
-            }}
-          />
-        </Flex>
+      {/* ---------- TOOLBAR (FIXED) ---------- */}
+      <div
+        style={{
+          padding: 12,
+          borderRadius: 12,
+          border: "1px solid var(--gray-6)",
+          background: "var(--gray-1)",
+        }}
+      >
+        <Flex align="center" gap="3">
+          <Flex style={{ flex: 1, minWidth: 0 }}>
+            <Searchbar
+              searchValue={searchValue}
+              onSearchChange={setSearchValue}
+              placeholder="Search by name, phone or email..."
+            />
+          </Flex>
 
-        {/* Add Customer */}
-        <Button onClick={() => navigate("/dashboard/customer/add-customer")}>
-          + Add Customer
-        </Button>
-      </Flex>
+          <Button
+            style={{ whiteSpace: "nowrap" }}
+            onClick={() => navigate("/dashboard/customer/add-customer")}
+          >
+            + Add Customer
+          </Button>
+        </Flex>
+      </div>
 
       {/* ---------- DIALOG ---------- */}
       <Dialog.Root
@@ -287,7 +252,7 @@ export default function Customers() {
 
       {/* ---------- TABLE ---------- */}
       <Table
-        data={customers}
+        data={filteredCustomers}
         columns={columns}
         striped
         hoverable

@@ -29,7 +29,7 @@ export default function Searchbar({
 
   return (
     <Flex align="center" gap="3" style={{ width: "100%" }}>
-      {/* Search input (Radix-styled native input) */}
+      {/* Search input */}
       <Flex
         align="center"
         gap="2"
@@ -44,22 +44,24 @@ export default function Searchbar({
       >
         <Search size={16} />
 
-        <input
-          value={searchValue}
-          placeholder={placeholder}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-            onSearchChange(e.target.value)
-          }
-          style={{
-            border: "none",
-            outline: "none",
-            background: "transparent",
-            width: "100%",
-            minWidth: 0,
-            fontSize: 14,
-            color: "var(--gray-12)",
-          }}
-        />
+            <input
+  value={searchValue}
+  placeholder={placeholder}
+  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+    onSearchChange(e.target.value)
+  }
+  style={{
+    border: "none",
+    outline: "none",
+    background: "transparent",
+    flex: 1,
+    minWidth: 0,
+    height: "100%",      // ✅ FIX
+    fontSize: 14,
+    color: "var(--gray-12)",
+  }}
+/>
+
       </Flex>
 
       {/* Category dropdown */}
