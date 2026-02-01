@@ -343,9 +343,7 @@
     grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
     gap: 16px;
     margin-bottom: 24px;
-
     align-items: stretch;
-
 }
 
 .kb-summary-card {
@@ -356,7 +354,6 @@
     align-items: center;
     justify-content: space-between;
     box-shadow: 0 12px 24px rgba(15, 23, 42, 0.04);
-
     height: 100%;
 }
 
@@ -527,6 +524,7 @@
     background-color: var(--accent-9);
     color: var(--accent-contrast);
     border: none;
+    cursor: pointer;
 }
 
 .rt-Button:hover {
@@ -545,6 +543,7 @@
     background-color: transparent !important;
     color: var(--red-9);
     border: 1px solid var(--red-7);
+    cursor: pointer;
 }
 
 .rt-Button.outline:hover,
@@ -553,14 +552,17 @@
 }
 
 .dialog-close-icon {
-    all: unset;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    color: var(--gray-11);
     cursor: pointer;
-    color: black;
-    line-height: 0;
+    padding: 4px;
 }
 
 .dialog-close-icon:hover {
-    color: var(--accent-5);
+    background: transparent;
+    color: var(--gray-12);
 }
 
 

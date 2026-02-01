@@ -201,9 +201,7 @@ export default function Stockmanagement() {
         }}
       >
         <Dialog.Content maxWidth="420px">
-          <Dialog.Title>
-            {isAddStock ? "Add Stock" : "Remove Stock"}
-          </Dialog.Title>
+          
 
           {selectedProduct && (
             <AddStock

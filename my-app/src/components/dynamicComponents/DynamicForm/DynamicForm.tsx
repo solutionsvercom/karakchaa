@@ -62,11 +62,15 @@ useEffect(() => {
       {title}
     </Text>
 
-    <Dialog.Close asChild>
-      <Button className="dialog-close-icon">
-        <X size={18} />
-      </Button>
-    </Dialog.Close>
+   <Dialog.Close asChild>
+  <Button
+    variant="ghost"
+    className="dialog-close-icon"
+  >
+    <X size={18} />
+  </Button>
+</Dialog.Close>
+
   </Flex>
 )}
 

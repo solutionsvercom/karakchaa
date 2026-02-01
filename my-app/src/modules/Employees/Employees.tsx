@@ -10,7 +10,7 @@ import {
   Badge,
 } from "@radix-ui/themes";
 import { Plus, MoreVertical, Pencil, Trash2 } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import Table, { Column } from "../../components/dynamicComponents/Table";
@@ -85,11 +85,17 @@ const roleColorMap: Record<Role, "yellow" | "green" | "orange" | "cyan"> = {
 export default function Employees() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { id } = useParams();
+
 
   const [search, setSearch] = React.useState("");
 
   const isAddEmployee = location.pathname.endsWith("/add-employee");
   const isEditEmployee = location.pathname.includes("/edit-employee/");
+  const isDialogOpen = isAddEmployee || isEditEmployee;
+  const employeeToEdit = employeesData.find(
+    (c) => c.id === Number(id)
+  );
 
   /* ================= TABLE COLUMNS ================= */
 
@@ -138,10 +144,10 @@ export default function Employees() {
     {
       key: "actions",
       header: "Actions",
-      render: (row) => (
+      render: (_,row) => (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
-            <IconButton variant="ghost">
+            <IconButton variant="soft" radius="full">
               <MoreVertical size={16} />
             </IconButton>
           </DropdownMenu.Trigger>
@@ -172,7 +178,8 @@ export default function Employees() {
   /* ================= FILTER ================= */
 
   const filteredEmployees = employeesData.filter((emp) =>
-    emp.name.toLowerCase().includes(search.toLowerCase())
+    emp.name.toLowerCase().includes(search.toLowerCase()) ||
+    emp.phone.includes(search)
   );
 
   /* ================= UI ================= */
@@ -196,13 +203,13 @@ export default function Employees() {
         </Flex>
 
         {/* ===== SEARCH ===== */}
-        <div style={{ maxWidth: 420 }}>
+        <Flex style={{ flex: 1, minWidth: 0 }}>
           <Searchbar
             searchValue={search}
             onSearchChange={setSearch}
             placeholder="Search employees..."
           />
-        </div>
+        </Flex>
 
         {/* ===== TABLE ===== */}
         <Table
@@ -215,13 +222,16 @@ export default function Employees() {
 
       {/* ===== ADD / EDIT EMPLOYEE DIALOG ===== */}
       <Dialog.Root
-        open={isAddEmployee || isEditEmployee}
+        open={isDialogOpen}
         onOpenChange={(open) => {
           if (!open) navigate("/dashboard/employees");
         }}
       >
         <Dialog.Content maxWidth="480px">
-          <AddEmployee />
+          <AddEmployee
+            mode={isEditEmployee ? "edit" : "create"}
+            initialValues={isEditEmployee ? employeeToEdit : undefined}
+          />
         </Dialog.Content>
       </Dialog.Root>
     </>

@@ -20,6 +20,7 @@ import {
   EnvelopeClosedIcon,
   MobileIcon,
 } from "@radix-ui/react-icons";
+import { Pencil, Trash2 } from "lucide-react";
 
 /* ---------- CUSTOMER TYPE ---------- */
 interface Customer {
@@ -172,9 +173,13 @@ export default function Customers() {
                 navigate(`/dashboard/customer/${row.id}/edit-customer`)
               }
             >
-              Edit
+             <Pencil size={14} /> Edit
             </DropdownMenu.Item>
-            <DropdownMenu.Item color="red">Delete</DropdownMenu.Item>
+            <DropdownMenu.Item
+                          color="red"
+                          onClick={() => console.log("Delete customer:", row.id)}
+                        >
+                          <Trash2 size={14} /> Delete</DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
       ),
