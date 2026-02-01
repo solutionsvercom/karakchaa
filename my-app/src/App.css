@@ -340,9 +340,12 @@
 
 .kb-summary-row {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
     gap: 16px;
     margin-bottom: 24px;
+
+    align-items: stretch;
+
 }
 
 .kb-summary-card {
@@ -353,6 +356,8 @@
     align-items: center;
     justify-content: space-between;
     box-shadow: 0 12px 24px rgba(15, 23, 42, 0.04);
+
+    height: 100%;
 }
 
 .kb-summary-card-title {

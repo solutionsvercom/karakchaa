@@ -12,7 +12,7 @@ type SupplierField =
   | "productsSupplied"
   | "active";
 
-const AddSupplier = () => {
+const AddSupplier = ({ onClose }: { onClose: () => void }) => {
   const fields: FormField<SupplierField>[] = [
     {
       name: "companyName",
@@ -22,28 +22,27 @@ const AddSupplier = () => {
       span: 2,
       placeholder: "Enter company name",
     },
-
-    { name: "contactPerson",
-       label: "Contact Person", 
-       type: "text",
-       required: true,
-       placeholder: "contact person name"
-      },
-
-    { name: "phone", 
-      label: "Phone", 
+    {
+      name: "contactPerson",
+      label: "Contact Person",
       type: "text",
       required: true,
-      placeholder: "Enter phone number"
-     },
-
-    { name: "email", 
-      label: "Email", 
+      placeholder: "Contact person name",
+    },
+    {
+      name: "phone",
+      label: "Phone",
+      type: "text",
+      required: true,
+      placeholder: "Enter phone number",
+    },
+    {
+      name: "email",
+      label: "Email",
       type: "email",
       span: 2,
-       placeholder: "Enter email address"
-     },
-
+      placeholder: "Enter email address",
+    },
     {
       name: "address",
       label: "Address",
@@ -53,29 +52,28 @@ const AddSupplier = () => {
       rows: 2,
       placeholder: "Enter supplier address",
     },
-
-    { name: "gst", 
+    {
+      name: "gst",
       label: "GST Number",
+      type: "text",
       required: true,
-       type: "text",
-        placeholder: "Enter GST number" },
+      placeholder: "Enter GST number",
+    },
     {
       name: "paymentTerms",
       label: "Payment Terms",
-      required: true,
       type: "text",
-      placeholder: "e.g. Net 30 days"
+      required: true,
+      placeholder: "e.g. Net 30 days",
     },
-
     {
       name: "productsSupplied",
       label: "Products Supplied",
-      required: true,
       type: "textarea",
+      required: true,
       span: 2,
-      placeholder: "Enter products supplied"
+      placeholder: "Enter products supplied",
     },
-
     {
       name: "active",
       label: "Active Supplier",
@@ -86,25 +84,22 @@ const AddSupplier = () => {
 
   return (
     <DynamicForm
-    title="Add Supplier"
-    fields={fields}
-    submitText="Create"
-    cancelText="Cancel"
-    onCancel={() => {
-      // close dialog if this form is inside Dialog
-      // or just console.log for now
-      console.log("Cancel clicked");
-    }}
-    confirm={{
-      title: "Are you absolutely sure?",
-      description: "This action cannot be undone.",
-      confirmText: "Yes, Create",
-      cancelText: "No, go back",
-    }}
-    onSubmit={(data) => {
-      console.log("Product:", data);
-    }}
-  />
+      title="Add Supplier"
+      fields={fields}
+      submitText="Create"
+      cancelText="Cancel"
+      onCancel={onClose}
+      confirm={{
+        title: "Are you absolutely sure?",
+        description: "This action cannot be undone.",
+        confirmText: "Yes, Create",
+        cancelText: "No, go back",
+      }}
+      onSubmit={(data) => {
+        console.log("Supplier:", data);
+        onClose();
+      }}
+    />
   );
 };
 
