@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Text } from "@radix-ui/themes";
 import FieldRenderer from "./FieldRenderer";
 import { FormField } from "./types";
@@ -16,7 +16,7 @@ type Props<T extends string> = {
   submitText?: string;
   cancelText?: string;
   onCancel?: () => void;
-
+  initialValues?: Partial<Record<T, any>>;
   confirm?: {
     title: string;
     description: string;
@@ -33,9 +33,17 @@ fields,
   cancelText,
   onCancel,
   confirm,
+  initialValues,
 }: Props<T>) => {
-  const [values, setValues] = useState<Record<T, any>>({} as Record<T, any>);
-
+  // const [values, setValues] = useState<Record<T, any>>({} as Record<T, any>);
+  const [values, setValues] = useState<Record<T, any>>(
+  (initialValues ?? {}) as Record<T, any>
+);
+useEffect(() => {
+  if (initialValues) {
+    setValues(initialValues as Record<T, any>);
+  }
+}, [initialValues]);
   const setValue = (name: T, value: any) => {
     setValues((prev) => ({ ...prev, [name]: value }));
   };

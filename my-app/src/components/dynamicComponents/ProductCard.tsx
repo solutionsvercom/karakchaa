@@ -7,25 +7,24 @@ import {
   Box,
 } from "@radix-ui/themes";
 import { DropdownMenu } from "@radix-ui/themes";
-import { Button } from "@radix-ui/themes";
 import { DotsVerticalIcon, CubeIcon } from "@radix-ui/react-icons";
-import * as Dialog from "@radix-ui/react-dialog";
-import { useState } from "react";
-import AddProducts from "../../modules/Products/AddProduct";
-
-
 
 /* ---------------- TYPES ---------------- */
 
 type Category = "snacks" | "desserts" | "beverages" | "meals" | "other";
 
-type ProductCardProps = {
+export type ProductCardProps = {
   name: string;
   sku: string;
   price: number;
   stock: number;
   category: Category;
   image?: string;
+
+  // ✅ CALLBACK ONLY (NO LOGIC)
+  onEdit?: () => void;
+  onDelete?: () => void;
+  
 };
 
 /* -------- CATEGORY → COLOR MAP -------- */
@@ -55,8 +54,9 @@ export default function ProductCard({
   stock,
   category,
   image,
+  onEdit,
+  onDelete,
 }: ProductCardProps) {
-  const [editOpen, setEditOpen] = useState(false);
   const safeCategory: Category =
     category && categoryColorMap[category] ? category : "other";
 
@@ -77,68 +77,40 @@ export default function ProductCard({
       }}
     >
       {/* MENU */}
-     <DropdownMenu.Root>
-  <DropdownMenu.Trigger>
-    <IconButton
-      variant="soft"
-      radius="full"
-      style={{
-        position: "absolute",
-        top: 10,
-        right: 10,
-        zIndex: 10,
-        background: "white",
-      }}
-    >
-      <DotsVerticalIcon />
-    </IconButton>
-  </DropdownMenu.Trigger>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger>
+          <IconButton
+            variant="soft"
+            radius="full"
+            style={{
+              position: "absolute",
+              top: 10,
+              right: 10,
+              zIndex: 10,
+              background: "white",
+            }}
+          >
+            <DotsVerticalIcon />
+          </IconButton>
+        </DropdownMenu.Trigger>
 
-  <DropdownMenu.Content align="end">
-   <DropdownMenu.Item
-  onSelect={(e) => {
-    e.preventDefault();  
-    setEditOpen(true);
-  }}
->
-  Edit
-</DropdownMenu.Item>
+        <DropdownMenu.Content align="end">
+          {onEdit && (
+            <DropdownMenu.Item onSelect={onEdit}>
+              Edit
+            </DropdownMenu.Item>
+          )}
 
-    <DropdownMenu.Item color="red">
-      Delete
-    </DropdownMenu.Item>
-  </DropdownMenu.Content>
-</DropdownMenu.Root>
-
-<Dialog.Root open={editOpen} onOpenChange={setEditOpen}>
-  <Dialog.Portal>
-    <Dialog.Overlay
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.4)",
-      }}
-    />
-
-   <Dialog.Content
-  style={{
-    maxWidth: 380,
-    width: "100%",
-    padding: 20,
-  }}
->
-  <AddProducts />
-</Dialog.Content>
-
-  </Dialog.Portal>
-</Dialog.Root>
-
-
-
+          {onDelete && (
+            <DropdownMenu.Item color="red" onSelect={onDelete}>
+              Delete
+            </DropdownMenu.Item>
+          )}
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>
 
       {/* IMAGE */}
       <Box
-        className="product-card-image"
         style={{
           height: 170,
           background: "linear-gradient(180deg, #f8fafc, #f1f5f9)",
@@ -158,18 +130,12 @@ export default function ProductCard({
             }}
           />
         ) : (
-          <CubeIcon
-            className="product-card-icon"
-            width={54}
-            height={54}
-            color="#cbd5e1"
-          />
+          <CubeIcon width={54} height={54} color="#cbd5e1" />
         )}
       </Box>
 
       {/* CONTENT */}
       <Flex direction="column" gap="3" p="3">
-        {/* NAME + PRICE */}
         <Flex justify="between" align="start">
           <Flex direction="column" gap="1">
             <Text weight="medium" size="3">
@@ -185,7 +151,6 @@ export default function ProductCard({
           </Text>
         </Flex>
 
-        {/* CATEGORY + STOCK */}
         <Flex justify="between" align="center">
           <Badge
             radius="full"

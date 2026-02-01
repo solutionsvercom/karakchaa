@@ -147,7 +147,7 @@ const columns: Column<SaleTransaction>[] = [
     accessor: "amount",
     render: (value) => <span style={{ fontWeight: "bold" }}>₹{value}</span>,
     width: "12%",
-    align: "right",
+    align: "left",
   },
   {
     key: "payment",
@@ -247,7 +247,7 @@ export default function Sales() {
           background: "var(--gray-1)",
         }}
       >
-        <Flex align="center" gap="3" wrap="wrap">
+        <Flex align="center" gap="3">
           <Searchbar
             searchValue={searchValue}
             onSearchChange={setSearchValue}
