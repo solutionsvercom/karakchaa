@@ -2,10 +2,9 @@ import React from "react";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import { Button, Dialog, Flex, Badge, DropdownMenu } from "@radix-ui/themes";
 import { ChevronDown, UserPlus, X, MoreVertical } from "lucide-react";
-// import Form from "../../components/dynamicComponents/DynamicForm";
-// import Form from "../../components/dynamicComponents/Form";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
+import { SummaryCard } from "../../components/dynamicComponents/Cards";
 
 /* ================= TYPES ================= */
 
@@ -23,16 +22,6 @@ type SaleTransaction = {
   dateTime: string;
 };
 
-/* ================= FORM FIELDS ================= */
-
-const SalesFields: FormField[] = [
-  { name: "customerName", label: "Customer Name", type: "text", placeholder: "Enter customer name", required: true },
-  { name: "invoice", label: "Invoice Number", type: "text", placeholder: "Auto-generated", required: false },
-  { name: "items", label: "Number of Items", type: "text", placeholder: "Enter number of items", required: true },
-  { name: "amount", label: "Total Amount", type: "text", placeholder: "Enter total amount", required: true },
-  { name: "description", label: "Description", type: "textarea", placeholder: "Add sale notes..." },
-];
-
 /* ================= MOCK DATA ================= */
 
 const mockSalesData: SaleTransaction[] = [
@@ -43,7 +32,7 @@ const mockSalesData: SaleTransaction[] = [
   { id: 5, invoice: "INV-005", customer: "Vikram Roy", items: "4 items", type: "card", amount: 580, payment: "cancelled", dateTime: "30 Jan, 1:20 PM" },
 ];
 
-/* ================= HELPER FUNCTIONS ================= */
+/* ================= HELPERS ================= */
 
 const getPaymentColor = (status: PaymentStatus): "green" | "yellow" | "red" => {
   switch (status) {
@@ -53,87 +42,27 @@ const getPaymentColor = (status: PaymentStatus): "green" | "yellow" | "red" => {
       return "yellow";
     case "cancelled":
       return "red";
-    default:
-      return "red";
   }
 };
 
-const getPaymentLabel = (status: PaymentStatus) => {
-  return status.charAt(0).toUpperCase() + status.slice(1);
-};
+const getPaymentLabel = (status: PaymentStatus) =>
+  status.charAt(0).toUpperCase() + status.slice(1);
 
 const calculateTotals = (data: SaleTransaction[]) => {
   const totalRevenue = data.reduce((sum, sale) => sum + sale.amount, 0);
   const totalOrders = data.length;
-  const averageOrder = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+  const averageOrder =
+    totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+
   return { totalRevenue, totalOrders, averageOrder };
-};
-
-/* ================= SUMMARY CARD COMPONENT ================= */
-
-type SummaryCardProps = {
-  title: string;
-  value: string;
-  subtitle?: string;
-  accentColor: string;
-  softColor: string;
-  icon: string;
-};
-
-const SummaryCard: React.FC<SummaryCardProps> = ({
-  title,
-  value,
-  subtitle,
-  accentColor,
-  softColor,
-  icon,
-}) => {
-  return (
-    <div className="kb-summary-card">
-      <div>
-        <div className="kb-summary-card-title">{title}</div>
-        <div className="kb-summary-card-value">{value}</div>
-        {subtitle && (
-          <div className="kb-summary-card-subtitle">{subtitle}</div>
-        )}
-      </div>
-
-      <div
-        className="kb-summary-card-icon-wrapper"
-        style={{ backgroundColor: softColor }}
-      >
-        <div
-          className="kb-summary-card-icon-circle"
-          style={{ backgroundColor: accentColor }}
-        >
-          <span className="kb-summary-card-icon">{icon}</span>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 /* ================= TABLE COLUMNS ================= */
 
 const columns: Column<SaleTransaction>[] = [
-  {
-    key: "invoice",
-    header: "Invoice",
-    accessor: "invoice",
-    width: "12%",
-  },
-  {
-    key: "customer",
-    header: "Customer",
-    accessor: "customer",
-    width: "18%",
-  },
-  {
-    key: "items",
-    header: "Items",
-    accessor: "items",
-    width: "12%",
-  },
+  { key: "invoice", header: "Invoice", accessor: "invoice", width: "12%" },
+  { key: "customer", header: "Customer", accessor: "customer", width: "18%" },
+  { key: "items", header: "Items", accessor: "items", width: "12%" },
   {
     key: "type",
     header: "Type",
@@ -145,9 +74,8 @@ const columns: Column<SaleTransaction>[] = [
     key: "amount",
     header: "Amount",
     accessor: "amount",
-    render: (value) => <span style={{ fontWeight: "bold" }}>₹{value}</span>,
+    render: (value) => <strong>₹{value}</strong>,
     width: "12%",
-    align: "left",
   },
   {
     key: "payment",
@@ -160,12 +88,7 @@ const columns: Column<SaleTransaction>[] = [
     ),
     width: "14%",
   },
-  {
-    key: "dateTime",
-    header: "Date & Time",
-    accessor: "dateTime",
-    width: "16%",
-  },
+  { key: "dateTime", header: "Date & Time", accessor: "dateTime", width: "16%" },
   {
     key: "actions",
     header: "Actions",
@@ -188,7 +111,7 @@ const columns: Column<SaleTransaction>[] = [
   },
 ];
 
-/* ================= MAIN COMPONENT ================= */
+/* ================= MAIN ================= */
 
 export default function Sales() {
   const [searchValue, setSearchValue] = React.useState("");
@@ -200,17 +123,20 @@ export default function Sales() {
     const matchesSearch =
       sale.invoice.toLowerCase().includes(searchValue.toLowerCase()) ||
       sale.customer.toLowerCase().includes(searchValue.toLowerCase());
+
     const matchesPayment =
       paymentFilter === "All Payments" ||
       sale.type === paymentFilter.toLowerCase();
+
     return matchesSearch && matchesPayment;
   });
 
-  const { totalRevenue, totalOrders, averageOrder } = calculateTotals(filteredSales);
+  const { totalRevenue, totalOrders, averageOrder } =
+    calculateTotals(filteredSales);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* SUMMARY CARDS with Dynamic Data */}
+      {/* SUMMARY */}
       <section className="kb-summary-row">
         <SummaryCard
           title="Total Revenue"
@@ -220,7 +146,6 @@ export default function Sales() {
           softColor="#E5F9EE"
           icon="₹"
         />
-
         <SummaryCard
           title="Total Orders"
           value={String(totalOrders)}
@@ -228,7 +153,6 @@ export default function Sales() {
           softColor="#E3F2FD"
           icon="📦"
         />
-
         <SummaryCard
           title="Average Order"
           value={`₹${averageOrder}`}
@@ -248,12 +172,15 @@ export default function Sales() {
         }}
       >
         <Flex align="center" gap="3">
-          <Searchbar
-            searchValue={searchValue}
-            onSearchChange={setSearchValue}
-            placeholder="Search by invoice or customer..."
-          />
+          <Flex style={{ flex: 1, minWidth: 0 }}>
+            <Searchbar
+              searchValue={searchValue}
+              onSearchChange={setSearchValue}
+              placeholder="Search by invoice or customer..."
+            />
+          </Flex>
 
+          {/* DATE FILTER */}
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               <Button variant="soft">
@@ -273,6 +200,7 @@ export default function Sales() {
             </DropdownMenu.Content>
           </DropdownMenu.Root>
 
+          {/* PAYMENT FILTER */}
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               <Button variant="soft">
@@ -291,59 +219,17 @@ export default function Sales() {
               ))}
             </DropdownMenu.Content>
           </DropdownMenu.Root>
-
-          <Dialog.Root>
-            <Dialog.Trigger>
-              <Button>+ Add Sale</Button>
-            </Dialog.Trigger>
-
-            <Dialog.Content maxWidth="420px">
-              <Flex justify="between" align="center" mb="4">
-                <Flex align="center" gap="2">
-                  <UserPlus size={18} />
-                  <Dialog.Title style={{ fontSize: 18, fontWeight: 500 }}>
-                    Add New Sale
-                  </Dialog.Title>
-                </Flex>
-
-                <Dialog.Close>
-                  <Button className="dialog-close-icon">
-                    <X size={18} />
-                  </Button>
-                </Dialog.Close>
-              </Flex>
-
-              {/* <Form fields={SalesFields} /> */}
-
-              <Flex mt="4" gap="3">
-                <Dialog.Close>
-                  <Button className="button outline" style={{ flex: 1 }}>
-                    Cancel
-                  </Button>
-                </Dialog.Close>
-
-                <Dialog.Close>
-                  <Button style={{ flex: 1 }} onClick={() => console.log("Sale created")}>
-                    Create Sale
-                  </Button>
-                </Dialog.Close>
-              </Flex>
-            </Dialog.Content>
-          </Dialog.Root>
         </Flex>
       </div>
 
-      {/* SALES TABLE */}
-      <div style={{ marginTop: 12 }}>
-        <h2 style={{ marginBottom: 16 }}>Sales Transactions</h2>
-        <Table<SaleTransaction>
-          data={filteredSales}
-          columns={columns}
-          emptyMessage="No sales found"
-          hoverable
-          striped
-        />
-      </div>
+      {/* TABLE */}
+      <Table<SaleTransaction>
+        data={filteredSales}
+        columns={columns}
+        emptyMessage="No sales found"
+        hoverable
+        striped
+      />
     </div>
   );
 }

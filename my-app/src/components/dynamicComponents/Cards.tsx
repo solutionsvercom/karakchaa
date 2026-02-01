@@ -1,6 +1,7 @@
-import React from 'react';
+import React from "react";
 
-type SummaryCardProps = {
+/* ---------- TYPES ---------- */
+export type SummaryCardProps = {
   title: string;
   value: string;
   subtitle?: string;
@@ -9,7 +10,8 @@ type SummaryCardProps = {
   icon: string;
 };
 
-const SummaryCard: React.FC<SummaryCardProps> = ({
+/* ---------- REUSABLE SUMMARY CARD ---------- */
+export const SummaryCard: React.FC<SummaryCardProps> = ({
   title,
   value,
   subtitle,
@@ -22,7 +24,9 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
       <div>
         <div className="kb-summary-card-title">{title}</div>
         <div className="kb-summary-card-value">{value}</div>
-        {subtitle && <div className="kb-summary-card-subtitle">{subtitle}</div>}
+        {subtitle && (
+          <div className="kb-summary-card-subtitle">{subtitle}</div>
+        )}
       </div>
 
       <div
@@ -40,6 +44,7 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
   );
 };
 
+/* ---------- DASHBOARD CARDS GROUP ---------- */
 const DashboardCards: React.FC = () => {
   return (
     <section className="kb-summary-row">
@@ -77,8 +82,6 @@ const DashboardCards: React.FC = () => {
         softColor="#E3F2FD"
         icon="👥"
       />
-    
-
     </section>
   );
 };
