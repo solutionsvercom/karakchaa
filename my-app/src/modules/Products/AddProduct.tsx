@@ -44,6 +44,8 @@ const AddProducts = ({ mode, initialValues }: AddProductsProps) => {
         { label: "Beverages", value: "beverages" },
         { label: "Snacks", value: "snacks" },
         { label: "Meals", value: "meals" },
+        { label: "Desserts", value:"desserts"},
+        { label: "Other", value:"other"}
       ],
     },
     { name: "sellingPrice", label: "Selling Price (₹)", type: "number" },

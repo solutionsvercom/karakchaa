@@ -117,6 +117,8 @@ export default function ProductsModule() {
               { label: "Snacks", value: "snacks" },
               { label: "Desserts", value: "desserts" },
               { label: "Beverages", value: "beverages" },
+              { label: "Desserts", value:"desserts"},
+               { label: "Other", value:"other"}
             ]}
             placeholder="Search products..."
           />
