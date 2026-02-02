@@ -20,19 +20,6 @@ type Props<T extends string> = {
 };
 
 
-const formatDate = (date: Date) => {
-  const d = String(date.getDate()).padStart(2, "0");
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const y = date.getFullYear();
-  return `${d}/${m}/${y}`;
-};
-
-const parseDateString = (value?: string) => {
-  if (!value) return undefined;
-  const [d, m, y] = value.split("/").map(Number);
-  if (!d || !m || !y) return undefined;
-  return new Date(y, m - 1, d);
-};
 
 const FieldRenderer = <T extends string>({
   field,
@@ -67,8 +54,9 @@ const FieldRenderer = <T extends string>({
       }}
       style={{
         width: "100%",
-        height: 40,
+        height: 35,
         border: "1px solid #e5e7eb",
+        background: "transparent",
         borderRadius: 10,
         padding: "0 12px",
         fontSize: 14,
@@ -91,7 +79,7 @@ const FieldRenderer = <T extends string>({
   variant="surface"
   onChange={(e) => onChange(e.target.value)}
   style={{
-    height: 30,         
+    height: 35,         
     fontSize: 13,        
   }}
 />
@@ -121,7 +109,7 @@ const FieldRenderer = <T extends string>({
         id={id}
         placeholder={field.placeholder || "Select"}
         style={{
-          width: "95%",
+          width: "100%",
           height: 35,
           padding: "0 12px",
           borderRadius: 10,
@@ -157,21 +145,21 @@ case "switch":
           type="button"
           style={{
             width: "100%",
-            height: 40,
+            height: 35,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             padding: "0 12px",
             border: "1px solid #e5e7eb",
             borderRadius: 10,
-            background: "#fff",
+            background: "transparent",
             cursor: "pointer",
           }}
         >
           <span
             style={{
               fontSize: 14,
-              color: value ? "#111827" : "#9ca3af",
+              
             }}
           >
             {value ? format(value, "dd-MMM-yyyy") : "Select date"}
@@ -185,25 +173,30 @@ case "switch":
         side="bottom"
         align="start"
         sideOffset={6}
+        avoidCollisions={false}
         style={{
-          background: "#fff",
+          background: "var(--color-panel)", // Radix theme token
           borderRadius: 12,
-          padding: 12,
+          padding: 0,
           boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
         }}
       >
         <DayPicker
-          mode="single"
-          selected={value}
-          onSelect={onChange}
-          
-        />
+  mode="single"
+  selected={value instanceof Date ? value : undefined}
+  onSelect={(date) => {
+    if (!date) return;
+    onChange(date);          // ✅ store selected date
+  }}
+/>
+
+
 
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
-            marginTop: 8,
+            marginTop: 4,
           }}
         >
           <button
