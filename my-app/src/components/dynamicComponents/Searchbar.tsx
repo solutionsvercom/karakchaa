@@ -29,7 +29,7 @@ export default function Searchbar({
 
   return (
     <Flex align="center" gap="3" style={{ width: "100%" }}>
-      {/* SEARCH INPUT */}
+      {/* Search input */}
       <Flex
         align="center"
         gap="2"
@@ -44,33 +44,27 @@ export default function Searchbar({
       >
         <Search size={16} />
 
-        <input
-          type="search"
-          name="search"
-          autoComplete="off"
-          spellCheck={false}
-          value={searchValue}
-          placeholder={placeholder}
-          onChange={(e) => onSearchChange(e.target.value)}
-          style={{
-            border: "none",
-            outline: "none",
-            backgroundColor: "transparent",
-            backgroundImage: "none",     // ✅ KILLS browser icon
-            appearance: "none",          // ✅ KILLS autofill UI
-            WebkitAppearance: "none",    // ✅ Chrome/Safari
-            MozAppearance: "none",       // ✅ Firefox
-            flex: 1,
-            minWidth: 0,
-            width: "100%",
-            fontSize: 14,
-            lineHeight: "20px",
-            color: "var(--gray-12)",
-          }}
-        />
+            <input
+  value={searchValue}
+  placeholder={placeholder}
+  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+    onSearchChange(e.target.value)
+  }
+  style={{
+    border: "none",
+    outline: "none",
+    background: "transparent",
+    flex: 1,
+    minWidth: 0,
+    height: "100%",      // ✅ FIX
+    fontSize: 14,
+    color: "var(--gray-12)",
+  }}
+/>
+
       </Flex>
 
-      {/* OPTIONAL DROPDOWN */}
+      {/* Category dropdown */}
       {options.length > 0 && (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>

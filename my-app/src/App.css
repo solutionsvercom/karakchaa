@@ -331,16 +331,10 @@
 /* Content area */
 
 .kb-content {
-    flex: 1;                 /*  allow flex grow */
-    width: 100%;             /*  force full width */
-    max-width: 100%;         /*  prevent clipping */
     padding: 20px 24px 32px;
     overflow-y: auto;
 }
-.kb-content > * {
-    width: 100%;
-    max-width: 100%;
-}
+
 
 /* Summary cards row */
 

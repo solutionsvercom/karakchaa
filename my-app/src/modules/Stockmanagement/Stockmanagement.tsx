@@ -5,9 +5,6 @@ import { Button, Flex, Badge, DropdownMenu, Dialog } from "@radix-ui/themes";
 import { ChevronDown, History, Plus, Minus } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AddStock from "./AddStock";
-import { SummaryCard } from "../../components/dynamicComponents/Cards";
-
-
 
 /* ================= TYPES ================= */
 
@@ -45,6 +42,12 @@ const mockStockData: StockItem[] = [
   { id: 8, product: "Biryani", sku: "MEL-002", category: "Meals", currentStock: 0, minLevel: 10, status: "out-of-stock" },
 ];
 
+const mockStockHistory: StockHistory[] = [
+  { id: 1, product: "Samosa", type: "out", quantity: 5, date: "30 Jan, 2:15 PM", reason: "Sales" },
+  { id: 2, product: "Cold Coffee", type: "in", quantity: 20, date: "30 Jan, 11:00 AM", reason: "Restock" },
+  { id: 3, product: "Veg Momos", type: "out", quantity: 10, date: "29 Jan, 4:30 PM", reason: "Sales" },
+];
+
 /* ================= HELPERS ================= */
 
 const getStockColor = (status: StockStatus): "green" | "yellow" | "red" =>
@@ -61,6 +64,8 @@ export default function Stockmanagement() {
 
   const isAddStock = /\/stockmanagement\/\d+\/add-stock/.test(location.pathname);
   const isRemoveStock = /\/stockmanagement\/\d+\/remove-stock/.test(location.pathname);
+  //  const isAddStock = location.pathname.endsWith("/add-stock");
+  // const isRemoveStock = location.pathname.endsWith("/remove-stock");
   const isDialogOpen = isAddStock || isRemoveStock;
 
   const [searchValue, setSearchValue] = React.useState("");
@@ -69,16 +74,8 @@ export default function Stockmanagement() {
   const [stock] = React.useState<StockItem[]>(mockStockData);
 
   const selectedProduct = isDialogOpen
-  ? stock.find((item) => location.pathname.includes(`/${item.id}/`))
-  : undefined;
-
-
-  /* ===== SUMMARY CARD CALCULATIONS (ADDED) ===== */
-
-  const totalProducts = stock.length;
-  const lowStockCount = stock.filter((i) => i.status === "low-stock").length;
-  const outOfStockCount = stock.filter((i) => i.status === "out-of-stock").length;
-  const stockValue = stock.reduce((sum, i) => sum + i.currentStock, 0);
+    ? stock.find((item) => location.pathname.includes(`/${item.id}/`))
+    : undefined;
 
   const filteredStock = stock.filter((item) => {
     const matchesSearch =
@@ -104,12 +101,14 @@ export default function Stockmanagement() {
       header: "Current Stock",
       accessor: "currentStock",
       render: (v) => <b>{v} piece</b>,
+      align: "left",
       width: "14%",
     },
     {
       key: "minLevel",
       header: "Min Level",
       accessor: "minLevel",
+      align: "left",
       width: "14%",
     },
     {
@@ -121,18 +120,28 @@ export default function Stockmanagement() {
           {getStockLabel(v)}
         </Badge>
       ),
+      align: "left",
       width: "14%",
     },
     {
       key: "actions",
       header: "Actions",
       width: "16%",
+      // align: "left",
       render: (_v, row) => (
-        <Flex gap="2">
-          <Button size="1" variant="ghost" onClick={() => navigate(`/dashboard/stockmanagement/${row.id}/add-stock`)}>
+        <Flex gap="2" justify="start">
+          <Button
+            size="1"
+            variant="ghost"
+            onClick={() => navigate(`/dashboard/stockmanagement/${row.id}/add-stock`)}
+          >
             <Plus size={16} />
           </Button>
-          <Button size="1" variant="ghost" onClick={() => navigate(`/dashboard/stockmanagement/${row.id}/remove-stock`)}>
+          <Button
+            size="1"
+            variant="ghost"
+            onClick={() => navigate(`/dashboard/stockmanagement/${row.id}/remove-stock`)}
+          >
             <Minus size={16} />
           </Button>
         </Flex>
@@ -142,18 +151,13 @@ export default function Stockmanagement() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-
-      {/* ===== SUMMARY CARDS (ADDED) ===== */}
-      <div className="kb-summary-row">
-        <SummaryCard title="Total Products" value={String(totalProducts)} accentColor="#7C4DFF" softColor="#F0E9FF" icon="📦" />
-        <SummaryCard title="Low Stock" value={String(lowStockCount)} accentColor="#FF9100" softColor="#FFF3E0" icon="⚠️" />
-        <SummaryCard title="Out of Stock" value={String(outOfStockCount)} accentColor="#FF5252" softColor="#FFEAEA" icon="⛔" />
-        <SummaryCard title="Stock Value" value={`₹${stockValue}`} accentColor="#00C853" softColor="#E5F9EE" icon="📈" />
-      </div>
-
       {/* FILTER BAR */}
       <Flex align="center" gap="3">
-        <Searchbar searchValue={searchValue} onSearchChange={setSearchValue} placeholder="Search products..." />
+        <Searchbar
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+          placeholder="Search products..."
+        />
 
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
@@ -171,20 +175,43 @@ export default function Stockmanagement() {
           </DropdownMenu.Content>
         </DropdownMenu.Root>
 
-        <Button variant={showHistory ? "solid" : "soft"} onClick={() => setShowHistory(!showHistory)}>
+        <Button
+          variant={showHistory ? "solid" : "soft"}
+          onClick={() => setShowHistory(!showHistory)}
+        >
           <History size={16} /> Stock History
         </Button>
       </Flex>
 
-      {!showHistory && <Table data={filteredStock} columns={columns} emptyMessage="No products found" hoverable striped />}
+      {!showHistory && (
+        <Table
+          data={filteredStock}
+          columns={columns}
+          emptyMessage="No products found"
+          hoverable
+          striped
+        />
+      )}
 
-      <Dialog.Root open={isDialogOpen} onOpenChange={(open) => !open && navigate("/dashboard/stockmanagement")}>
+      {/* DIALOG */}
+      <Dialog.Root
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) navigate("/dashboard/stockmanagement");
+        }}
+      >
         <Dialog.Content maxWidth="420px">
-          <Dialog.Title>{isAddStock ? "Add Stock" : "Remove Stock"}</Dialog.Title>
+          
+
           {selectedProduct && (
             <AddStock
               mode={isAddStock ? "add" : "remove"}
-              product={{ id: selectedProduct.id, name: selectedProduct.product, stock: selectedProduct.currentStock, unit: "piece" }}
+              product={{
+                id: selectedProduct.id,
+                name: selectedProduct.product,
+                stock: selectedProduct.currentStock,
+                unit: "piece",
+              }}
             />
           )}
         </Dialog.Content>
