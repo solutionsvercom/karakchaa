@@ -5,12 +5,12 @@ import {
   Switch,
 } from "@radix-ui/themes";
 import { FormField } from "./types";
-import "react-day-picker/dist/style.css";
 import * as Popover from "@radix-ui/react-popover";
 import { DayPicker } from "react-day-picker";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import "react-day-picker/dist/style.css";
+import "react-day-picker/style.css";
+
 
 
 type Props<T extends string> = {
