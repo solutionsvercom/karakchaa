@@ -1,7 +1,7 @@
 import React from "react";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
-import { Button, Dialog, Flex, Badge, DropdownMenu } from "@radix-ui/themes";
-import { ChevronDown, UserPlus, X, MoreVertical } from "lucide-react";
+import { Button, Dialog, Flex, Badge, DropdownMenu, IconButton } from "@radix-ui/themes";
+import { ChevronDown, UserPlus, X, MoreVertical, Pencil, Trash2, Eye } from "lucide-react";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
@@ -95,14 +95,14 @@ const columns: Column<SaleTransaction>[] = [
     render: () => (
       <DropdownMenu.Root>
         <DropdownMenu.Trigger>
-          <Button variant="ghost" size="1">
-            <MoreVertical size={16} />
-          </Button>
+          <IconButton variant="soft" radius="full">
+              <MoreVertical size={16} />
+            </IconButton>
         </DropdownMenu.Trigger>
         <DropdownMenu.Content>
-          <DropdownMenu.Item>Edit</DropdownMenu.Item>
-          <DropdownMenu.Item>View Details</DropdownMenu.Item>
-          <DropdownMenu.Item color="red">Delete</DropdownMenu.Item>
+          <DropdownMenu.Item> <Pencil size={14} />Edit</DropdownMenu.Item>
+          <DropdownMenu.Item><Eye size={14} />View Details</DropdownMenu.Item>
+          <DropdownMenu.Item color="red"><Trash2 size={14} />Delete</DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Root>
     ),

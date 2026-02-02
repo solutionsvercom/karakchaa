@@ -91,10 +91,7 @@ export default function ProductsModule() {
         >
           <Dialog.Content maxWidth="380px">
             {/* REQUIRED for Radix */}
-            <Dialog.Title>
-              {isAddMode ? "Add Product" : "Edit Product"}
-            </Dialog.Title>
-
+            
             {isDialogOpen && (
               <AddProducts
                 mode={isAddMode ? "create" : "edit"}

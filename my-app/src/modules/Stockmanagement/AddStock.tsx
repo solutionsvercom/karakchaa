@@ -1,8 +1,9 @@
-import { Flex } from "@radix-ui/themes";
+import { Flex,Button } from "@radix-ui/themes";
 import { useNavigate } from "react-router-dom";
 import DynamicForm from "../../components/dynamicComponents/DynamicForm/DynamicForm";
 import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
-
+import { X } from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
 /* ---------------- TYPES ---------------- */
 
 type StockFormField =
@@ -31,7 +32,8 @@ const getFields = (mode: StockMode): FormField<StockFormField>[] => [
     label: "Quantity",
     type: "number",
     required: true,
-    group: "triple",
+    placeholder: "Enter quantity",
+    span: 2,
   },
   {
     name: "reason",
@@ -39,7 +41,7 @@ const getFields = (mode: StockMode): FormField<StockFormField>[] => [
     type: "select",
     required: true,
     placeholder: "Select reason",
-    group: "triple",
+    span: 2,
     options:
       mode === "add"
         ? [
@@ -58,15 +60,15 @@ const getFields = (mode: StockMode): FormField<StockFormField>[] => [
     label: "Reference / Invoice No.",
     type: "text",
     placeholder: "e.g. INV-001",
-    group: "triple",
+    span: 2,
   },
   {
     name: "notes",
     label: "Notes",
     type: "textarea",
     placeholder: "Additional notes...",
-    rows: 3,
-    group: "triple",
+    rows: 2,
+    span: 2,
   },
 ];
 
@@ -78,19 +80,29 @@ export default function AddStock({ mode, product }: AddStockProps) {
   return (
     <Flex direction="column" gap="4">
       {/* ===== TITLE ===== */}
-      <h2 style={{ margin: 0 }}>
-        {mode === "add" ? "Add Stock" : "Remove Stock"}
-      </h2>
+      <Flex justify="between" align="center" mb="4">
+         <h3 style={{ margin: 0 }}>
+        {mode === "add" ? "Add Stock Details" : "Remove Stock Details "}
+      </h3>
+      <Dialog.Close asChild>
+            <Button className="dialog-close-icon">
+              <X size={18} />
+            </Button>
+          </Dialog.Close>
+      </Flex>
+     
 
       {/* ===== PRODUCT INFO CARD ===== */}
       <div
         style={{
+          display: "inline-block",
+          alignSelf: "flex-start",
           padding: 16,
           borderRadius: 10,
-          background: "#f8fafc",
+          border: "1px solid #474c55",
         }}
       >
-        <div style={{ fontWeight: 600 }}>{product.name}</div>
+        <div style={{ fontWeight: 400 }}>{product.name}</div>
         <div style={{ color: "#64748b", fontSize: 14 }}>
           Current Stock: {product.stock} {product.unit}
         </div>

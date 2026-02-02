@@ -349,9 +349,7 @@
     grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
     gap: 16px;
     margin-bottom: 24px;
-
     align-items: stretch;
-
 }
 
 .kb-summary-card {
@@ -362,7 +360,6 @@
     align-items: center;
     justify-content: space-between;
     box-shadow: 0 12px 24px rgba(15, 23, 42, 0.04);
-
     height: 100%;
 }
 
@@ -533,6 +530,7 @@
     background-color: var(--accent-9);
     color: var(--accent-contrast);
     border: none;
+    cursor: pointer;
 }
 
 .rt-Button:hover {
@@ -551,67 +549,84 @@
     background-color: transparent !important;
     color: var(--red-9);
     border: 1px solid var(--red-7);
+    cursor: pointer;
 }
 
 .rt-Button.outline:hover,
 .button.outline:hover {
-    background-color: var(--red-3);
+    background-color: var(--red-5) !important;
 }
 
 .dialog-close-icon {
-    all: unset;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    color: var(--gray-11);
     cursor: pointer;
-    color: var(--accent-9);
-    line-height: 0;
+    padding: 4px;
 }
 
 .dialog-close-icon:hover {
-    color: var(--accent-10);
+    background: transparent;
+    color: var(--gray-12);
 }
+
 
 /* ===============================
    PRODUCT CARD HOVER EFFECT
 ================================ */
 
+
 /* Card base */
+
 .product-card {
-  position: relative;
-  overflow: hidden;
-  transition: box-shadow 0.25s ease, transform 0.25s ease;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
+
 
 /* Lift effect */
+
 .product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12);
 }
+
 
 /* Image wrapper (only image animates) */
+
 .product-card-image {
-  overflow: hidden;
+    overflow: hidden;
 }
 
+
 /* Image zoom effect */
+
 .product-card-image img {
-  transition: transform 0.35s ease;
+    transition: transform 0.35s ease;
 }
 
 .product-card:hover .product-card-image img {
-  transform: scale(1.08);
+    transform: scale(1.08);
 }
 
+
 /* Icon fallback */
+
 .product-card-icon {
-  transition: transform 0.35s ease, opacity 0.25s ease;
+    transition: transform 0.35s ease, opacity 0.25s ease;
 }
 
 .product-card:hover .product-card-icon {
-  transform: scale(1.1);
-  opacity: 0.9;
+    transform: scale(1.1);
+    opacity: 0.9;
 }
 
+
 /* Keep menu always on top */
+
 .product-card button {
-  position: relative;
-  z-index: 10;
+    position: relative;
+    z-index: 10;
 }

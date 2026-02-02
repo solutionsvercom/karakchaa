@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   Button,
   Dialog,
+  IconButton,
 } from "@radix-ui/themes";
 
 import {
@@ -15,6 +16,7 @@ import {
   EnvelopeClosedIcon,
   MobileIcon,
 } from "@radix-ui/react-icons";
+import { MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
@@ -146,9 +148,9 @@ export default function Customers() {
       render: (_, row) => (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
-            <Button variant="soft" radius="full">
-              <DotsVerticalIcon />
-            </Button>
+            <IconButton variant="soft" radius="full">
+              <MoreVertical size={16} />
+            </IconButton>
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Content align="end">
@@ -157,11 +159,13 @@ export default function Customers() {
                 navigate(`/dashboard/customer/${row.id}/edit-customer`)
               }
             >
-              Edit
+             <Pencil size={14} /> Edit
             </DropdownMenu.Item>
-            <DropdownMenu.Item color="red">
-              Delete
-            </DropdownMenu.Item>
+            <DropdownMenu.Item
+                          color="red"
+                          onClick={() => console.log("Delete customer:", row.id)}
+                        >
+                          <Trash2 size={14} /> Delete</DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
       ),
@@ -219,7 +223,7 @@ export default function Customers() {
             style={{ whiteSpace: "nowrap" }}
             onClick={() => navigate("/dashboard/customer/add-customer")}
           >
-            + Add Customer
+            <Plus size={16} /> Add Customer
           </Button>
         </Flex>
 

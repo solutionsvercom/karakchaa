@@ -8,6 +8,7 @@ import {
 } from "@radix-ui/themes";
 import { DropdownMenu } from "@radix-ui/themes";
 import { DotsVerticalIcon, CubeIcon } from "@radix-ui/react-icons";
+import { Pencil, Trash2 } from "lucide-react";
 
 /* ---------------- TYPES ---------------- */
 
@@ -97,13 +98,13 @@ export default function ProductCard({
         <DropdownMenu.Content align="end">
           {onEdit && (
             <DropdownMenu.Item onSelect={onEdit}>
-              Edit
+             <Pencil size={14} />  Edit
             </DropdownMenu.Item>
           )}
 
           {onDelete && (
             <DropdownMenu.Item color="red" onSelect={onDelete}>
-              Delete
+            <Trash2 size={14} />  Delete
             </DropdownMenu.Item>
           )}
         </DropdownMenu.Content>
