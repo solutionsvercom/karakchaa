@@ -15,6 +15,7 @@ import { useNavigate, useLocation, useParams } from "react-router-dom";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 import AddEmployee from "./AddEmployee";
+import { SummaryCard } from "../../components/dynamicComponents/Cards";
 
 /* ================= TYPES ================= */
 
@@ -30,7 +31,7 @@ type Employee = {
   status: "Active" | "Inactive";
 };
 
-/* ================= DUMMY DATA ================= */
+/* ================= DATA ================= */
 
 const employeesData: Employee[] = [
   {
@@ -87,17 +88,31 @@ export default function Employees() {
   const location = useLocation();
   const { id } = useParams();
 
-
   const [search, setSearch] = React.useState("");
 
   const isAddEmployee = location.pathname.endsWith("/add-employee");
   const isEditEmployee = location.pathname.includes("/edit-employee/");
   const isDialogOpen = isAddEmployee || isEditEmployee;
+
   const employeeToEdit = employeesData.find(
-    (c) => c.id === Number(id)
+    (e) => e.id === Number(id)
   );
 
-  /* ================= TABLE COLUMNS ================= */
+  /* ================= SUMMARY ================= */
+
+  const totalEmployees = employeesData.length;
+  const activeEmployees = employeesData.filter(
+    (e) => e.status === "Active"
+  ).length;
+  const inactiveEmployees = employeesData.filter(
+    (e) => e.status === "Inactive"
+  ).length;
+  const monthlySalary = employeesData.reduce(
+    (sum, e) => sum + e.salary,
+    0
+  );
+
+  /* ================= TABLE ================= */
 
   const columns: Column<Employee>[] = [
     {
@@ -105,16 +120,16 @@ export default function Employees() {
       header: "Employee",
       accessor: "name",
     },
-    {
+        {
       key: "role",
       header: "Role",
       accessor: "role",
-      render: (v) => (
+      render: (v: Role) => (
         <Badge color={roleColorMap[v]} radius="full">
           {v}
         </Badge>
-      ),
-    },
+  ),
+},
     {
       key: "phone",
       header: "Contact",
@@ -144,7 +159,7 @@ export default function Employees() {
     {
       key: "actions",
       header: "Actions",
-      render: (_,row) => (
+      render: (_v, row) => (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
             <IconButton variant="soft" radius="full">
@@ -155,9 +170,7 @@ export default function Employees() {
           <DropdownMenu.Content align="end">
             <DropdownMenu.Item
               onClick={() =>
-                navigate(
-                  `/dashboard/employees/edit-employee/${row.id}`
-                )
+                navigate(`/dashboard/employees/edit-employee/${row.id}`)
               }
             >
               <Pencil size={14} /> Edit
@@ -165,7 +178,9 @@ export default function Employees() {
 
             <DropdownMenu.Item
               color="red"
-              onClick={() => console.log("Delete employee:", row.id)}
+              onClick={() =>
+                console.log("Delete employee:", row.id)
+              }
             >
               <Trash2 size={14} /> Delete
             </DropdownMenu.Item>
@@ -177,51 +192,73 @@ export default function Employees() {
 
   /* ================= FILTER ================= */
 
-  const filteredEmployees = employeesData.filter((emp) =>
-    emp.name.toLowerCase().includes(search.toLowerCase()) ||
-    emp.phone.includes(search)
+  const filteredEmployees = employeesData.filter(
+    (emp) =>
+      emp.name.toLowerCase().includes(search.toLowerCase()) ||
+      emp.phone.includes(search)
   );
 
   /* ================= UI ================= */
 
   return (
     <>
-      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-        {/* ===== HEADER ===== */}
-        <Flex justify="between" align="center">
-          <Text size="5" weight="bold">
-            Employees
-          </Text>
+      <Flex direction="column" gap="5" width="100%">
+        {/* ===== TITLE ===== */}
+        <Text size="5" weight="bold">
+          Employees
+        </Text>
 
-          
-        </Flex>
-
-        {/* ===== SEARCH ===== */}
-        <div
-        style={{
-          padding: 12,
-          borderRadius: 12,
-          border: "1px solid var(--gray-6)",
-          background: "var(--gray-1)",
-        }}
-      >
-        <Flex align="center" gap="3">
-        <Flex style={{ flex: 1, minWidth: 0 }}>
-          <Searchbar
-            searchValue={search}
-            onSearchChange={setSearch}
-            placeholder="Search employees..."
+        {/* ===== SUMMARY CARDS (4) ===== */}
+        <div className="kb-summary-row">
+          <SummaryCard
+            title="Total Employees"
+            value={String(totalEmployees)}
+            accentColor="#7C4DFF"
+            softColor="#F0E9FF"
+            icon="👥"
           />
-        </Flex>
-        <Button
+          <SummaryCard
+            title="Active"
+            value={String(activeEmployees)}
+            accentColor="#00C853"
+            softColor="#E5F9EE"
+            icon="✅"
+          />
+          <SummaryCard
+            title="Inactive"
+            value={String(inactiveEmployees)}
+            accentColor="#FF9100"
+            softColor="#FFF3E0"
+            icon="⏸️"
+          />
+          <SummaryCard
+            title="Monthly Salary"
+            value={`₹${monthlySalary.toLocaleString()}`}
+            accentColor="#2962FF"
+            softColor="#E3F2FD"
+            icon="₹"
+          />
+        </div>
+
+        {/* ===== SEARCH + ADD (FULL WIDTH) ===== */}
+        <Flex align="center" gap="3" width="100%">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Searchbar
+              searchValue={search}
+              onSearchChange={setSearch}
+              placeholder="Search employees..."
+            />
+          </div>
+
+          <Button
+            style={{ whiteSpace: "nowrap" }}
             onClick={() =>
               navigate("/dashboard/employees/add-employee")
             }
           >
             <Plus size={16} /> Add Employee
           </Button>
-          </Flex>
-          </div>
+        </Flex>
 
         {/* ===== TABLE ===== */}
         <Table
@@ -230,9 +267,9 @@ export default function Employees() {
           emptyMessage="No employees found"
           hoverable
         />
-      </div>
+      </Flex>
 
-      {/* ===== ADD / EDIT EMPLOYEE DIALOG ===== */}
+      {/* ===== DIALOG ===== */}
       <Dialog.Root
         open={isDialogOpen}
         onOpenChange={(open) => {
