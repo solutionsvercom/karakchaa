@@ -15,6 +15,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 import AddEmployee from "./AddEmployee";
+import { SummaryCard } from "../../components/dynamicComponents/Cards";
 
 /* ================= TYPES ================= */
 
@@ -91,6 +92,17 @@ export default function Employees() {
   const isAddEmployee = location.pathname.endsWith("/add-employee");
   const isEditEmployee = location.pathname.includes("/edit-employee/");
 
+  /* ===== SUMMARY CARD CALCULATIONS ===== */
+
+  const totalEmployees = employeesData.length;
+  const activeEmployees = employeesData.filter(
+    (e) => e.status === "Active"
+  ).length;
+  const monthlySalary = employeesData.reduce(
+    (sum, e) => sum + e.salary,
+    0
+  );
+
   /* ================= TABLE COLUMNS ================= */
 
   const columns: Column<Employee>[] = [
@@ -103,7 +115,7 @@ export default function Employees() {
       key: "role",
       header: "Role",
       accessor: "role",
-      render: (v) => (
+      render: (v: Role) => (
         <Badge color={roleColorMap[v]} radius="full">
           {v}
         </Badge>
@@ -129,7 +141,7 @@ export default function Employees() {
       key: "status",
       header: "Status",
       accessor: "status",
-      render: (v) => (
+      render: (v: Role) => (
         <Badge color="green" variant="soft">
           {v}
         </Badge>
@@ -149,9 +161,7 @@ export default function Employees() {
           <DropdownMenu.Content align="end">
             <DropdownMenu.Item
               onClick={() =>
-                navigate(
-                  `/dashboard/employees/edit-employee/${row.id}`
-                )
+                navigate(`/dashboard/employees/edit-employee/${row.id}`)
               }
             >
               <Pencil size={14} /> Edit
@@ -180,11 +190,44 @@ export default function Employees() {
   return (
     <>
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-        {/* ===== HEADER ===== */}
         <Flex justify="between" align="center">
           <Text size="5" weight="bold">
             Employees
           </Text>
+        </Flex>
+
+        <div className="kb-summary-row">
+          <SummaryCard
+            title="Total Employees"
+            value={String(totalEmployees)}
+            accentColor="#7C4DFF"
+            softColor="#F0E9FF"
+            icon="👥"
+          />
+          <SummaryCard
+            title="Active"
+            value={String(activeEmployees)}
+            accentColor="#00C853"
+            softColor="#E5F9EE"
+            icon="✅"
+          />
+          <SummaryCard
+            title="Monthly Salary"
+            value={`₹${monthlySalary.toLocaleString()}`}
+            accentColor="#2962FF"
+            softColor="#E3F2FD"
+            icon="₹"
+          />
+        </div>
+
+        <Flex align="center" justify="between" gap="3">
+          <div style={{ flex: 1, maxWidth: 420 }}>
+            <Searchbar
+              searchValue={search}
+              onSearchChange={setSearch}
+              placeholder="Search employees..."
+            />
+          </div>
 
           <Button
             onClick={() =>
@@ -195,16 +238,6 @@ export default function Employees() {
           </Button>
         </Flex>
 
-        {/* ===== SEARCH ===== */}
-        <div style={{ maxWidth: 420 }}>
-          <Searchbar
-            searchValue={search}
-            onSearchChange={setSearch}
-            placeholder="Search employees..."
-          />
-        </div>
-
-        {/* ===== TABLE ===== */}
         <Table
           data={filteredEmployees}
           columns={columns}
@@ -213,7 +246,6 @@ export default function Employees() {
         />
       </div>
 
-      {/* ===== ADD / EDIT EMPLOYEE DIALOG ===== */}
       <Dialog.Root
         open={isAddEmployee || isEditEmployee}
         onOpenChange={(open) => {

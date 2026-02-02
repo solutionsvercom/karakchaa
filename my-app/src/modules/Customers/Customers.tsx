@@ -1,11 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 
-import Searchbar from "../../components/dynamicComponents/Searchbar";
-import { SummaryCard } from "../../components/dynamicComponents/Cards";
-import AddCustomer from "./AddCustomer";
-import Table, { Column } from "../../components/dynamicComponents/Table";
-
 import {
   Flex,
   Text,
@@ -21,8 +16,14 @@ import {
   MobileIcon,
 } from "@radix-ui/react-icons";
 
-/* ---------- CUSTOMER TYPE ---------- */
-interface Customer {
+import Searchbar from "../../components/dynamicComponents/Searchbar";
+import { SummaryCard } from "../../components/dynamicComponents/Cards";
+import Table, { Column } from "../../components/dynamicComponents/Table";
+import AddCustomer from "./AddCustomer";
+
+/* ================= TYPES ================= */
+
+type Customer = {
   id: number;
   name: string;
   phone: string;
@@ -30,9 +31,10 @@ interface Customer {
   purchases: number;
   totalSpent: number;
   loyaltyPoints: number;
-}
+};
 
-/* ---------- STATIC DATA ---------- */
+/* ================= DATA ================= */
+
 const customers: Customer[] = [
   {
     id: 1,
@@ -61,47 +63,34 @@ const customers: Customer[] = [
     totalSpent: 3200,
     loyaltyPoints: 320,
   },
-  {
-    id: 4,
-    name: "Rahul Sharma",
-    phone: "9876543211",
-    email: "rahul@email.com",
-    purchases: 12,
-    totalSpent: 2450,
-    loyaltyPoints: 245,
-  },
-  {
-    id: 5,
-    name: "Priya Das",
-    phone: "9876543210",
-    email: "priya@email.com",
-    purchases: 8,
-    totalSpent: 1680,
-    loyaltyPoints: 168,
-  },
 ];
 
-/* ---------- MAIN COMPONENT ---------- */
+/* ================= COMPONENT ================= */
+
 export default function Customers() {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
 
-  const [searchValue, setSearchValue] = React.useState("");
+  const [search, setSearch] = React.useState("");
 
-  const isAddMode = location.pathname.endsWith("/add-customer");
-  const isEditMode = location.pathname.endsWith("/edit-customer");
-  const isDialogOpen = isAddMode || isEditMode;
+  const isAdd = location.pathname.endsWith("/add-customer");
+  const isEdit = location.pathname.includes("/edit-customer/");
+  const isDialogOpen = isAdd || isEdit;
 
   const customerToEdit = customers.find(
     (c) => c.id === Number(id)
   );
 
-  const filteredCustomers = customers.filter((customer) =>
-    customer.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-    customer.phone.includes(searchValue) ||
-    customer.email.toLowerCase().includes(searchValue.toLowerCase())
+  /* ================= FILTER ================= */
+
+  const filteredCustomers = customers.filter((c) =>
+    `${c.name} ${c.phone} ${c.email}`
+      .toLowerCase()
+      .includes(search.toLowerCase())
   );
+
+  /* ================= TABLE ================= */
 
   const columns: Column<Customer>[] = [
     {
@@ -148,12 +137,8 @@ export default function Customers() {
     },
     {
       key: "loyaltyPoints",
-      header: "Loyalty Points",
-      render: (_, row) => (
-        <Text weight="medium" color="orange">
-          {row.loyaltyPoints}
-        </Text>
-      ),
+      header: "Points",
+      accessor: "loyaltyPoints",
     },
     {
       key: "actions",
@@ -174,57 +159,61 @@ export default function Customers() {
             >
               Edit
             </DropdownMenu.Item>
-            <DropdownMenu.Item color="red">Delete</DropdownMenu.Item>
+            <DropdownMenu.Item color="red">
+              Delete
+            </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
       ),
     },
   ];
 
-  return (
-    <Flex direction="column" gap="5" width="100%">
-      {/* ---------- STATS ---------- */}
-      <section className="kb-summary-row">
-        <SummaryCard
-          title="Total Customers"
-          value={String(customers.length)}
-          accentColor="#2962FF"
-          softColor="#E3F2FD"
-          icon="👥"
-        />
-        <SummaryCard
-          title="Total Purchases"
-          value={String(customers.reduce((s, c) => s + c.purchases, 0))}
-          accentColor="#00C853"
-          softColor="#E5F9EE"
-          icon="🛒"
-        />
-        <SummaryCard
-          title="Total Revenue"
-          value={`₹${customers.reduce((s, c) => s + c.totalSpent, 0).toLocaleString()}`}
-          accentColor="#FF9100"
-          softColor="#FFF3E0"
-          icon="₹"
-        />
-      </section>
+  /* ================= UI ================= */
 
-      {/* ---------- TOOLBAR (FIXED) ---------- */}
-      <div
-        style={{
-          padding: 12,
-          borderRadius: 12,
-          border: "1px solid var(--gray-6)",
-          background: "var(--gray-1)",
-        }}
-      >
-        <Flex align="center" gap="3">
-          <Flex style={{ flex: 1, minWidth: 0 }}>
+  return (
+    <>
+      <Flex direction="column" gap="5" width="100%">
+        {/* ===== PAGE TITLE ===== */}
+        <Text size="5" weight="bold">
+          Customers
+        </Text>
+
+        {/* ===== SUMMARY ===== */}
+        <div className="kb-summary-row">
+          <SummaryCard
+            title="Total Customers"
+            value={String(customers.length)}
+            accentColor="#2962FF"
+            softColor="#E3F2FD"
+            icon="👥"
+          />
+          <SummaryCard
+            title="Total Purchases"
+            value={String(customers.reduce((s, c) => s + c.purchases, 0))}
+            accentColor="#00C853"
+            softColor="#E5F9EE"
+            icon="🛒"
+          />
+          <SummaryCard
+            title="Revenue"
+            value={`₹${customers
+              .reduce((s, c) => s + c.totalSpent, 0)
+              .toLocaleString()}`}
+            accentColor="#FF9100"
+            softColor="#FFF3E0"
+            icon="₹"
+          />
+        </div>
+
+        {/* ===== TOOLBAR (FULL WIDTH FIXED) ===== */}
+        <Flex align="center" gap="3" width="100%">
+          <div style={{ flex: 1, minWidth: 0 }}>
             <Searchbar
-              searchValue={searchValue}
-              onSearchChange={setSearchValue}
-              placeholder="Search by name, phone or email..."
+              searchValue={search}
+              onSearchChange={setSearch}
+              placeholder="Search customers..."
             />
-          </Flex>
+          </div>
 
           <Button
             style={{ whiteSpace: "nowrap" }}
@@ -233,9 +222,18 @@ export default function Customers() {
             + Add Customer
           </Button>
         </Flex>
-      </div>
 
-      {/* ---------- DIALOG ---------- */}
+        {/* ===== TABLE ===== */}
+        <Table
+          data={filteredCustomers}
+          columns={columns}
+          emptyMessage="No customers found"
+          hoverable
+          striped
+        />
+      </Flex>
+
+      {/* ===== ADD / EDIT DIALOG ===== */}
       <Dialog.Root
         open={isDialogOpen}
         onOpenChange={(open) => {
@@ -244,19 +242,11 @@ export default function Customers() {
       >
         <Dialog.Content maxWidth="420px">
           <AddCustomer
-            mode={isEditMode ? "edit" : "create"}
-            initialValues={isEditMode ? customerToEdit : undefined}
+            mode={isEdit ? "edit" : "create"}
+            initialValues={isEdit ? customerToEdit : undefined}
           />
         </Dialog.Content>
       </Dialog.Root>
-
-      {/* ---------- TABLE ---------- */}
-      <Table
-        data={filteredCustomers}
-        columns={columns}
-        striped
-        hoverable
-      />
-    </Flex>
+    </>
   );
 }
