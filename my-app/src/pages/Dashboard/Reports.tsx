@@ -1,7 +1,10 @@
-export default function ReportsPage() {
+import React from "react";
+import Reports from "../../modules/Reports/Reports";
+
+export default function EmployeesPage() {
   return (
-    <div>
-      This is Reports
+    <div >
+      <Reports />
     </div>
   );
 }

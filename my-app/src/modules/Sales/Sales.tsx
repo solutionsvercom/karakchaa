@@ -24,12 +24,21 @@ type SaleTransaction = {
 
 /* ================= MOCK DATA ================= */
 
-const mockSalesData: SaleTransaction[] = [
-  { id: 1, invoice: "INV-001", customer: "Rajesh Kumar", items: "2 items", type: "cash", amount: 250, payment: "completed", dateTime: "29 Jan, 2:30 PM" },
-  { id: 2, invoice: "INV-002", customer: "Priya Singh", items: "5 items", type: "card", amount: 650, payment: "completed", dateTime: "29 Jan, 4:15 PM" },
-  { id: 3, invoice: "INV-003", customer: "Amit Patel", items: "1 item", type: "upi", amount: 80, payment: "pending", dateTime: "30 Jan, 10:00 AM" },
-  { id: 4, invoice: "INV-004", customer: "Neha Sharma", items: "3 items", type: "cash", amount: 420, payment: "completed", dateTime: "30 Jan, 11:45 AM" },
-  { id: 5, invoice: "INV-005", customer: "Vikram Roy", items: "4 items", type: "card", amount: 580, payment: "cancelled", dateTime: "30 Jan, 1:20 PM" },
+export const mockSalesData: SaleTransaction[] = [
+  { id: 1, invoice: "INV-001", customer: "Rajesh Kumar", items: "Tea", type: "cash", amount: 250, payment: "completed", 
+    dateTime: "2026-01-29T14:30:00", },
+  { id: 2, invoice: "INV-002", customer: "Priya Singh", items: "Tea", type: "card", amount: 650, payment: "completed",
+     dateTime: "2026-01-29T16:15:00", },
+  { id: 3, invoice: "INV-003", customer: "Amit Patel", items: "Samosa", type: "upi", amount: 80, payment: "pending", 
+     dateTime: "2026-01-30T10:00:00", },
+  { id: 4, invoice: "INV-004", customer: "Neha Sharma", items: "Momos", type: "cash", amount: 420, payment: "completed", 
+     dateTime: "2025-08-30T10:00:00", },
+  { id: 5, invoice: "INV-005", customer: "Vikram Roy", items: "Samosa", type: "card", amount: 580, payment: "cancelled",  
+    dateTime: "2025-05-30T10:00:00",},
+    {
+id: 6, invoice: "INV-006", customer: "Ram Sharma", items: "Coffee", type: "card", amount: 580, payment: "cancelled",  
+    dateTime: "01-02-2026",
+    },
 ];
 
 /* ================= HELPERS ================= */
@@ -45,17 +54,25 @@ const getPaymentColor = (status: PaymentStatus): "green" | "yellow" | "red" => {
   }
 };
 
+
 const getPaymentLabel = (status: PaymentStatus) =>
   status.charAt(0).toUpperCase() + status.slice(1);
 
-const calculateTotals = (data: SaleTransaction[]) => {
+export const calculateTotals = (data: SaleTransaction[]) => {
   const totalRevenue = data.reduce((sum, sale) => sum + sale.amount, 0);
   const totalOrders = data.length;
   const averageOrder =
     totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+    
 
   return { totalRevenue, totalOrders, averageOrder };
 };
+
+const {
+  totalRevenue,
+  totalOrders,
+  averageOrder,
+} = calculateTotals(mockSalesData);
 
 /* ================= TABLE COLUMNS ================= */
 
@@ -233,3 +250,8 @@ export default function Sales() {
     </div>
   );
 }
+export const salesSummary = {
+  totalRevenue,
+  totalOrders,
+  averageOrder,
+};
