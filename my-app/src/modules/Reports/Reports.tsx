@@ -1,169 +1,54 @@
 import React from "react";
-import {
-  Flex,
-  Button,
-  Text,
-  Dialog,
-  IconButton,
-  DropdownMenu,
-  Badge,
-} from "@radix-ui/themes";
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Rectangle ,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-
-
-
-import { ChevronDown, Plus } from "lucide-react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
-import Searchbar from "../../components/dynamicComponents/Searchbar";
+import { Flex, Button, Text, DropdownMenu } from "@radix-ui/themes";
+import { ChevronDown } from "lucide-react";
+import { useDataFilter } from "../../hooks/useDataFilter";
+import { mockSalesData, calculateTotals } from "../Sales/Sales";
+import { RevenueTrendChart, TopProductsChart,buildRevenueTrendSmart,buildTopProducts, } from "../../components/dynamicComponents/Charts";
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
-import { mockSalesData } from "../Sales/Sales";
-import { calculateTotals } from "../Sales/Sales";
-import {
-  buildRevenueTrend,
-  buildTopProducts,
-} from "./ReportsBuilder";
-
-
-function parseDateTime(dateTime: string): Date {
-  // ISO or RFC (backend-friendly)
-  if (!isNaN(Date.parse(dateTime))) {
-    return new Date(dateTime);
-  }
-
-  // YYYY-MM-DD HH:mm:ss
-  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(dateTime)) {
-    return new Date(dateTime.replace(" ", "T"));
-  }
-
-  // DD/MM/YYYY
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateTime)) {
-    const [day, month, year] = dateTime.split("/");
-    return new Date(`${year}-${month}-${day}`);
-  }
-
-  // Fallback (last resort)
-  return new Date(dateTime);
-}
-
-
-
-function filterByDateRange<T extends { dateTime: string }>(
-  data: T[],
-  range: string
-) {
-  if (range === "All Time") return data;
-
-  const now = new Date();
-
-  const daysMap: Record<string, number> = {
-    "Last 1 Day": 1,
-    "Last 7 Days": 7,
-    "Last 1 Months": 30,
-    "Last 3 Months": 90,
-    "Last 6 Months": 180,
-    "Last 1 Year": 365,
-  };
-
-  const days = daysMap[range];
-  if (!days) return data;
-
-  const fromDate = new Date();
-  fromDate.setDate(now.getDate() - days);
-
-  return data.filter((item) => {
-   const itemDate = parseDateTime(item.dateTime);
-
-    return itemDate >= fromDate;
-  });
-}
-
-const formatRupeesK = (value: number) => {
-  if (value >= 1000) return `₹${(value / 1000).toFixed(1)}k`;
-  return `₹${(value / 1000).toFixed(2)}k`;
-};
-
-
-
-
-
-
 export default function Reports() {
-  const [category, setCategory] = React.useState("All Times");
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { id } = useParams();
-  
+  const { category, setCategory, filteredData } = useDataFilter(mockSalesData);
 
-  const [search, setSearch] = React.useState("");
-  
-  //  Filter sales data using selected dropdown value
-const filteredSales = filterByDateRange(
-  mockSalesData,
-  category
-);
+  const salesSummary = calculateTotals(filteredData);
+ const revenueTrendData = buildRevenueTrendSmart(filteredData, category);
+  const topProductsData = buildTopProducts(filteredData);
 
-// Calculate summary from filtered data
-const salesSummary = calculateTotals(filteredSales);
-const revenueTrendData = buildRevenueTrend(filteredSales);
-const topProductsData = buildTopProducts(filteredSales);
-
-
-
-  
-return (
-
-<Flex direction="column" gap="5" width="100%">
-
-   <Flex justify="between" align="center">
+  return (
+    <Flex direction="column" gap="5" width="100%">
+      <Flex justify="between" align="center">
         <Text size="8" weight="bold">
           Reports & Analytics
         </Text>
 
-       
-          {/* Category Filter */}
-          <DropdownMenu.Root>
-            <DropdownMenu.Trigger>
-              <Button variant="outline">
-                {category}
-                <ChevronDown size={16} />
-              </Button>
-            </DropdownMenu.Trigger>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            <Button variant="outline">
+              {category}
+              <ChevronDown size={16} />
+            </Button>
+          </DropdownMenu.Trigger>
 
-            <DropdownMenu.Content>
-              {[
-                "All Time",
-                "Last 1 Day",
-                 "Last 7 Days",
-                 "Last 1 Months",
-                 "Last 3 Months",
-                 "Last 6 Months",
-                "Last 1 Year",
+          <DropdownMenu.Content>
+            {[
+              "All Time",
+              "Today",
+              "Yesterday",
+              "Last 7 Days",
+              "Last 14 Days",
+              "Last 30 Days",
+              "Last 3 Months",
+              "Last 6 Months",
+              "Last 1 Year",
             ].map((item) => (
-        <DropdownMenu.Item
-         key={item}
-         onClick={() => setCategory(item)}
-                    >
-                    {item}
-                </DropdownMenu.Item>
+              <DropdownMenu.Item key={item} onClick={() => setCategory(item)}>
+                {item}
+              </DropdownMenu.Item>
             ))}
-
-            </DropdownMenu.Content>
-          </DropdownMenu.Root>
-
-       
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
       </Flex>
-        
-        {/* ===== SUMMARY CARDS (4) ===== */}
+
+      {/* ===== SUMMARY CARDS ===== */}
+       {/* ===== SUMMARY CARDS (4) ===== */}
         <div className="kb-summary-row">
           <SummaryCard
             title="Total Revenue"
@@ -197,132 +82,14 @@ return (
         </div>
 
 
- {/* ===== CHARTS ROW ===== */}
-  <Flex gap="4" width="100%" >
-  
-  {/* LEFT: Revenue Trend */}
-  <Flex
-    direction="column"
-    style={{ flex: 1 }}
-    className="kb-chart-card"
-  >
-    <Text weight="bold" mb="2">
-      Revenue Trend
-    </Text>
+      {/* ===== CHARTS ROW ===== */}
+      <Flex gap="4" width="100%">
+        <RevenueTrendChart data={revenueTrendData} />
+        <TopProductsChart data={topProductsData} />
+      </Flex>
 
-    {/* Chart goes here */}
-    <div className="kb-card">
-  
-  <ResponsiveContainer width="100%" height={250}>
-    <LineChart data={revenueTrendData}>
-    <XAxis
-      dataKey="date"
-      stroke="var(--gray-8)"
-      
-    />
-
-    <YAxis
-      stroke="var(--gray-8)"
-     
-      tickFormatter={formatRupeesK}
-    />
-<Tooltip
-  contentStyle={{
-    backgroundColor: 'var(--tooltip-bg)',
-    border: '1px solid var(--tooltip-border)',
-    color: 'var(--tooltip-text)', 
-  }}
-  labelStyle={{
-    color: 'var(--tooltip-label)',
-  }}
-  itemStyle={{
-    color: 'var(--tooltip-text)', 
-  }}
-  formatter={(value) =>
-    typeof value === 'number' ? formatRupeesK(value) : ''
-  }
-/>
-
-
-
-    <Line
-      type="monotone"
-      dataKey="revenue"
-      stroke="var(--accent-9)"
-      strokeWidth={3}
-      dot={{ r: 4 }}
-      activeDot={{ r: 6 }}
-    />
-  </LineChart>
-  </ResponsiveContainer>
-</div>
-
-
-  </Flex>
-
-  {/* RIGHT: Top Selling Products */}
-  <Flex
-    direction="column"
-    style={{ flex: 1 }}
-    className="kb-chart-card"
-  >
-    <Text weight="bold" mb="2">
-      Top Selling Products
-    </Text>
-
-    {/* Chart goes here */}
-    <div className="kb-card">
-      
-  <ResponsiveContainer width="100%" height={250}>
-    <BarChart data={topProductsData} layout="vertical" >
-     <XAxis
-    type="number"
-    allowDecimals={false}
-   
-  />
-  <YAxis
-    type="category"
-    dataKey="name"
-    
-  />
-      <Tooltip
-      cursor={false}
-  contentStyle={{
-    backgroundColor: 'var(--tooltip-bg)',
-    border: '1px solid var(--tooltip-border)',
-    color: 'var(--tooltip-text)', 
-  }}
-  labelStyle={{
-    color: 'var(--tooltip-label)',
-  }}
-  itemStyle={{
-    color: 'var(--tooltip-text)', 
-  }}
-      
-      />
-     <Bar
-  dataKey="count"
-  fill="var(--accent-9)"
-  barSize={18}
-  radius={[0, 6, 6, 0]}
-  activeBar={(props) => (
-    <Rectangle
-      {...props}
-      height={props.height + 12}   
-      y={props.y - 8}             
-      fill="var(--accent-9)"
-    />
-  )}
-/>
-    </BarChart>
-  </ResponsiveContainer>
-</div>
-
-
-  </Flex>
-
- </Flex>
- <Text size="4" weight="bold">
+      {/* Rest of your expense breakdown... */}
+       <Text size="4" weight="bold">
           Expense Breakdown
         </Text>
 
@@ -380,12 +147,6 @@ return (
           />
 
         </div>
-
-
-
-</Flex>
-      
-      
-    
+    </Flex>
   );
 }
