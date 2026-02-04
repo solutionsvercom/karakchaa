@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { Plus, Trash2,Pencil, } from "lucide-react";
 
 import {
   Flex,
@@ -35,7 +36,7 @@ type Customer = {
 
 /* ================= DATA ================= */
 
-const customers: Customer[] = [
+export const customers: Customer[] = [
   {
     id: 1,
     name: "Raju Barua",
@@ -64,6 +65,7 @@ const customers: Customer[] = [
     loyaltyPoints: 320,
   },
 ];
+
 
 /* ================= COMPONENT ================= */
 
@@ -158,10 +160,10 @@ export default function Customers() {
                 navigate(`/dashboard/customer/${row.id}/edit-customer`)
               }
             >
-              Edit
+           <Pencil size={14} />   Edit
             </DropdownMenu.Item>
             <DropdownMenu.Item color="red">
-              Delete
+            <Trash2 size={14} />  Delete
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
@@ -175,9 +177,7 @@ export default function Customers() {
     <>
       <Flex direction="column" gap="5" width="100%">
         {/* ===== PAGE TITLE ===== */}
-        <Text size="5" weight="bold">
-          Customers
-        </Text>
+       
 
         {/* ===== SUMMARY ===== */}
         <div className="kb-summary-row">

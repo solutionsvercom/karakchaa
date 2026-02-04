@@ -12,6 +12,7 @@ import {
   UserCog,
   Store,
   Wallet,
+  BarChart3,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -28,6 +29,8 @@ const menuItems = [
   { label: 'Expenses', path: '/Dashboard/Expenses', icon: <Wallet size={16} /> },
   { label: 'Suppliers', path: '/Dashboard/Suppliers', icon: <Truck size={16} /> },
   { label: 'Employees', path: '/Dashboard/Employees', icon: <UserCog size={16} /> },
+  { label: 'Reports', path: '/Dashboard/Reports', icon: <BarChart3 size={16} /> },
+  
 ];
 
 type SidebarProps = {

@@ -20,7 +20,6 @@ type Props<T extends string> = {
 };
 
 
-
 const FieldRenderer = <T extends string>({
   field,
   value,
@@ -159,7 +158,7 @@ case "switch":
           <span
             style={{
               fontSize: 14,
-              
+              color: value ? "#111827" : "#9ca3af",
             }}
           >
             {value ? format(value, "dd-MMM-yyyy") : "Select date"}

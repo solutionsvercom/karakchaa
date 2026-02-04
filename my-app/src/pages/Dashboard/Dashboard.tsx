@@ -1,17 +1,10 @@
-import React from 'react';
-import DashboardCards from '../../components/dynamicComponents/Cards';
+import React from "react";
+import Dashboard from "../../modules/Dashboard/dashboard";
 
-const DashboardPage: React.FC = () => {
+export default function EmployeesPage() {
   return (
-    <>
-      <DashboardCards />
-
-      {/* You can add charts / tables here later */}
-      <section className="kb-main-placeholder">
-        Sales Trend (Last 7 Days) / Low Stock, etc.
-      </section>
-    </>
+    <div >
+      <Dashboard />
+    </div>
   );
-};
-
-export default DashboardPage;
+}
