@@ -11,6 +11,7 @@ import {
   filterLastNDays } from "../../components/dynamicComponents/Charts";
 import { mockSalesData,calculateTotals } from "../Sales/Sales";
 import { LowStockAlert } from "../../components/dynamicComponents/Charts/LowStockAlert";
+import { RecentSales } from "../../components/dynamicComponents/Charts/RecentSales";
 import { mockStockData, getStockStats } from "../Stockmanagement/Stockmanagement";
 import { customers } from "../Customers/Customers";
 
@@ -81,6 +82,10 @@ const weeklySummary = calculateTotals(last7DaysData);
           height={300}
           maxProducts={3}
           barSize={50}
+        />
+        <RecentSales 
+          sales={mockSalesData}
+          limit={5}
         />
       </Flex>
     </Flex>
