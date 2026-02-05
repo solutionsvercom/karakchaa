@@ -1,9 +1,11 @@
 import React from "react";
+import { ReactNode } from "react";
+
 
 /* ---------- TYPES ---------- */
 export type SummaryCardProps = {
   title: string;
-  value: string;
+  value: ReactNode;
   subtitle?: string;
   accentColor: string;
   softColor: string;

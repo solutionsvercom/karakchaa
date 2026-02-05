@@ -3,12 +3,23 @@ import { Flex, Button, Text, DropdownMenu } from "@radix-ui/themes";
 import { ChevronDown } from "lucide-react";
 import { useDataFilter } from "../../hooks/useDataFilter";
 import { mockSalesData, calculateTotals } from "../Sales/Sales";
+import { ExpenseTransaction, calculateExpenseTotals,mockExpenses } from "../Expenses/Expenses";
 import { RevenueTrendChart, TopProductsChart,buildRevenueTrendSmart,buildTopProducts, } from "../../components/dynamicComponents/Charts";
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
+
+
+
 export default function Reports() {
   const { category, setCategory, filteredData } = useDataFilter(mockSalesData);
-
   const salesSummary = calculateTotals(filteredData);
+  const {
+  totalExpenses,
+  thisMonthExpenses,
+  totalTransactions,
+  averageExpense,
+} = calculateExpenseTotals(mockExpenses);
+const netProfit = salesSummary.totalRevenue - totalExpenses;
+
  const revenueTrendData = buildRevenueTrendSmart(filteredData, category);
   const topProductsData = buildTopProducts(filteredData);
 
@@ -67,18 +78,29 @@ export default function Reports() {
           />
           <SummaryCard
             title="Total Expenses"
-            value={String()}
+            value={String( totalExpenses)}
             accentColor="#FF9100"
             softColor="#FFF3E0"
             icon="💵"
           />
-          <SummaryCard
-            title="Net Profit"
-            value={String()}
-            accentColor="#2962FF"
-            softColor="#E3F2FD"
-            icon="📈"
-          />
+         <SummaryCard
+  title="Net Profit"
+  value={
+    <span
+      style={{
+        color: netProfit >= 0 ? "#16A34A" : "#DC2626",
+        fontWeight: 600,
+      }}
+    >
+      {netProfit < 0 ? "-" : "+"}
+      ₹{Math.abs(netProfit).toLocaleString()}
+    </span>
+  }
+  accentColor="#2962FF"
+  softColor="#E3F2FD"
+  icon={netProfit >= 0 ? "📈" : "📉"}   
+/>
+
         </div>
 
 

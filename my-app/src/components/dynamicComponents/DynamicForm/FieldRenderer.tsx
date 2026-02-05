@@ -5,12 +5,8 @@ import {
   Switch,
 } from "@radix-ui/themes";
 import { FormField } from "./types";
-import * as Popover from "@radix-ui/react-popover";
-import { DayPicker } from "react-day-picker";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import "react-day-picker/style.css";
-
+import { DatePicker } from "./DatePicker";
+import "./DatePicker.css";
 
 
 type Props<T extends string> = {
@@ -136,104 +132,9 @@ case "switch":
       onCheckedChange={onChange}
     />
   );
-  case "date":
-  return (
-    <Popover.Root>
-      <Popover.Trigger asChild>
-        <button
-          type="button"
-          style={{
-            width: "100%",
-            height: 35,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "0 12px",
-            border: "1px solid #e5e7eb",
-            borderRadius: 10,
-            background: "transparent",
-            cursor: "pointer",
-          }}
-        >
-          <span
-            style={{
-              fontSize: 14,
-              color: value ? "#111827" : "#9ca3af",
-            }}
-          >
-            {value ? format(value, "dd-MMM-yyyy") : "Select date"}
-          </span>
-
-          <CalendarIcon size={16} color="#6b7280" />
-        </button>
-      </Popover.Trigger>
-
-      <Popover.Content
-        side="bottom"
-        align="start"
-        sideOffset={6}
-        avoidCollisions={false}
-        style={{
-          background: "var(--color-panel)", // Radix theme token
-          borderRadius: 12,
-          padding: 0,
-          boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
-        }}
-      >
-        <DayPicker
-  mode="single"
-  selected={value instanceof Date ? value : undefined}
-  onSelect={(date) => {
-    if (!date) return;
-    onChange(date);          // ✅ store selected date
-  }}
-/>
-
-
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: 4,
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => onChange(undefined)}
-            style={{
-              fontSize: 12,
-              color: "#2563eb",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            Clear
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onChange(new Date())}
-            style={{
-              fontSize: 12,
-              color: "#2563eb",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            Today
-          </button>
-        </div>
-      </Popover.Content>
-    </Popover.Root>
-  );
-
-
-
-
-
+  
+case "date":
+  return <DatePicker value={value} onChange={onChange} />;
 
 
    case "file":

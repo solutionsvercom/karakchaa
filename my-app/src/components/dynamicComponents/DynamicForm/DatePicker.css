@@ -1,0 +1,87 @@
+/* Custom Day Picker Styles */
+
+.custom-day-picker {
+    width: 100%;
+}
+
+.custom-day-picker .rdp {
+    --rdp-cell-size: 24px;
+    --rdp-accent-color: var(--accent-9);
+    --rdp-background-color: var(--accent-a3);
+    margin: 0;
+    font-size: 12px;
+}
+
+.custom-day-picker .rdp-months {
+    margin: 0;
+}
+
+.custom-day-picker .rdp-month {
+    margin: 0;
+    width: 100%;
+}
+
+.custom-day-picker .rdp-table {
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+}
+
+.custom-day-picker .rdp-caption {
+    display: none !important;
+}
+
+.custom-day-picker .rdp-nav {
+    display: none !important;
+}
+
+.custom-day-picker .rdp-head_cell {
+    color: var(--gray-11);
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    width: 26px;
+    padding: 2px 0;
+}
+
+.custom-day-picker .rdp-day {
+    color: var(--gray-12);
+    border-radius: 4px;
+    font-size: 11px;
+    width: 26px;
+    height: 26px;
+    margin: 0;
+}
+
+.custom-day-picker .rdp-day:hover:not(.rdp-day_selected) {
+    background-color: var(--gray-a3);
+}
+
+.custom-day-picker .rdp-day_selected {
+    background-color: var(--accent-9) !important;
+    color: white !important;
+    font-weight: 600;
+}
+
+.custom-day-picker .rdp-day_today:not(.rdp-day_selected) {
+    font-weight: 600;
+    color: var(--accent-11);
+}
+
+.custom-day-picker .rdp-day_outside {
+    color: var(--gray-a8);
+    opacity: 0.3;
+}
+
+.custom-day-picker .rdp-cell {
+    padding: 0.5px;
+}
+
+.custom-day-picker .rdp-tbody {
+    border: 0;
+}
+
+.custom-day-picker .rdp-row {
+    margin: 1px 0;
+    /* 👈 REDUCED row spacing */
+}
