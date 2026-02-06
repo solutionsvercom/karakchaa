@@ -204,7 +204,7 @@ const ExpensesTable: React.FC = () => {
 
               {/* Actions */}
                         
-          <td style={{ padding: "12px 16px", textAlign: "center",borderBottom: "1px solid var(--gray-4)", }}>
+          <td style={{ padding: "12px 16px", textAlign: "left",borderBottom: "1px solid var(--gray-4)", }}>
             <DropdownMenu.Root>
               <DropdownMenu.Trigger >
                 <Button
@@ -312,22 +312,20 @@ export default function Expenses() {
       >
         <Flex align="center" gap="3">
           {/* Search */}
-          <Box style={{ width: "60%" }}>
+          
             <Searchbar
               searchValue={searchValue}
               onSearchChange={setSearchValue}
               placeholder="Search expenses..."
             />
-          </Box>
+          
 
           {/* Category Filter */}
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               <Button
                 variant="outline"
-                style={{
-                backgroundColor: "white",
-                  
+                style={{                  
                   color: "var(--gray-12)",
                   border: "1px solid #d1d5db",
                   boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
