@@ -5,10 +5,10 @@ import {
   Badge,
   IconButton,
   Box,
+  DropdownMenu,
 } from "@radix-ui/themes";
-import { DropdownMenu } from "@radix-ui/themes";
 import { DotsVerticalIcon, CubeIcon } from "@radix-ui/react-icons";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Plus } from "lucide-react";
 
 /* ---------------- TYPES ---------------- */
 
@@ -22,10 +22,13 @@ export type ProductCardProps = {
   category: Category;
   image?: string;
 
-  // ✅ CALLBACK ONLY (NO LOGIC)
+  /** ✅ NEW (POS support) */
+  variant?: "default" | "pos";
+  onAdd?: () => void;
+
+  /** Existing callbacks */
   onEdit?: () => void;
   onDelete?: () => void;
-  
 };
 
 /* -------- CATEGORY → COLOR MAP -------- */
@@ -55,9 +58,13 @@ export default function ProductCard({
   stock,
   category,
   image,
+  variant = "default",
+  onAdd,
   onEdit,
   onDelete,
 }: ProductCardProps) {
+  const isPOS = variant === "pos";
+
   const safeCategory: Category =
     category && categoryColorMap[category] ? category : "other";
 
@@ -77,38 +84,40 @@ export default function ProductCard({
         transition: "all 0.25s ease",
       }}
     >
-      {/* MENU */}
-      <DropdownMenu.Root>
-        <DropdownMenu.Trigger>
-          <IconButton
-            variant="soft"
-            radius="full"
-            style={{
-              position: "absolute",
-              top: 10,
-              right: 10,
-              zIndex: 10,
-              background: "white",
-            }}
-          >
-            <DotsVerticalIcon />
-          </IconButton>
-        </DropdownMenu.Trigger>
+      {/* MENU (HIDDEN IN POS) */}
+      {!isPOS && (
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            <IconButton
+              variant="soft"
+              radius="full"
+              style={{
+                position: "absolute",
+                top: 10,
+                right: 10,
+                zIndex: 10,
+                background: "white",
+              }}
+            >
+              <DotsVerticalIcon />
+            </IconButton>
+          </DropdownMenu.Trigger>
 
-        <DropdownMenu.Content align="end">
-          {onEdit && (
-            <DropdownMenu.Item onSelect={onEdit}>
-             <Pencil size={14} />  Edit
-            </DropdownMenu.Item>
-          )}
+          <DropdownMenu.Content align="end">
+            {onEdit && (
+              <DropdownMenu.Item onSelect={onEdit}>
+                <Pencil size={14} /> Edit
+              </DropdownMenu.Item>
+            )}
 
-          {onDelete && (
-            <DropdownMenu.Item color="red" onSelect={onDelete}>
-            <Trash2 size={14} />  Delete
-            </DropdownMenu.Item>
-          )}
-        </DropdownMenu.Content>
-      </DropdownMenu.Root>
+            {onDelete && (
+              <DropdownMenu.Item color="red" onSelect={onDelete}>
+                <Trash2 size={14} /> Delete
+              </DropdownMenu.Item>
+            )}
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
+      )}
 
       {/* IMAGE */}
       <Box
@@ -124,11 +133,7 @@ export default function ProductCard({
           <img
             src={image}
             alt={name}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         ) : (
           <CubeIcon width={54} height={54} color="#cbd5e1" />
@@ -137,34 +142,45 @@ export default function ProductCard({
 
       {/* CONTENT */}
       <Flex direction="column" gap="3" p="3">
-        <Flex justify="between" align="start">
-          <Flex direction="column" gap="1">
-            <Text weight="medium" size="3">
-              {name}
-            </Text>
-            <Text size="1" color="gray">
-              SKU: {sku}
-            </Text>
-          </Flex>
-
-          <Text weight="bold" size="3" color="violet">
-            ₹{price}
-          </Text>
-        </Flex>
+        <Text weight="medium" size="3">
+          {name}
+        </Text>
 
         <Flex justify="between" align="center">
-          <Badge
-            radius="full"
-            variant="soft"
-            color={categoryColorMap[safeCategory]}
-          >
-            {formatLabel(safeCategory)}
-          </Badge>
-
-          <Text size="2" color={lowStock ? "red" : "gray"}>
-            {lowStock ? "Low stock" : "Stock"}: {stock}
+          <Text weight="bold" size="4" color="violet">
+            ₹{price}
           </Text>
+
+          {/* ✅ POS + BUTTON */}
+          {isPOS && (
+            <IconButton
+              radius="full"
+              size="3"
+              color="violet"
+              // onClick={onAdd}
+              onClick={() => onAdd?.()}
+            >
+              <Plus size={18} />
+            </IconButton>
+          )}
         </Flex>
+
+        {/* DEFAULT MODE DETAILS */}
+        {!isPOS && (
+          <Flex justify="between" align="center">
+            <Badge
+              radius="full"
+              variant="soft"
+              color={categoryColorMap[safeCategory]}
+            >
+              {formatLabel(safeCategory)}
+            </Badge>
+
+            <Text size="2" color={lowStock ? "red" : "gray"}>
+              {lowStock ? "Low stock" : "Stock"}: {stock}
+            </Text>
+          </Flex>
+        )}
       </Flex>
     </Card>
   );
