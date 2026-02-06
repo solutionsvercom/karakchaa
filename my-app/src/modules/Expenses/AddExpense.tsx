@@ -1,6 +1,11 @@
-// import { Dialog } from "@radix-ui/themes";
 import DynamicForm from "../../components/dynamicComponents/DynamicForm/DynamicForm";
 import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
+import { useNavigate } from "react-router-dom";
+
+interface AddExpensesProps {
+  mode: "create" | "edit";
+  initialValues?: any;
+}
 
 type ExpenseField =
   | "title"
@@ -11,7 +16,9 @@ type ExpenseField =
   | "vendor"
   | "notes";
 
-const AddExpense = () => {
+const AddExpense = ({ mode, initialValues }: AddExpensesProps) => {
+  const navigate = useNavigate();
+
   const fields: FormField<ExpenseField>[] = [
     {
       name: "title",
@@ -25,6 +32,8 @@ const AddExpense = () => {
       name: "category",
       label: "Category",
       type: "select",
+      required: true,
+      span: 1,
       options: [
         { label: "Miscellaneous", value: "misc" },
         { label: "Rent", value: "rent" },
@@ -42,22 +51,28 @@ const AddExpense = () => {
       name: "amount",
       label: "Amount (₹)",
       type: "number",
+      required: true,
+      span: 1,
       placeholder: "0.00",
     },
     {
       name: "paymentMethod",
       label: "Payment Method",
       type: "select",
+      required: true,
+      span: 1,
       options: [
         { label: "Cash", value: "cash" },
         { label: "UPI", value: "upi" },
-        { label: "Bank", value: "bank" },
+        { label: "Bank Transfer", value: "bank" },
       ],
     },
     {
       name: "date",
       label: "Date",
       type: "date",
+      required: true,
+      span: 1,
     },
     {
       name: "vendor",
@@ -76,15 +91,38 @@ const AddExpense = () => {
   ];
 
   return (
-  <DynamicForm
-    fields={fields}
-    submitText="Record Expense"
-    cancelText="Cancel"
-    onSubmit={(data) => {
-      console.log("Expense:", data);
-    }}
-  />
-);
-}
+    <DynamicForm
+      title={mode === "edit" ? "Edit Expense" : "Add Expense"}
+      fields={fields}
+      initialValues={initialValues}
+      submitText={mode === "edit" ? "Update" : "Create"}
+      cancelText="Cancel"
+      onCancel={() => {
+        navigate("/dashboard/expenses");
+      }}
+      confirm={{
+        title:
+          mode === "edit"
+            ? "Are you sure you want to update?"
+            : "Are you absolutely sure?",
+        description:
+          mode === "edit"
+            ? "This will update the expense details."
+            : "This action cannot be undone.",
+        confirmText: mode === "edit" ? "Yes, Update" : "Yes, Create",
+        cancelText: "No, go back",
+      }}
+      onSubmit={(data) => {
+        if (mode === "create") {
+          console.log("POST /expenses", data);
+          navigate("/dashboard/expenses");
+        } else {
+          console.log("PUT /expenses/:id", data);
+          navigate("/dashboard/expenses");
+        }
+      }}
+    />
+  );
+};
 
 export default AddExpense;

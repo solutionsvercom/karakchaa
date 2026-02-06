@@ -204,9 +204,7 @@ export default function Employees() {
     <>
       <Flex direction="column" gap="5" width="100%">
         {/* ===== TITLE ===== */}
-        <Text size="5" weight="bold">
-          Employees
-        </Text>
+        
 
         {/* ===== SUMMARY CARDS (4) ===== */}
         <div className="kb-summary-row">

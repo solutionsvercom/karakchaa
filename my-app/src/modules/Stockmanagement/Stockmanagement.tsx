@@ -16,9 +16,9 @@ import { SummaryCard } from "../../components/dynamicComponents/Cards";
 
 /* ================= TYPES ================= */
 
-type StockStatus = "in-stock" | "low-stock" | "out-of-stock";
+export type StockStatus = "in-stock" | "low-stock" | "out-of-stock";
 
-type StockItem = {
+export type StockItem = {
   id: number;
   product: string;
   sku: string;
@@ -28,7 +28,7 @@ type StockItem = {
   status: StockStatus;
 };
 
-type StockHistory = {
+export type StockHistory = {
   id: number;
   product: string;
   type: "in" | "out";
@@ -39,29 +39,42 @@ type StockHistory = {
 
 /* ================= MOCK DATA ================= */
 
-const mockStockData: StockItem[] = [
+export const mockStockData: StockItem[] = [
   { id: 1, product: "Samosa", sku: "SNK-001", category: "Snacks", currentStock: 5, minLevel: 10, status: "low-stock" },
   { id: 2, product: "Cold Coffee", sku: "BEV-004", category: "Beverages", currentStock: 50, minLevel: 10, status: "in-stock" },
-  { id: 3, product: "Veg Momos", sku: "SNK-003", category: "Snacks", currentStock: 40, minLevel: 10, status: "in-stock" },
+  { id: 3, product: "Veg Momos", sku: "SNK-003", category: "Snacks", currentStock: 40, minLevel: 10, status: "out-of-stock" },
   { id: 4, product: "Thali Meal", sku: "MEL-001", category: "Meals", currentStock: 25, minLevel: 8, status: "in-stock" },
   { id: 5, product: "Pakora", sku: "SNK-002", category: "Snacks", currentStock: 60, minLevel: 15, status: "in-stock" },
   { id: 6, product: "Chicken Momos", sku: "SNK-004", category: "Snacks", currentStock: 35, minLevel: 20, status: "in-stock" },
-  { id: 7, product: "Gulab Jamun", sku: "DES-001", category: "Desserts", currentStock: 45, minLevel: 15, status: "in-stock" },
+  { id: 7, product: "Gulab Jamun", sku: "DES-001", category: "Desserts", currentStock: 45, minLevel: 15, status: "low-stock" },
   { id: 8, product: "Biryani", sku: "MEL-002", category: "Meals", currentStock: 0, minLevel: 10, status: "out-of-stock" },
 ];
 
 /* ================= HELPERS ================= */
 
-const getStockColor = (status: StockStatus): "green" | "yellow" | "red" =>
+export const getStockColor = (status: StockStatus): "green" | "yellow" | "red" =>
   status === "in-stock" ? "green" : status === "low-stock" ? "yellow" : "red";
 
-const getStockLabel = (status: StockStatus) =>
+export const getStockLabel = (status: StockStatus) =>
   status === "in-stock"
     ? "In Stock"
     : status === "low-stock"
     ? "Low Stock"
     : "Out of Stock";
+    
+export function getStockStats(products: StockItem[]) {
+  const totalProducts = products.length;
+  const inStock = products.filter((p) => p.status === "in-stock").length;
+  const lowStock = products.filter((p) => p.status === "low-stock").length;
+  const outOfStock = products.filter((p) => p.status === "out-of-stock").length;
 
+  return {
+    totalProducts,
+    inStock,
+    lowStock,
+    outOfStock,
+  };
+}
 /* ================= MAIN COMPONENT ================= */
 
 export default function Stockmanagement() {
