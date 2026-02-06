@@ -42,7 +42,7 @@ export const SupplierCard: React.FC<SupplierCardProps> = ({
 }) => {
   return (
     <div className="kb-supplier-card">
-      {/* ================= HEADER ================= */}
+      {/* HEADER */}
       <div className="kb-supplier-card-header">
         <div className="kb-supplier-card-header-left">
           <div
@@ -60,32 +60,31 @@ export const SupplierCard: React.FC<SupplierCardProps> = ({
           </div>
         </div>
 
-        {/* 3-DOT MENU */}
+        {/* 3 DOT MENU */}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
-            <IconButton variant="ghost" size="2">
+            <IconButton
+              variant="ghost"
+              size="2"
+              className="kb-supplier-card-menu"
+            >
               <MoreVertical size={18} />
             </IconButton>
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Content align="end" sideOffset={6}>
             <DropdownMenu.Item onClick={onEdit}>
-              <Pencil size={16} />
-              Edit
+              <Pencil size={16} /> Edit
             </DropdownMenu.Item>
-
             <DropdownMenu.Separator />
-
             <DropdownMenu.Item color="red" onClick={onDelete}>
-              <Trash2 size={16} />
-              Delete
+              <Trash2 size={16} /> Delete
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
       </div>
-      {/* ✅ HEADER CLOSED HERE */}
 
-      {/* ================= CONTACT INFO ================= */}
+      {/* CONTACT INFO */}
       <div className="kb-supplier-card-details">
         {phone && (
           <div className="kb-supplier-card-row">
@@ -109,30 +108,22 @@ export const SupplierCard: React.FC<SupplierCardProps> = ({
 
       <div className="kb-supplier-card-divider" />
 
-      {/* ================= PRODUCTS ================= */}
+      {/* PRODUCTS */}
       <div>
-        <div className="kb-supplier-card-label">
-          Products Supplied
-        </div>
+        <div className="kb-supplier-card-label">Products Supplied</div>
         <div>{products}</div>
       </div>
 
-      {/* ================= FOOTER ================= */}
+      {/* FOOTER */}
       <div className="kb-supplier-card-footer">
         <span
-          className={`kb-supplier-status ${
-            status === "Active" ? "active" : "inactive"
-          }`}
+          className="kb-supplier-status"
           style={{ background: softColor, color: accentColor }}
         >
           {status}
         </span>
 
-        {gst && (
-          <span className="kb-supplier-gst">
-            GST: {gst}
-          </span>
-        )}
+        {gst && <span className="kb-supplier-gst">GST: {gst}</span>}
       </div>
     </div>
   );

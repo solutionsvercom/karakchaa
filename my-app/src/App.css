@@ -624,3 +624,122 @@
     position: relative;
     z-index: 10;
 }
+
+/* ================= SUPPLIER CARD ================= */
+
+.kb-supplier-card {
+  background: var(--gray-1);
+  color: var(--gray-12);
+  border-radius: 16px;
+  padding: 24px;
+  width: 360px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease,
+    color 0.25s ease;
+}
+
+/* Hover lift */
+.kb-supplier-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
+}
+
+/* Header */
+.kb-supplier-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.kb-supplier-card-header-left {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Avatar (Accent driven) */
+.kb-supplier-card-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--accent-9);
+  color: var(--accent-contrast);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Text */
+.kb-supplier-card-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--gray-12);
+}
+
+.kb-supplier-card-person {
+  font-size: 13px;
+  color: var(--gray-10);
+}
+
+/* Menu (3-dot) */
+.kb-supplier-card-menu:hover {
+  background: var(--gray-a3);
+}
+
+/* Details */
+.kb-supplier-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kb-supplier-card-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 14px;
+  color: var(--gray-11);
+}
+
+/* Divider */
+.kb-supplier-card-divider {
+  height: 1px;
+  background: var(--gray-a5);
+}
+
+/* Products */
+.kb-supplier-card-label {
+  font-size: 13px;
+  color: var(--gray-10);
+  margin-bottom: 4px;
+}
+
+/* Footer */
+.kb-supplier-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kb-supplier-status {
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--accent-a3);
+  color: var(--accent-9);
+}
+
+.kb-supplier-gst {
+  font-size: 12px;
+  color: var(--gray-10);
+}
