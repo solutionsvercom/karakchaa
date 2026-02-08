@@ -147,7 +147,7 @@ export default function ProductCard({
         </Text>
 
         <Flex justify="between" align="center">
-          <Text weight="bold" size="4" color="violet">
+          <Text weight="bold" size="4" >
             ₹{price}
           </Text>
 
@@ -156,7 +156,7 @@ export default function ProductCard({
             <IconButton
               radius="full"
               size="3"
-              color="violet"
+              
               // onClick={onAdd}
               onClick={() => onAdd?.()}
             >
