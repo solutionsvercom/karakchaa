@@ -113,7 +113,7 @@ color: "CanvasText",
             </Text>
 
             <Flex justify="between" mb="2">
-              <Text size="2" color="gray">
+              <Text size="2" >
                 {items.length} item(s)
               </Text>
               <Text size="2">₹{total}</Text>
@@ -121,7 +121,7 @@ color: "CanvasText",
 
             {discount > 0 && (
               <Flex justify="between" mb="3">
-                <Text size="2" color="gray">
+                <Text size="2">
                   Discount
                 </Text>
                 <Text size="2" color="red">
@@ -134,7 +134,7 @@ color: "CanvasText",
               <Text size="4" weight="bold">
                 Total
               </Text>
-              <Text size="5" weight="bold" color="violet">
+              <Text size="5" weight="bold" color="green">
                 ₹{discountedTotal}
               </Text>
             </Flex>
@@ -157,8 +157,8 @@ color: "CanvasText",
                   padding: "0 12px",
                   border: "1px solid var(--gray-a6)",
                   borderRadius: 8,
-                  background: "var(--color-background)",
-                  color: "var(--gray-12)",
+                 
+                  
                   fontSize: 14,
                 }}
               />
@@ -179,8 +179,8 @@ color: "CanvasText",
                   padding: "0 12px",
                   border: "1px solid var(--gray-a6)",
                   borderRadius: 8,
-                  background: "var(--color-background)",
-                  color: "var(--gray-12)",
+                  
+                  
                   fontSize: 14,
                 }}
               />
@@ -202,7 +202,7 @@ color: "CanvasText",
                     padding: "10px 16px",
                     border: "none",
                     borderRadius: 8,
-                    background: orderType === btn.value ? "var(--violet-9)" : "var(--gray-a3)",
+                    background: orderType === btn.value ? "var(--green-9)" : "var(--gray-a3)",
                     
                     fontWeight: 500,
                     fontSize: 14,
@@ -236,7 +236,7 @@ color: "CanvasText",
                     padding: "10px",
                     border: "none",
                     borderRadius: 8,
-                    background: paymentMethod === btn.value ? "var(--violet-9)" : "var(--gray-a3)",
+                    background: paymentMethod === btn.value ? "var(--green-9)" : "var(--gray-a3)",
                     
                     fontWeight: 500,
                     fontSize: 13,
@@ -269,8 +269,8 @@ color: "CanvasText",
                 padding: 12,
                 border: "1px solid var(--gray-a6)",
                 borderRadius: 8,
-                background: "var(--color-background)",
-                color: "var(--gray-12)",
+                
+                
                 fontSize: 14,
                 resize: "vertical",
                 fontFamily: "inherit",

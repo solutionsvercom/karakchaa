@@ -756,21 +756,3 @@
     font-size: 12px;
     color: var(--gray-10);
 }
-
-
-/* Checkout Dialog Background - Dark Mode Support */
-
-.checkout-dialog {
-    background: white;
-}
-
-[data-theme="dark"] .checkout-dialog {
-    background: #1a1a1a;
-}
-
-
-/* OR if using class-based dark mode */
-
-.dark .checkout-dialog {
-    background: #1a1a1a;
-}
