@@ -101,7 +101,7 @@ export default function Suppliers() {
             products={s.products}
             gst={s.gst}
             status={s.status}
-            accentColor="#7C5CFF"
+            accentColor=""
             softColor="rgba(124,92,255,0.15)"
             onEdit={() => setEditingSupplier(s)}
             onDelete={() => console.log("Delete", s.id)}

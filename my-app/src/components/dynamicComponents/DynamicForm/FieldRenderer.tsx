@@ -135,6 +135,44 @@ case "switch":
   
 case "date":
   return <DatePicker value={value} onChange={onChange} />;
+  
+  case "button-group":
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: field.options && field.options.length <= 4 
+          ? `repeat(${field.options.length}, 1fr)` 
+          : "repeat(3, 1fr)",
+        gap: 8,
+      }}
+    >
+      {field.options?.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => onChange(option.value)}
+          style={{
+            padding: "10px 12px",
+            border: "none",
+            borderRadius: 6,
+            background: value === option.value ? "var(--violet-9)" : "var(--gray-a3)",
+            color: value === option.value ? "white" : "var(--gray-12)",
+            fontWeight: 500,
+            fontSize: 13,
+            cursor: "pointer",
+            transition: "all 0.2s",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 4,
+          }}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
 
 
    case "file":
