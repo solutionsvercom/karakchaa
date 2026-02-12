@@ -24,7 +24,7 @@ const Cart = () => {
                 width: 28,
                 height: 28,
                 borderRadius: "50%",
-                background: "var(--violet-9)",
+                background: "var(--accent-9)",
                 color: "white",
                 fontWeight: 600,
               }}
