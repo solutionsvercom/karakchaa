@@ -1,6 +1,12 @@
 import React from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Plus, Trash2,Pencil, } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchCustomers, fetchCustomerStats } from "../../features/CustomersSlice";
+import { RootState, AppDispatch } from "../../store/Store";
+import { useEffect } from "react";
+import { deleteCustomer } from "../../features/CustomersSlice";
+
 
 import {
   Flex,
@@ -24,8 +30,8 @@ import AddCustomer from "./AddCustomer";
 
 /* ================= TYPES ================= */
 
-type Customer = {
-  id: number;
+type CustomerRow = {
+  id: string;
   name: string;
   phone: string;
   email: string;
@@ -34,37 +40,8 @@ type Customer = {
   loyaltyPoints: number;
 };
 
-/* ================= DATA ================= */
 
-export const customers: Customer[] = [
-  {
-    id: 1,
-    name: "Raju Barua",
-    phone: "9876543214",
-    email: "raju@email.com",
-    purchases: 20,
-    totalSpent: 4500,
-    loyaltyPoints: 450,
-  },
-  {
-    id: 2,
-    name: "Sneha Borah",
-    phone: "9876543213",
-    email: "sneha@email.com",
-    purchases: 5,
-    totalSpent: 890,
-    loyaltyPoints: 89,
-  },
-  {
-    id: 3,
-    name: "Amit Kumar",
-    phone: "9876543212",
-    email: "amit@email.com",
-    purchases: 15,
-    totalSpent: 3200,
-    loyaltyPoints: 320,
-  },
-];
+/* ================= DATA ================= */
 
 
 /* ================= COMPONENT ================= */
@@ -80,22 +57,45 @@ export default function Customers() {
   const isEdit = location.pathname.endsWith("/edit-customer");
   const isDialogOpen = isAdd || isEdit;
 
+  const dispatch = useDispatch<AppDispatch>();
 
-  const customerToEdit = customers.find(
-    (c) => c.id === Number(id)
-  );
+const { customers, stats, loading } = useSelector(
+  (state: RootState) => state.customer
+);
+ const formattedCustomers: CustomerRow[] = customers?.map((c) => ({
+  id: c?._id || "",
+  name: c?.fullName || c?.fullName || "",
+  phone: c?.phoneNumber || "",
+  email: c?.email || "",
+  purchases: c?.totalPurchases || 0,
+  totalSpent: c?.totalSpent || 0,
+  loyaltyPoints: c?.points || 0,
+})) || [];
+
+
+
+useEffect(() => {
+  dispatch(fetchCustomers());
+  dispatch(fetchCustomerStats());
+}, [dispatch]);
+
+
+const customerToEdit = customers.find((c) => c._id === id);
+
 
   /* ================= FILTER ================= */
 
-  const filteredCustomers = customers.filter((c) =>
-    `${c.name} ${c.phone} ${c.email}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+  const filteredCustomers = formattedCustomers.filter((c) =>
+  `${c.name} ${c.phone} ${c.email}`
+    .toLowerCase()
+    .includes(search.toLowerCase())
+);
+
+
 
   /* ================= TABLE ================= */
 
-  const columns: Column<Customer>[] = [
+  const columns: Column<CustomerRow>[] = [
     {
       key: "customer",
       header: "Customer",
@@ -162,7 +162,8 @@ export default function Customers() {
             >
            <Pencil size={14} />   Edit
             </DropdownMenu.Item>
-            <DropdownMenu.Item color="red">
+            <DropdownMenu.Item color="red" onClick={() => dispatch(deleteCustomer(row.id))}
+>
             <Trash2 size={14} />  Delete
             </DropdownMenu.Item>
           </DropdownMenu.Content>
@@ -183,23 +184,21 @@ export default function Customers() {
         <div className="kb-summary-row">
           <SummaryCard
             title="Total Customers"
-            value={String(customers.length)}
+           value={String(stats?.totalCustomers || 0)}
             accentColor="#2962FF"
             softColor="#E3F2FD"
             icon="👥"
           />
           <SummaryCard
             title="Total Purchases"
-            value={String(customers.reduce((s, c) => s + c.purchases, 0))}
+           value={String(stats?.totalPurchases || 0)}
             accentColor="#00C853"
             softColor="#E5F9EE"
             icon="🛒"
           />
           <SummaryCard
             title="Revenue"
-            value={`₹${customers
-              .reduce((s, c) => s + c.totalSpent, 0)
-              .toLocaleString()}`}
+           value={`₹${(stats?.totalRevenue || 0).toLocaleString()}`}
             accentColor="#FF9100"
             softColor="#FFF3E0"
             icon="₹"
@@ -226,12 +225,13 @@ export default function Customers() {
 
         {/* ===== TABLE ===== */}
         <Table
-          data={filteredCustomers}
-          columns={columns}
-          emptyMessage="No customers found"
-          hoverable
-          striped
-        />
+  data={filteredCustomers}
+  columns={columns}
+  emptyMessage="No customers found"
+  hoverable
+  striped
+/>
+
       </Flex>
 
       {/* ===== ADD / EDIT DIALOG ===== */}
@@ -242,10 +242,24 @@ export default function Customers() {
         }}
       >
         <Dialog.Content maxWidth="420px">
-          <AddCustomer
-            mode={isEdit ? "edit" : "create"}
-            initialValues={isEdit ? customerToEdit : undefined}
-          />
+       <AddCustomer
+  key={customerToEdit?._id || "create"}   // 🔥 THIS FIXES PREFILL
+  mode={isEdit ? "edit" : "create"}
+  customerId={customerToEdit?._id}
+  initialValues={
+    isEdit && customerToEdit
+      ? {
+          name: customerToEdit.fullName || "",
+          phone: customerToEdit.phoneNumber || "",
+          email: customerToEdit.email || "",
+          address: customerToEdit.address || "",
+          notes: customerToEdit.notes || "",
+        }
+      : undefined
+  }
+/>
+
+
         </Dialog.Content>
       </Dialog.Root>
     </>
