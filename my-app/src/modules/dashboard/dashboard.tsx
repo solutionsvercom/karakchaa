@@ -13,7 +13,9 @@ import { mockSalesData,calculateTotals } from "../Sales/Sales";
 import { LowStockAlert } from "../../components/dynamicComponents/Charts/LowStockAlert";
 import { RecentSales } from "../../components/dynamicComponents/Charts/RecentSales";
 import { mockStockData, getStockStats } from "../Stockmanagement/Stockmanagement";
-import { customers } from "../Customers/Customers";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/Store";
+
 
 
 
@@ -31,6 +33,9 @@ const weeklySummary = calculateTotals(last7DaysData);
   const todayData = filterLastNDays(mockSalesData, 0);
   const todaySummary = calculateTotals(todayData);
   const stockStats = getStockStats(mockStockData);
+const { customers, stats } = useSelector(
+  (state: RootState) => state.customer
+);
 
   return (
     <Flex direction="column" gap="5" width="100%">

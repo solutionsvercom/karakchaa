@@ -1,10 +1,17 @@
 import DynamicForm from "../../components/dynamicComponents/DynamicForm/DynamicForm";
 import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
+import { useDispatch } from "react-redux";
+import { createCustomer, updateCustomer,fetchCustomers, 
+  fetchCustomerStats  } from "../../features/CustomersSlice";
+import { AppDispatch } from "../../store/Store";
+import { useNavigate } from "react-router-dom";
+
 
 /* ---------- PROPS (ADDED) ---------- */
 interface AddCustomerProps {
   mode: "create" | "edit";
   initialValues?: any;
+  customerId?: string;
 }
 
 /* ---------- FIELD TYPE ---------- */
@@ -16,7 +23,8 @@ type CustomerField =
   | "notes";
 
 /* ---------- COMPONENT ---------- */
-const AddCustomer = ({ mode, initialValues }: AddCustomerProps) => {
+const AddCustomer = ({ mode, initialValues, customerId }: AddCustomerProps) => {
+
   const fields: FormField<CustomerField>[] = [
     {
       name: "name",
@@ -56,6 +64,8 @@ const AddCustomer = ({ mode, initialValues }: AddCustomerProps) => {
       placeholder: "Additional notes...",
     },
   ];
+const dispatch = useDispatch<AppDispatch>();
+const navigate = useNavigate();
 
   return (
     <DynamicForm
@@ -79,13 +89,40 @@ const AddCustomer = ({ mode, initialValues }: AddCustomerProps) => {
         confirmText: mode === "edit" ? "Yes, Update" : "Yes, Create",
         cancelText: "No, go back",
       }}
-      onSubmit={(data) => {
-        if (mode === "create") {
-          console.log("POST /customers", data);
-        } else {
-          console.log("PUT /customers/:id", data);
-        }
-      }}
+      onSubmit={async (data) => {
+  try {
+    // 🔥 TRANSFORM FRONTEND → BACKEND FORMAT
+    const payload = {
+      fullName: data.name,
+      phoneNumber: data.phone,
+      email: data.email,
+      address: data.address,
+      notes: data.notes,
+    };
+
+    if (mode === "create") {
+      await dispatch(createCustomer(payload)).unwrap();
+    } else if (mode === "edit" && customerId) {
+      await dispatch(
+        updateCustomer({
+          id: customerId,
+          data: payload,
+        })
+      ).unwrap();
+    }
+
+    await dispatch(fetchCustomers());
+    await dispatch(fetchCustomerStats());
+
+    navigate("/dashboard/customer");
+
+  } catch (error) {
+    console.error("Failed:", error);
+  }
+}}
+
+
+
     />
   );
 };
