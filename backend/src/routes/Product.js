@@ -16,6 +16,8 @@ router.get("/:id", productController.getProduct);
 
 // Update product
 router.put("/:id", productController.updateProduct);
+// Delete product
+router.delete("/:id", productController.deleteProduct);
 
 // Enable / Disable product
 router.patch("/:id/status", productController.toggleProductStatus);

@@ -102,6 +102,20 @@ class ProductController {
       next(err);
     }
   }
+    async deleteProduct(req, res, next) {
+    try {
+      const product = await productService.deleteProduct(req.params.id);
+
+      res.json({
+        success: true,
+        message: "Product deleted successfully",
+        data: product,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
+
 
 module.exports = new ProductController();

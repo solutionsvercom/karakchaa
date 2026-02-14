@@ -64,6 +64,16 @@ async function toggleProductStatus(id, isActive) {
   product.isActive = isActive;
   return await product.save();
 }
+const deleteProduct = async (id) => {
+  const product = await Product.findByIdAndDelete(id);
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  return product;
+};
+
 
 /**
  * Get low stock products
@@ -82,4 +92,5 @@ module.exports = {
   updateProduct,
   toggleProductStatus,
   getLowStockProducts,
+  deleteProduct,
 };
