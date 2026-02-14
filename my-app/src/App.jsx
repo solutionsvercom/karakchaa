@@ -12,6 +12,8 @@ import ReportsPage from './pages/Dashboard/Reports'
 import SuppliersPage from './pages/Dashboard/Suppliers'
 import StockmanagementPage from './pages/Dashboard/Stockmanagement'
 import SalesPage from './pages/Dashboard/Sales'
+import ProtectedRoute from "./components/ProtectedRoute";
+
 
 
 import Login from './pages/Login'
@@ -28,11 +30,25 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         {/* Dashboard Parent */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
+       <Route
+  path="/dashboard"
+  element={
+    <ProtectedRoute>
+      <DashboardLayout />
+    </ProtectedRoute>
+  }
+>
+
           <Route index element={<DashboardPage />} />
           {/* <Route path="customer" element={<CustomerPage />} /> */}
           <Route path="customer/*" element={<CustomerPage />} />
-          <Route path="stockmanagement/*" element={<StockmanagementPage />} />
+          <Route path="customer/add-customer" element={<CustomerPage />} />
+          <Route path="customer/:id/edit-customer" element={<CustomerPage />} />
+    {/* Stock Management Routes */}
+<Route path="stockmanagement" element={<StockmanagementPage />} />
+<Route path="stockmanagement/stock-history" element={<StockmanagementPage />} />
+<Route path="stockmanagement/:id/add-stock" element={<StockmanagementPage />} />
+<Route path="stockmanagement/:id/remove-stock" element={<StockmanagementPage />} />
           <Route path="sales" element={<SalesPage />} />
           <Route path="employees/*" element={<EmployeesPage />} />
           <Route path="expenses/*" element={<ExpensesPage />} />
@@ -42,7 +58,7 @@ function App() {
           <Route path="reports" element={<ReportsPage />} />
           <Route path="suppliers/*" element={<SuppliersPage />} />
         </Route>
-
+<Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   )

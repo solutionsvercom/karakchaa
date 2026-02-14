@@ -1,6 +1,15 @@
-import { Flex, Button } from "@radix-ui/themes";
+import { Flex, Button, Callout } from "@radix-ui/themes";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react"; //  ADD THIS
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../../store/Store";
+import {
+  addStock,
+  removeStock,
+  fetchStockItems,
+  fetchStockStats,
+  clearError,
+} from "../../features/StockmanagementSlice";
 import DynamicForm from "../../components/dynamicComponents/DynamicForm/DynamicForm";
 import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
 import { X } from "lucide-react";
@@ -11,8 +20,8 @@ import * as Dialog from "@radix-ui/react-dialog";
 type StockFormField =
   | "quantity"
   | "reason"
-  | "supplier"      //  ADD THIS
-  | "unitCost"      //  ADD THIS
+  | "supplier"
+  | "unitCost"
   | "reference"
   | "notes";
 
@@ -20,8 +29,8 @@ type StockMode = "add" | "remove";
 
 interface AddStockProps {
   mode: StockMode;
+  productId: string;
   product: {
-    id: number;
     name: string;
     stock: number;
     unit: string;
@@ -30,9 +39,20 @@ interface AddStockProps {
 
 /* ---------------- COMPONENT ---------------- */
 
-export default function AddStock({ mode, product }: AddStockProps) {
+export default function AddStock({ mode, productId, product }: AddStockProps) {
   const navigate = useNavigate();
-  const [selectedReason, setSelectedReason] = useState<string>(""); //  ADD THIS
+  const dispatch = useDispatch<AppDispatch>();
+  const [selectedReason, setSelectedReason] = useState<string>("");
+
+  // Get error from Redux state
+  const error = useSelector((state: RootState) => state.stock.error);
+
+  // Clear error when component unmounts
+  useEffect(() => {
+    return () => {
+      dispatch(clearError());
+    };
+  }, [dispatch]);
 
   //  DYNAMIC FIELDS FUNCTION
   const getFields = (): FormField<StockFormField>[] => {
@@ -128,6 +148,13 @@ export default function AddStock({ mode, product }: AddStockProps) {
         </Dialog.Close>
       </Flex>
 
+      {/* ===== ERROR ALERT ===== */}
+      {error && (
+        <Callout.Root color="red" style={{ marginBottom: "16px" }}>
+          <Callout.Text>{error}</Callout.Text>
+        </Callout.Root>
+      )}
+
       {/* ===== PRODUCT INFO CARD ===== */}
       <div
         style={{
@@ -146,15 +173,51 @@ export default function AddStock({ mode, product }: AddStockProps) {
 
       {/* ===== FORM ===== */}
       <DynamicForm
-        fields={getFields()} //  NOW DYNAMIC
+        fields={getFields()}
         submitText={mode === "add" ? "Add Stock" : "Remove Stock"}
         cancelText="Cancel"
-        onCancel={() => navigate("/dashboard/stock")}
-        onSubmit={(data) => {
-          console.log(mode === "add" ? "ADD STOCK" : "REMOVE STOCK", data);
-          navigate("/dashboard/stock");
+        onCancel={() => {
+          dispatch(clearError());
+          navigate("/dashboard/stockmanagement");
         }}
-        //  ADD THIS TO TRACK REASON CHANGES
+        confirm={{
+          title:
+            mode === "add"
+              ? "Confirm Stock Addition"
+              : "Confirm Stock Removal",
+          description:
+            mode === "add"
+              ? "This will increase the stock quantity."
+              : "This will decrease the stock quantity.",
+          confirmText: mode === "add" ? "Yes, Add" : "Yes, Remove",
+          cancelText: "Cancel",
+        }}
+        onSubmit={async (data) => {
+          try {
+            dispatch(clearError());
+
+            const payload = {
+              id: productId,
+              quantity: Number(data.quantity),
+              reason: data.reason,
+              referenceNo: data.reference,
+              notes: data.notes,
+            };
+
+            if (mode === "add") {
+              await dispatch(addStock(payload)).unwrap();
+            } else {
+              await dispatch(removeStock(payload)).unwrap();
+            }
+
+            await dispatch(fetchStockItems());
+            await dispatch(fetchStockStats());
+
+            navigate("/dashboard/stockmanagement");
+          } catch (error) {
+            console.error("Failed:", error);
+          }
+        }}
         onFieldChange={(fieldName, value) => {
           if (fieldName === "reason") {
             setSelectedReason(value as string);
