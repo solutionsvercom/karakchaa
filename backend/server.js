@@ -2,13 +2,18 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
+// import errorMiddleware from "./src/middlewares/errorMiddleware.js";
 
 const app = express();
 
 /* ================= MIDDLEWARE ================= */
 app.use(cors());
 app.use(express.json());
+// app.use(errorMiddleware);
 app.use(express.urlencoded({ extended: true }));
+app.use("/api/products", require("./src/routes/Product"));
+app.use("/api/sales", require("./src/routes/Sale"));
+
 
 /* ================= ROUTES IMPORT ================= */
 const customerRoutes = require('./src/routes/CustomerRoutes');
@@ -19,6 +24,9 @@ const employeeRoutes = require('./src/routes/EmployeesRoutes');
 app.use('/api/customers', customerRoutes);
 app.use('/api/stock', stockRoutes);
 app.use('/api/employees', employeeRoutes);
+app.use("/api/products", require("./src/routes/Product"));
+app.use("/api/sales", require("./src/routes/Sale"));
+
 
 /* ================= BASIC ROUTES ================= */
 app.get('/', (req, res) => {
