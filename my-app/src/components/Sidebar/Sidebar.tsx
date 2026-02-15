@@ -19,19 +19,21 @@ import {
   ChevronDown,
   LogOut,
 } from "lucide-react";
+import { ROLE_ACCESS } from "../../config/RoleConfig";
 
 const menuItems = [
-  { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={16} /> },
-  { label: 'Point of Sale', path: '/dashboard/pos', icon: <ShoppingCart size={16} /> },
-  { label: 'Products', path: '/dashboard/products', icon: <Package size={16} /> },
-  { label: 'Sales', path: '/dashboard/sales', icon: <TrendingUp size={16} /> },
-  { label: 'Stock Management', path: '/dashboard/stockmanagement', icon: <Store size={16} /> },
-  { label: 'Customers', path: '/dashboard/customer', icon: <Users size={16} /> },
-  { label: 'Expenses', path: '/dashboard/expenses', icon: <Wallet size={16} /> },
-  { label: 'Suppliers', path: '/dashboard/suppliers', icon: <Truck size={16} /> },
-  { label: 'Employees', path: '/dashboard/employees', icon: <UserCog size={16} /> },
-  { label: 'Reports', path: '/dashboard/reports', icon: <BarChart3 size={16} /> },
+  { label: 'Dashboard', path: '/dashboard', key: 'dashboard', icon: <LayoutDashboard size={16} /> },
+  { label: 'Point of Sale', path: '/dashboard/pos', key: 'pos', icon: <ShoppingCart size={16} /> },
+  { label: 'Products', path: '/dashboard/products', key: 'products', icon: <Package size={16} /> },
+  { label: 'Sales', path: '/dashboard/sales', key: 'sales', icon: <TrendingUp size={16} /> },
+  { label: 'Stock Management', path: '/dashboard/stockmanagement', key: 'stockmanagement', icon: <Store size={16} /> },
+  { label: 'Customers', path: '/dashboard/customer', key: 'customers', icon: <Users size={16} /> },
+  { label: 'Expenses', path: '/dashboard/expenses', key: 'expenses', icon: <Wallet size={16} /> },
+  { label: 'Suppliers', path: '/dashboard/suppliers', key: 'suppliers', icon: <Truck size={16} /> },
+  { label: 'Employees', path: '/dashboard/employees', key: 'employees', icon: <UserCog size={16} /> },
+  { label: 'Reports', path: '/dashboard/reports', key: 'reports', icon: <BarChart3 size={16} /> },
 ];
+
 
 type SidebarProps = {
   isOpen?: boolean;
@@ -104,7 +106,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <nav className="kb-sidebar-menu">
-        {menuItems.map((item) => {
+        {menuItems
+  .filter(item =>
+    user?.role &&
+    ROLE_ACCESS[user.role as keyof typeof ROLE_ACCESS]?.includes(item.key)
+  )
+  .map((item) => {
+
+
           const active = location.pathname === item.path;
           return (
             <Link
