@@ -15,9 +15,22 @@ exports.createCustomer = async(req, res) => {
             });
         }
 
+        // ✅ CHECK FOR DUPLICATE (Same Name + Same Phone)
+        const existingCustomer = await Customer.findOne({
+            fullName: fullName.trim(),
+            phoneNumber: phoneNumber.trim()
+        });
+
+        if (existingCustomer) {
+            return res.status(409).json({
+                success: false,
+                message: 'Customer already exists with this name and phone number'
+            });
+        }
+
         const customer = new Customer({
-            fullName,
-            phoneNumber,
+            fullName: fullName.trim(),
+            phoneNumber: phoneNumber.trim(),
             email,
             address,
             notes
@@ -97,6 +110,24 @@ exports.getCustomerById = async(req, res) => {
 ========================= */
 exports.updateCustomer = async(req, res) => {
     try {
+        const { fullName, phoneNumber } = req.body;
+
+        // ✅ CHECK FOR DUPLICATE (Same Name + Same Phone) excluding current customer
+        if (fullName && phoneNumber) {
+            const existingCustomer = await Customer.findOne({
+                fullName: fullName.trim(),
+                phoneNumber: phoneNumber.trim(),
+                _id: { $ne: req.params.id } // Exclude current customer
+            });
+
+            if (existingCustomer) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'Customer already exists with this name and phone number'
+                });
+            }
+        }
+
         const updatedCustomer = await Customer.findByIdAndUpdate(
             req.params.id,
             req.body, { new: true }

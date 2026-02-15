@@ -1,6 +1,9 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
-import DashboardLayout from './components/DashboardLayout';
+
+import DashboardLayout from './components/DashboardLayout'
+import ProtectedRoute from "./components/ProtectedRoute"
+
 import DashboardPage from './pages/Dashboard/Dashboard'
 import CustomerPage from './pages/Dashboard/Customers'
 import EmployeesPage from './pages/Dashboard/Employees'
@@ -13,7 +16,6 @@ import SuppliersPage from './pages/Dashboard/Suppliers'
 import StockmanagementPage from './pages/Dashboard/Stockmanagement'
 import SalesPage from './pages/Dashboard/Sales'
 
-
 import Login from './pages/Login'
 
 function App() {
@@ -22,30 +24,139 @@ function App() {
       <Routes>
 
         {/* Default */}
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* Auth */}
+        {/* Login */}
         <Route path="/login" element={<Login />} />
 
-        {/* Dashboard Parent */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<DashboardPage />} />
-          {/* <Route path="customer" element={<CustomerPage />} /> */}
-          <Route path="customer/*" element={<CustomerPage />} />
-          <Route path="stockmanagement/*" element={<StockmanagementPage />} />
-          <Route path="sales" element={<SalesPage />} />
-          <Route path="employees/*" element={<EmployeesPage />} />
-          <Route path="expenses/*" element={<ExpensesPage />} />
-          <Route path="feedback" element={<FeedbackPage />} />
-          <Route path="pos" element={<PosPage />} />
-          <Route path="products/*" element={<ProductsPage />} />
-          <Route path="reports" element={<ReportsPage />} />
-          <Route path="suppliers/*" element={<SuppliersPage />} />
+        {/* Protected Dashboard Layout */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "manager", "staff"]}>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
+
+          {/* Dashboard → All roles */}
+          <Route
+            index
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager", "staff"]}>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* POS → Admin + Staff */}
+          <Route
+            path="pos"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "staff"]}>
+                <PosPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Products → Admin + Manager */}
+          <Route
+            path="products/*"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager","staff"]}>
+                <ProductsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Sales → Admin + Manager */}
+          <Route
+            path="sales"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                <SalesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Customers → Admin + Manager */}
+          <Route
+            path="customer/*"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                <CustomerPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Stock Management → Admin only */}
+          <Route
+            path="stockmanagement"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <StockmanagementPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Suppliers → Admin only */}
+          <Route
+            path="suppliers/*"
+            element={
+              <ProtectedRoute allowedRoles={["admin","manager"]}>
+                <SuppliersPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Employees → Admin only */}
+          <Route
+            path="employees/*"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <EmployeesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Reports → Admin only */}
+          <Route
+            path="reports"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <ReportsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Expenses → Admin only */}
+          <Route
+            path="expenses/*"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <ExpensesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Feedback → All roles */}
+          <Route
+            path="feedback"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager", "staff"]}>
+                <FeedbackPage />
+              </ProtectedRoute>
+            }
+          />
+
         </Route>
+
+        {/* Catch all → redirect to login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
 
       </Routes>
     </BrowserRouter>
   )
 }
 
-export default App;
+export default App
