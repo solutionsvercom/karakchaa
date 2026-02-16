@@ -15,7 +15,7 @@ export const store = configureStore({
     product : productReducer,
     sales : salesReducer,
       employees: employeesReducer,
-      stock: stockReducer,
+      
 
   },
 });
