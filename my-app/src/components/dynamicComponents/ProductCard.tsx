@@ -10,6 +10,7 @@ import {
 import { DotsVerticalIcon, CubeIcon } from "@radix-ui/react-icons";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
+
 /* ---------------- TYPES ---------------- */
 
 type Category = "snacks" | "desserts" | "beverages" | "meals" | "other";
@@ -22,9 +23,13 @@ export type ProductCardProps = {
   category: Category;
   image?: string;
 
-  /** ✅ NEW (POS support) */
+  /** POS support */
   variant?: "default" | "pos";
   onAdd?: () => void;
+
+  /** ⭐ NEW TOGGLE SUPPORT */
+  isActive?: boolean;
+  onToggleActive?: (value: boolean) => void;
 
   /** Existing callbacks */
   onEdit?: () => void;
@@ -60,6 +65,8 @@ export default function ProductCard({
   image,
   variant = "default",
   onAdd,
+  isActive = true, // ⭐ DEFAULT TRUE
+  onToggleActive,
   onEdit,
   onDelete,
 }: ProductCardProps) {
@@ -110,6 +117,15 @@ export default function ProductCard({
               </DropdownMenu.Item>
             )}
 
+            {/* ⭐ TOGGLE ACTIVE */}
+            {onToggleActive && (
+              <DropdownMenu.Item
+                onSelect={() => onToggleActive(!isActive)}
+              >
+                {isActive ? "Disable Product" : "Enable Product"}
+              </DropdownMenu.Item>
+            )}
+
             {onDelete && (
               <DropdownMenu.Item color="red" onSelect={onDelete}>
                 <Trash2 size={14} /> Delete
@@ -147,17 +163,15 @@ export default function ProductCard({
         </Text>
 
         <Flex justify="between" align="center">
-          <Text weight="bold" size="4" >
+          <Text weight="bold" size="4">
             ₹{price}
           </Text>
 
-          {/* ✅ POS + BUTTON */}
+          {/* POS ADD BUTTON */}
           {isPOS && (
             <IconButton
               radius="full"
               size="3"
-              
-              // onClick={onAdd}
               onClick={() => onAdd?.()}
             >
               <Plus size={18} />
