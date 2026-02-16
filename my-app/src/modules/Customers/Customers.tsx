@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchCustomers, fetchCustomerStats } from "../../features/CustomersSlice";
 import { RootState, AppDispatch } from "../../store/Store";
 import { useEffect } from "react";
-import { deleteCustomer } from "../../features/CustomersSlice";
+import { deleteCustomer, Customer } from "../../features/CustomersSlice";
 
 
 import {
@@ -51,6 +51,7 @@ export default function Customers() {
   const location = useLocation();
   const { id } = useParams();
 
+
   const [search, setSearch] = React.useState("");
 
   const isAdd = location.pathname.endsWith("/add-customer");
@@ -62,6 +63,18 @@ export default function Customers() {
 const { customers, stats, loading } = useSelector(
   (state: RootState) => state.customer
 );
+
+useEffect(() => {
+  dispatch(fetchCustomers());
+  dispatch(fetchCustomerStats());
+}, [dispatch]);
+
+
+const customerToEdit = customers.find(
+  (c) => c._id === id
+);
+
+
  const formattedCustomers: CustomerRow[] = customers?.map((c) => ({
   id: c?._id || "",
   name: c?.fullName || c?.fullName || "",
@@ -73,14 +86,13 @@ const { customers, stats, loading } = useSelector(
 })) || [];
 
 
-
-useEffect(() => {
-  dispatch(fetchCustomers());
-  dispatch(fetchCustomerStats());
-}, [dispatch]);
+// if (loading) {
+//   return <div>Loading...</div>;
+// }
 
 
-const customerToEdit = customers.find((c) => c._id === id);
+
+
 
 
   /* ================= FILTER ================= */
@@ -162,7 +174,11 @@ const customerToEdit = customers.find((c) => c._id === id);
             >
            <Pencil size={14} />   Edit
             </DropdownMenu.Item>
-            <DropdownMenu.Item color="red" onClick={() => dispatch(deleteCustomer(row.id))}
+            <DropdownMenu.Item color="red" onClick={async () => {
+  await dispatch(deleteCustomer(row.id)).unwrap();
+  dispatch(fetchCustomerStats());
+}}
+
 >
             <Trash2 size={14} />  Delete
             </DropdownMenu.Item>
@@ -184,21 +200,25 @@ const customerToEdit = customers.find((c) => c._id === id);
         <div className="kb-summary-row">
           <SummaryCard
             title="Total Customers"
-           value={String(stats?.totalCustomers || 0)}
+         value={(stats?.totalCustomers || 0).toString()}
             accentColor="#2962FF"
             softColor="#E3F2FD"
             icon="👥"
           />
           <SummaryCard
-            title="Total Purchases"
-           value={String(stats?.totalPurchases || 0)}
+            title="Total Revenue"
+           value={`₹${(stats?.totalRevenue || 0).toLocaleString()}`}
             accentColor="#00C853"
             softColor="#E5F9EE"
             icon="🛒"
           />
           <SummaryCard
-            title="Revenue"
-           value={`₹${(stats?.totalRevenue || 0).toLocaleString()}`}
+            title="Avg per Customer"
+           value={`₹${
+    stats?.totalCustomers
+      ? Math.floor(stats.totalRevenue / stats.totalCustomers).toLocaleString()
+      : "0"
+  }`}
             accentColor="#FF9100"
             softColor="#FFF3E0"
             icon="₹"
@@ -243,14 +263,14 @@ const customerToEdit = customers.find((c) => c._id === id);
       >
         <Dialog.Content maxWidth="420px">
        <AddCustomer
-  key={customerToEdit?._id || "create"}   // 🔥 THIS FIXES PREFILL
+  key={customerToEdit?._id || "create"}
   mode={isEdit ? "edit" : "create"}
   customerId={customerToEdit?._id}
   initialValues={
-    isEdit && customerToEdit
+    customerToEdit
       ? {
-          name: customerToEdit.fullName || "",
-          phone: customerToEdit.phoneNumber || "",
+          name: customerToEdit.fullName,
+          phone: customerToEdit.phoneNumber,
           email: customerToEdit.email || "",
           address: customerToEdit.address || "",
           notes: customerToEdit.notes || "",
@@ -258,6 +278,7 @@ const customerToEdit = customers.find((c) => c._id === id);
       : undefined
   }
 />
+
 
 
         </Dialog.Content>

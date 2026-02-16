@@ -1,51 +1,204 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import './App.css'
-import DashboardLayout from './components/DashboardLayout';
-import DashboardPage from './pages/Dashboard/Dashboard'
-import CustomerPage from './pages/Dashboard/Customers'
-import EmployeesPage from './pages/Dashboard/Employees'
-import ExpensesPage from './pages/Dashboard/Expenses'
-import FeedbackPage from './pages/Dashboard/Feedback'
-import PosPage from './pages/Dashboard/Pos'
-import ProductsPage from './pages/Dashboard/Products'
-import ReportsPage from './pages/Dashboard/Reports'
-import SuppliersPage from './pages/Dashboard/Suppliers'
-import StockmanagementPage from './pages/Dashboard/Stockmanagement'
-import SalesPage from './pages/Dashboard/Sales'
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import "./App.css";
 
+import DashboardLayout from "./components/DashboardLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-import Login from './pages/Login'
+import DashboardPage from "./pages/Dashboard/Dashboard";
+import CustomerPage from "./pages/Dashboard/Customers";
+import EmployeesPage from "./pages/Dashboard/Employees";
+import ExpensesPage from "./pages/Dashboard/Expenses";
+import FeedbackPage from "./pages/Dashboard/Feedback";
+import PosPage from "./pages/Dashboard/Pos";
+import ProductsPage from "./pages/Dashboard/Products";
+import ReportsPage from "./pages/Dashboard/Reports";
+import SuppliersPage from "./pages/Dashboard/Suppliers";
+import StockmanagementPage from "./pages/Dashboard/Stockmanagement";
+import SalesPage from "./pages/Dashboard/Sales";
+
+import Login from "./pages/Login";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* Default */}
-        <Route path="/" element={<Navigate to="/login" />} />
-
-        {/* Auth */}
+        {/* Public */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
 
-        {/* Dashboard Parent */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<DashboardPage />} />
-          {/* <Route path="customer" element={<CustomerPage />} /> */}
-          <Route path="customer/*" element={<CustomerPage />} />
-          <Route path="stockmanagement/*" element={<StockmanagementPage />} />
-          <Route path="sales" element={<SalesPage />} />
-          <Route path="employees/*" element={<EmployeesPage />} />
-          <Route path="expenses/*" element={<ExpensesPage />} />
-          <Route path="feedback" element={<FeedbackPage />} />
-          <Route path="pos" element={<PosPage />} />
-          <Route path="products/*" element={<ProductsPage />} />
-          <Route path="reports" element={<ReportsPage />} />
-          <Route path="suppliers/*" element={<SuppliersPage />} />
+        {/* Dashboard Layout */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "manager", "staff"]}>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
+
+          {/* Dashboard */}
+          <Route
+            index
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager", "staff"]}>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* POS */}
+          <Route
+            path="pos"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager", "staff"]}>
+                <PosPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* PRODUCTS */}
+          <Route
+            path="products/*"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager", "staff"]}>
+                <ProductsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* CUSTOMERS */}
+          <Route
+            path="customer"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                <CustomerPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="customer/add-customer"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                <CustomerPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="customer/:id/edit-customer"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                <CustomerPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* STOCK MANAGEMENT */}
+          <Route
+            path="stockmanagement"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                <StockmanagementPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="stockmanagement/stock-history"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                <StockmanagementPage />
+              </ProtectedRoute>
+            }
+          />
+           <Route
+            path="stockmanagement/:id/add-stock"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                <StockmanagementPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="stockmanagement/:id/remove-stock"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                <StockmanagementPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* SALES */}
+          <Route
+            path="sales"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                <SalesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* SUPPLIERS */}
+          <Route
+            path="suppliers/*"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                <SuppliersPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* EMPLOYEES */}
+          <Route
+            path="employees/*"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <EmployeesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* EXPENSES */}
+          <Route
+            path="expenses/*"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <ExpensesPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* REPORTS */}
+          <Route
+            path="reports"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                <ReportsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* FEEDBACK */}
+          <Route
+            path="feedback"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <FeedbackPage />
+              </ProtectedRoute>
+            }
+          />
+
         </Route>
+
+        {/* Catch all */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
 
       </Routes>
     </BrowserRouter>
-  )
+  );
 }
 
 export default App;

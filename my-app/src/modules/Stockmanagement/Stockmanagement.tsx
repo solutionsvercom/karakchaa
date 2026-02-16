@@ -1,25 +1,25 @@
-// modules/StockManagement/Stockmanagement.tsx
-import React from "react";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { RootState, AppDispatch } from "../../store/Store";
+import {
+  fetchStockItems,
+  fetchStockStats,
+} from "../../features/StockmanagementSlice";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import Table, { Column } from "../../components/dynamicComponents/Table";
-import {
-  Button,
-  Flex,
-  Badge,
-  DropdownMenu,
-  Dialog,
-} from "@radix-ui/themes";
+import { Button, Flex, Badge, DropdownMenu, Dialog } from "@radix-ui/themes";
 import { ChevronDown, History, Plus, Minus } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
 import AddStock from "./AddStock";
+import StockHistory from "./StockHistory";
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
 
 /* ================= TYPES ================= */
 
-export type StockStatus = "in-stock" | "low-stock" | "out-of-stock";
+export type StockStatus = "In Stock" | "Low Stock" | "Out of Stock";
 
-export type StockItem = {
-  id: number;
+export type StockRow = {
+  id: string;
   product: string;
   sku: string;
   category: string;
@@ -28,97 +28,72 @@ export type StockItem = {
   status: StockStatus;
 };
 
-export type StockHistory = {
-  id: number;
-  product: string;
-  type: "in" | "out";
-  quantity: number;
-  date: string;
-  reason: string;
-};
-
-/* ================= MOCK DATA ================= */
-
-export const mockStockData: StockItem[] = [
-  { id: 1, product: "Samosa", sku: "SNK-001", category: "Snacks", currentStock: 5, minLevel: 10, status: "low-stock" },
-  { id: 2, product: "Cold Coffee", sku: "BEV-004", category: "Beverages", currentStock: 50, minLevel: 10, status: "in-stock" },
-  { id: 3, product: "Veg Momos", sku: "SNK-003", category: "Snacks", currentStock: 40, minLevel: 10, status: "out-of-stock" },
-  { id: 4, product: "Thali Meal", sku: "MEL-001", category: "Meals", currentStock: 25, minLevel: 8, status: "in-stock" },
-  { id: 5, product: "Pakora", sku: "SNK-002", category: "Snacks", currentStock: 60, minLevel: 15, status: "in-stock" },
-  { id: 6, product: "Chicken Momos", sku: "SNK-004", category: "Snacks", currentStock: 35, minLevel: 20, status: "in-stock" },
-  { id: 7, product: "Gulab Jamun", sku: "DES-001", category: "Desserts", currentStock: 45, minLevel: 15, status: "low-stock" },
-  { id: 8, product: "Biryani", sku: "MEL-002", category: "Meals", currentStock: 0, minLevel: 10, status: "out-of-stock" },
-];
-
 /* ================= HELPERS ================= */
 
-export const getStockColor = (status: StockStatus): "green" | "yellow" | "red" =>
-  status === "in-stock" ? "green" : status === "low-stock" ? "yellow" : "red";
+export const getStockColor = (
+  status: StockStatus
+): "green" | "yellow" | "red" =>
+  status === "In Stock" ? "green" : status === "Low Stock" ? "yellow" : "red";
 
-export const getStockLabel = (status: StockStatus) =>
-  status === "in-stock"
-    ? "In Stock"
-    : status === "low-stock"
-    ? "Low Stock"
-    : "Out of Stock";
-    
-export function getStockStats(products: StockItem[]) {
-  const totalProducts = products.length;
-  const inStock = products.filter((p) => p.status === "in-stock").length;
-  const lowStock = products.filter((p) => p.status === "low-stock").length;
-  const outOfStock = products.filter((p) => p.status === "out-of-stock").length;
-
-  return {
-    totalProducts,
-    inStock,
-    lowStock,
-    outOfStock,
-  };
-}
 /* ================= MAIN COMPONENT ================= */
 
 export default function Stockmanagement() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { id } = useParams();
+  const dispatch = useDispatch<AppDispatch>();
 
-  const isAddStock = /\/stockmanagement\/\d+\/add-stock/.test(location.pathname);
-  const isRemoveStock = /\/stockmanagement\/\d+\/remove-stock/.test(location.pathname);
-  const isDialogOpen = isAddStock || isRemoveStock;
+  const { items, stats, loading } = useSelector(
+    (state: RootState) => state.stock
+  );
 
   const [searchValue, setSearchValue] = React.useState("");
   const [category, setCategory] = React.useState("All Products");
-  const [showHistory, setShowHistory] = React.useState(false);
-  const [stock] = React.useState<StockItem[]>(mockStockData);
 
-  const selectedProduct = isDialogOpen
-    ? stock.find((item) => location.pathname.includes(`/${item.id}/`))
-    : undefined;
+  // ✅ CHECK URL FOR STOCK HISTORY
+  const isStockHistory = location.pathname.includes("/stock-history");
+  const isAddStock = location.pathname.includes("/add-stock");
+  const isRemoveStock = location.pathname.includes("/remove-stock");
+  const isDialogOpen = isAddStock || isRemoveStock;
 
-  /* ================= SUMMARY COUNTS ================= */
+  // Fetch data on mount
+  useEffect(() => {
+    dispatch(fetchStockItems());
+    dispatch(fetchStockStats());
+  }, [dispatch]);
 
-  const totalProducts = stock.length;
-  const inStockCount = stock.filter((s) => s.status === "in-stock").length;
-  const lowStockCount = stock.filter((s) => s.status === "low-stock").length;
-  const outOfStockCount = stock.filter((s) => s.status === "out-of-stock").length;
+  // Find selected product for dialog
+  const selectedProduct = items.find((item) => item._id === id);
+
+  // Format items for table
+  const formattedStock: StockRow[] = items.map((item) => ({
+    id: item._id,
+    product: item.productName,
+    sku: item.sku,
+    category: item.category,
+    currentStock: item.currentStock,
+    minLevel: item.minStockLevel,
+    status: item.status,
+  }));
 
   /* ================= FILTER ================= */
 
-  const filteredStock = stock.filter((item) => {
+  const filteredStock = formattedStock.filter((item) => {
     const matchesSearch =
       item.product.toLowerCase().includes(searchValue.toLowerCase()) ||
       item.sku.toLowerCase().includes(searchValue.toLowerCase());
 
     const matchesCategory =
       category === "All Products" ||
-      (category === "Low Stock" && item.status === "low-stock") ||
-      (category === "Out of Stock" && item.status === "out-of-stock");
+      (category === "Low Stock" && item.status === "Low Stock") ||
+      (category === "Out of Stock" && item.status === "Out of Stock");
 
     return matchesSearch && matchesCategory;
   });
 
   /* ================= TABLE COLUMNS ================= */
 
-  const columns: Column<StockItem>[] = [
+  const columns: Column<StockRow>[] = [
     { key: "product", header: "Product", accessor: "product", width: "18%" },
     { key: "sku", header: "SKU", accessor: "sku", width: "12%" },
     { key: "category", header: "Category", accessor: "category", width: "14%" },
@@ -141,7 +116,7 @@ export default function Stockmanagement() {
       accessor: "status",
       render: (v) => (
         <Badge color={getStockColor(v)} variant="soft">
-          {getStockLabel(v)}
+          {v}
         </Badge>
       ),
       width: "14%",
@@ -181,28 +156,28 @@ export default function Stockmanagement() {
       <div className="kb-summary-row">
         <SummaryCard
           title="Total Products"
-          value={String(totalProducts)}
+          value={String(stats?.totalProducts || 0)}
           accentColor="#2962FF"
           softColor="#E3F2FD"
           icon="📦"
         />
         <SummaryCard
           title="In Stock"
-          value={String(inStockCount)}
+          value={String(stats?.inStock || 0)}
           accentColor="#00C853"
           softColor="#E5F9EE"
           icon="✅"
         />
         <SummaryCard
           title="Low Stock"
-          value={String(lowStockCount)}
+          value={String(stats?.lowStock || 0)}
           accentColor="#FF9100"
           softColor="#FFF3E0"
           icon="⚠️"
         />
         <SummaryCard
           title="Out of Stock"
-          value={String(outOfStockCount)}
+          value={String(stats?.outOfStock || 0)}
           accentColor="#D32F2F"
           softColor="#FDECEA"
           icon="❌"
@@ -233,15 +208,23 @@ export default function Stockmanagement() {
           </DropdownMenu.Content>
         </DropdownMenu.Root>
 
+        {/* ✅ UPDATED: Stock History Button with URL Navigation */}
         <Button
-          variant={showHistory ? "solid" : "soft"}
-          onClick={() => setShowHistory(!showHistory)}
+          variant={isStockHistory ? "solid" : "soft"}
+          onClick={() =>
+            navigate(
+              isStockHistory
+                ? "/dashboard/stockmanagement"
+                : "/dashboard/stockmanagement/stock-history"
+            )
+          }
         >
           <History size={16} /> Stock History
         </Button>
       </Flex>
 
-      {!showHistory && (
+      {/* ✅ CONDITIONAL RENDERING BASED ON URL */}
+      {!isStockHistory ? (
         <Table
           data={filteredStock}
           columns={columns}
@@ -249,6 +232,8 @@ export default function Stockmanagement() {
           hoverable
           striped
         />
+      ) : (
+        <StockHistory />
       )}
 
       {/* ===== DIALOG ===== */}
@@ -259,14 +244,19 @@ export default function Stockmanagement() {
         }}
       >
         <Dialog.Content maxWidth="420px">
+          <Dialog.Title style={{ display: "none" }}>
+            {isAddStock ? "Add Stock" : "Remove Stock"}
+          </Dialog.Title>
+
           {selectedProduct && (
             <AddStock
+              key={selectedProduct._id}
               mode={isAddStock ? "add" : "remove"}
+              productId={selectedProduct._id}
               product={{
-                id: selectedProduct.id,
-                name: selectedProduct.product,
+                name: selectedProduct.productName,
                 stock: selectedProduct.currentStock,
-                unit: "piece",
+                unit: selectedProduct.unit,
               }}
             />
           )}

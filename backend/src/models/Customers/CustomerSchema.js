@@ -1,20 +1,21 @@
 const mongoose = require('mongoose');
 
 const customerSchema = new mongoose.Schema({
-
-
     fullName: {
         type: String,
-        required: true
+        required: true,
+        trim: true // ✅ Automatically trim whitespace
     },
 
     phoneNumber: {
         type: String,
-        required: true
+        required: true,
+        trim: true // ✅ Automatically trim whitespace
     },
 
     email: {
-        type: String
+        type: String,
+        trim: true
     },
 
     address: {
@@ -40,12 +41,13 @@ const customerSchema = new mongoose.Schema({
         default: 0
     },
 
-
-
     createdAt: {
         type: Date,
         default: Date.now
     }
 });
+
+// ✅ COMPOUND INDEX - Prevents duplicate name+phone at database level
+customerSchema.index({ fullName: 1, phoneNumber: 1 }, { unique: true });
 
 module.exports = mongoose.model('Customer', customerSchema);
