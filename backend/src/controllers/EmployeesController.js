@@ -12,8 +12,24 @@ exports.createEmployee = async (req, res) => {
     const employee = await createEmployee(req.body);
     res.status(201).json(employee);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+
+  // 🔥 Handle duplicate phone number
+  if (error.code === 11000 && error.keyPattern?.phone) {
+    return res.status(400).json({
+      message: "Phone number already exists",
+    });
   }
+
+  // 🔥 Handle validation errors
+  if (error.name === "ValidationError") {
+    return res.status(400).json({
+      message: "Please fill all required fields correctly",
+    });
+  }
+
+  res.status(400).json({ message: error.message });
+}
+
 };
 
 /* ================= GET ALL ================= */
@@ -45,9 +61,17 @@ exports.updateEmployee = async (req, res) => {
   try {
     const employee = await updateEmployee(req.params.id, req.body);
     res.json(employee);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+    } catch (error) {
+
+  if (error.code === 11000 && error.keyPattern?.phone) {
+    return res.status(400).json({
+      message: "Phone number already exists",
+    });
   }
+
+  res.status(400).json({ message: error.message });
+}
+
 };
 
 /* ================= DELETE ================= */

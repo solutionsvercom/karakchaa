@@ -9,18 +9,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/api/products", require("./src/routes/Product"));
+app.use("/api/sales", require("./src/routes/Sale"));
 
 /* ================= ROUTES IMPORT ================= */
 const authRoutes = require('./src/routes/AuthRoutes');
 const customerRoutes = require('./src/routes/CustomerRoutes');
 const stockRoutes = require('./src/routes/StockmanagementRoutes');
 const employeeRoutes = require('./src/routes/EmployeesRoutes');
+// const productRoutes = require('./src/routes/ProductRoutes');
+// const salesRoutes = require('./src/routes/SalesRoutes');
 
 /* ================= ROUTES USE ================= */
 app.use('/api/auth', authRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/stock', stockRoutes);
 app.use('/api/employees', employeeRoutes);
+app.use("/api/products", require("./src/routes/Product"));
+app.use("/api/sales", require("./src/routes/Sale"));
 
 /* ================= BASIC ROUTES ================= */
 app.get('/', (req, res) => {
