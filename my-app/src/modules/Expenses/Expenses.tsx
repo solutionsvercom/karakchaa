@@ -1,5 +1,5 @@
-import React from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Trash2, Pencil, ChevronDown } from "lucide-react";
 import {
   Flex,
@@ -15,60 +15,14 @@ import { SummaryCard } from "../../components/dynamicComponents/Cards";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 import AddExpense from "./AddExpense";
 
-/* ================= TYPES ================= */
-
-type Expense = {
-  id: number;
-  title: string;
-  category: string;
-  amount: number;
-  vendor: string;
-  paymentMethod: string;
-  date: string;
-  notes?: string;
-};
-
-/* ================= DATA ================= */
-
-export const mockExpenses: Expense[] = [
-  {
-    id: 1,
-    title: "Tea Inventory",
-    category: "inventory",
-    amount: 15,
-    vendor: "Assam Tea Distributors",
-    paymentMethod: "bank",
-    date: "2025-01-12",
-    notes: "Monthly tea stock",
-  },
-  {
-    id: 2,
-    title: "Kitchen Supplies",
-    category: "supplies",
-    amount: 8500,
-    vendor: "Fresh Foods Guwahati",
-    paymentMethod: "cash",
-    date: "2025-01-10",
-  },
-  {
-    id: 3,
-    title: "Electricity Bill",
-    category: "utilities",
-    amount: 4500,
-    vendor: "APDCL",
-    paymentMethod: "upi",
-    date: "2025-01-05",
-  },
-  {
-    id: 4,
-    title: "Monthly Rent",
-    category: "rent",
-    amount: 1000,
-    vendor: "Property Owner",
-    paymentMethod: "bank",
-    date: "2026-02-01",
-  },
-];
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState } from "../../store/Store";
+import {
+  fetchExpenses,
+  fetchExpenseTotals,
+  deleteExpense,
+  type Expense,
+} from "../../features/ExpensesSlice";
 
 /* ================= HELPERS ================= */
 
@@ -88,7 +42,9 @@ const getCategoryLabel = (category: string) => {
   return labels[category] || category;
 };
 
-const getCategoryColor = (category: string): "pink" | "cyan" | "orange" | "purple" | "green" | "blue" | "red" => {
+const getCategoryColor = (
+  category: string
+): "pink" | "cyan" | "orange" | "purple" | "green" | "blue" | "red" => {
   const colors: Record<string, any> = {
     rent: "purple",
     salary: "blue",
@@ -103,7 +59,8 @@ const getCategoryColor = (category: string): "pink" | "cyan" | "orange" | "purpl
   };
   return colors[category] || "gray";
 };
- /* ================= CALCULATIONS ================= */
+
+/* ================= (For Reports.tsx compatibility) ================= */
 
 export type ExpenseTransaction = {
   amount: number;
@@ -113,57 +70,63 @@ export type ExpenseTransaction = {
 export const calculateExpenseTotals = (data: ExpenseTransaction[]) => {
   const now = new Date();
 
-  const totalExpenses = data.reduce(
-    (sum, expense) => sum + expense.amount,
+  const totalExpenses = (data || []).reduce(
+    (sum, expense) => sum + Number((expense as any).amount || 0),
     0
   );
 
-  const thisMonthExpenses = data
+  const thisMonthExpenses = (data || [])
     .filter((expense) => {
-      const expenseDate = new Date(expense.date);
+      const expenseDate = new Date((expense as any).date);
       return (
         expenseDate.getMonth() === now.getMonth() &&
         expenseDate.getFullYear() === now.getFullYear()
       );
     })
-    .reduce((sum, expense) => sum + expense.amount, 0);
+    .reduce((sum, expense) => sum + Number((expense as any).amount || 0), 0);
 
-  const totalTransactions = data.length;
-
+  const totalTransactions = (data || []).length;
   const averageExpense =
-    totalTransactions > 0
-      ? Math.round(totalExpenses / totalTransactions)
-      : 0;
+    totalTransactions > 0 ? Math.round(totalExpenses / totalTransactions) : 0;
 
-  return {
-    totalExpenses,
-    thisMonthExpenses,
-    totalTransactions,
-    averageExpense,
-  };
+  return { totalExpenses, thisMonthExpenses, totalTransactions, averageExpense };
 };
-
 
 /* ================= COMPONENT ================= */
 
 export default function Expenses() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id } = useParams();
+  const dispatch = useDispatch<any>();
+
+  const { expenses, totals, loading, error } = useSelector(
+    (state: RootState) => state.expenses
+  );
+
+  const safeExpenses = Array.isArray(expenses) ? expenses : [];
 
   const [search, setSearch] = React.useState("");
   const [category, setCategory] = React.useState("All Categories");
 
+  // ✅ Like Suppliers: keep the expense being edited in local state
+  const [editingExpense, setEditingExpense] = React.useState<Expense | null>(
+    null
+  );
+
   const isAdd = location.pathname.endsWith("/add-expense");
-  const isEdit = location.pathname.endsWith("/edit-expense");
-  const isDialogOpen = isAdd || isEdit;
+  const isDialogOpen = isAdd || !!editingExpense;
 
-  const expenseToEdit = mockExpenses.find((e) => e.id === Number(id));
+  // load list + totals
+  useEffect(() => {
+    dispatch(fetchExpenses());
+    dispatch(fetchExpenseTotals());
+  }, [dispatch]);
 
-  /* ================= FILTER ================= */
-
-  const filteredExpenses = mockExpenses.filter((expense) => {
-    const matchesSearch = `${expense.title} ${expense.vendor} ${expense.category}`
+  /* ---------- SEARCH + FILTER ---------- */
+  const filteredExpenses = safeExpenses.filter((expense: Expense) => {
+    const matchesSearch = `${expense.title} ${expense.vendor ?? ""} ${
+      expense.category
+    }`
       .toLowerCase()
       .includes(search.toLowerCase());
 
@@ -174,25 +137,17 @@ export default function Expenses() {
     return matchesSearch && matchesCategory;
   });
 
- 
-  const { totalExpenses,
-    thisMonthExpenses,
-    totalTransactions,
-    averageExpense,} =
-      calculateExpenseTotals(filteredExpenses);
-
-  /* ================= TABLE ================= */
-
+  /* ---------- TABLE COLUMNS ---------- */
   const columns: Column<Expense>[] = [
     {
       key: "title",
       header: "Title",
-      render: (_, row) => <Text weight="medium">{row.title}</Text>,
+      render: (_: any, row: Expense) => <Text weight="medium">{row.title}</Text>,
     },
     {
       key: "category",
       header: "Category",
-      render: (_, row) => (
+      render: (_: any, row: Expense) => (
         <Badge color={getCategoryColor(row.category)}>
           {getCategoryLabel(row.category)}
         </Badge>
@@ -201,30 +156,32 @@ export default function Expenses() {
     {
       key: "vendor",
       header: "Vendor",
-      accessor: "vendor",
+      render: (_: any, row: Expense) => <Text>{row.vendor ?? "-"}</Text>,
     },
     {
       key: "amount",
       header: "Amount",
-      render: (_, row) => (
+      render: (_: any, row: Expense) => (
         <Text weight="medium" color="red">
-          ₹{row.amount.toLocaleString()}
+          ₹{Number(row.amount || 0).toLocaleString()}
         </Text>
       ),
     },
     {
       key: "paymentMethod",
       header: "Payment",
-      render: (_, row) => (
+      render: (_: any, row: Expense) => (
         <Text size="2" style={{ textTransform: "capitalize" }}>
-          {row.paymentMethod === "bank" ? "Bank Transfer" : row.paymentMethod.toUpperCase()}
+          {row.paymentMethod === "bank"
+            ? "Bank Transfer"
+            : row.paymentMethod.toUpperCase()}
         </Text>
       ),
     },
     {
       key: "date",
       header: "Date",
-      render: (_, row) => {
+      render: (_: any, row: Expense) => {
         const date = new Date(row.date);
         return (
           <Text size="2">
@@ -240,7 +197,7 @@ export default function Expenses() {
     {
       key: "actions",
       header: "Actions",
-      render: (_, row) => (
+      render: (_: any, row: Expense) => (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
             <Button variant="soft" radius="full">
@@ -249,14 +206,27 @@ export default function Expenses() {
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Content align="end">
-            <DropdownMenu.Item
-              onClick={() =>
-                navigate(`/dashboard/expenses/${row.id}/edit-expense`)
-              }
-            >
+            {/* ✅ FIX: open edit using local state */}
+            <DropdownMenu.Item onClick={() => setEditingExpense(row)}>
               <Pencil size={14} /> Edit
             </DropdownMenu.Item>
-            <DropdownMenu.Item color="red">
+
+            <DropdownMenu.Item
+              color="red"
+              onClick={async () => {
+                const ok = window.confirm(
+                  "Are you sure you want to delete this expense?"
+                );
+                if (!ok) return;
+
+                const res = await dispatch(deleteExpense(row._id));
+                if (deleteExpense.fulfilled.match(res)) {
+                  dispatch(fetchExpenses());
+                  dispatch(fetchExpenseTotals());
+                  if (editingExpense?._id === row._id) setEditingExpense(null);
+                }
+              }}
+            >
               <Trash2 size={14} /> Delete
             </DropdownMenu.Item>
           </DropdownMenu.Content>
@@ -265,37 +235,51 @@ export default function Expenses() {
     },
   ];
 
-  /* ================= UI ================= */
+  // ✅ CRITICAL: DatePicker expects Date object → convert here
+  const editInitialValues = React.useMemo(() => {
+    if (!editingExpense) return undefined;
+
+    return {
+      ...editingExpense,
+      date: editingExpense.date ? new Date(editingExpense.date) : new Date(),
+      vendor: editingExpense.vendor ?? "",
+      notes: editingExpense.notes ?? "",
+    };
+  }, [editingExpense]);
 
   return (
     <>
       <Flex direction="column" gap="5" width="100%">
-        {/* ===== SUMMARY ===== */}
+        {error && (
+          <Text color="red" size="2">
+            {error}
+          </Text>
+        )}
+
         <div className="kb-summary-row">
           <SummaryCard
             title="This Month"
-            value={`₹${thisMonthExpenses}`}
+            value={`₹${totals?.thisMonthExpenses ?? 0}`}
             accentColor="#2962FF"
             softColor="#E3F2FD"
             icon="📦"
           />
           <SummaryCard
             title="Total Expenses"
-            value={`₹${totalExpenses}`}
+            value={`₹${totals?.totalExpenses ?? 0}`}
             accentColor="#00C853"
             softColor="#E5F9EE"
             icon="✅"
           />
           <SummaryCard
             title="Total Records"
-            value={String(totalTransactions)}
+            value={String(totals?.totalTransactions ?? filteredExpenses.length)}
             accentColor="#FF9100"
             softColor="#FFF3E0"
             icon="⚠️"
           />
         </div>
 
-        {/* ===== TOOLBAR ===== */}
         <Flex align="center" gap="3" width="100%">
           <div style={{ flex: 1, minWidth: 0 }}>
             <Searchbar
@@ -305,7 +289,6 @@ export default function Expenses() {
             />
           </div>
 
-          {/* Category Filter */}
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               <Button variant="soft">
@@ -335,7 +318,6 @@ export default function Expenses() {
             </DropdownMenu.Content>
           </DropdownMenu.Root>
 
-          {/* Add Expense Button */}
           <Button
             style={{ whiteSpace: "nowrap" }}
             onClick={() => navigate("/dashboard/expenses/add-expense")}
@@ -344,27 +326,36 @@ export default function Expenses() {
           </Button>
         </Flex>
 
-        {/* ===== TABLE ===== */}
         <Table
-          data={filteredExpenses}
-          columns={columns}
-          emptyMessage="No expenses found"
-          hoverable
-          striped
-        />
+  columns={columns}
+  data={filteredExpenses}
+  loading={loading}
+  // emptyText="No expenses found."
+  hoverable
+  striped
+/>
+
       </Flex>
 
-      {/* ===== ADD / EDIT DIALOG ===== */}
+      {/* ✅ Dialog opens for Add OR Edit */}
       <Dialog.Root
         open={isDialogOpen}
         onOpenChange={(open) => {
-          if (!open) navigate("/dashboard/expenses");
+          if (!open) {
+            setEditingExpense(null);
+            navigate("/dashboard/expenses");
+          }
         }}
       >
         <Dialog.Content maxWidth="450px">
           <AddExpense
-            mode={isEdit ? "edit" : "create"}
-            initialValues={isEdit ? expenseToEdit : undefined}
+            key={editingExpense ? editingExpense._id : "create"} // ✅ remount form
+            mode={editingExpense ? "edit" : "create"}
+            initialValues={editingExpense ? editInitialValues : undefined}
+            onClose={() => {
+              setEditingExpense(null);
+              navigate("/dashboard/expenses");
+            }}
           />
         </Dialog.Content>
       </Dialog.Root>

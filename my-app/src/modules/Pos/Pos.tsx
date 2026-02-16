@@ -80,7 +80,7 @@ export default function Pos() {
               textAlign: "center",
               fontWeight: 500,
               background:
-                activeTab === "pos" ? "var(--violet-9)" : "transparent",
+                activeTab === "pos" ? "var(--accent-9)" : "transparent",
               color: activeTab === "pos" ? "white" : "var(--gray-12)",
             }}
           >
@@ -97,7 +97,7 @@ export default function Pos() {
               textAlign: "center",
               fontWeight: 500,
               background:
-                activeTab === "digital" ? "var(--violet-9)" : "transparent",
+                activeTab === "digital" ? "var(--accent-9)" : "transparent",
               color: activeTab === "digital" ? "white" : "var(--gray-12)",
             }}
           >

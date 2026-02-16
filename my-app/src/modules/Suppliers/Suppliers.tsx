@@ -3,12 +3,23 @@ import { Flex, Button, Dialog, Text } from "@radix-ui/themes";
 import { Plus } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
-import AddSupplier from "./AddSupplier";
+import AddSupplier, { SupplierFormValues } from "./AddSupplier";
 import { SupplierCard } from "../../components/dynamicComponents/SupplierCard";
 
-/* ---------------- SUPPLIERS DATA ---------------- */
+/* ---------------- INITIAL DATA ---------------- */
+type SupplierUI = {
+  id: number;
+  name: string;
+  contactPerson: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  products?: string;
+  gst?: string;
+  status: "Active" | "Inactive";
+};
 
-const SUPPLIERS = [
+const INITIAL_SUPPLIERS: SupplierUI[] = [
   {
     id: 1,
     name: "Fresh Foods Guwahati",
@@ -18,7 +29,7 @@ const SUPPLIERS = [
     address: "Wholesale Market, Guwahati",
     products: "Vegetables, Fruits, Dairy products",
     gst: "18AABCT5678BZZB",
-    status: "Active" as const,
+    status: "Active",
   },
   {
     id: 2,
@@ -29,7 +40,7 @@ const SUPPLIERS = [
     address: "Tea Market, Guwahati, Assam",
     products: "Tea leaves, Green tea, Specialty teas",
     gst: "18AABCT1234ATZA",
-    status: "Active" as const,
+    status: "Active",
   },
   {
     id: 3,
@@ -37,16 +48,15 @@ const SUPPLIERS = [
     contactPerson: "Anita Devi",
     address: "Industrial Area, Guwahati",
     products: "Flour, Sugar, Bakery ingredients",
-    status: "Inactive" as const,
+    status: "Inactive",
   },
 ];
 
-/* ---------------- SUPPLIERS PAGE ---------------- */
-
 export default function Suppliers() {
   const [searchValue, setSearchValue] = React.useState("");
-  const [editingSupplier, setEditingSupplier] =
-    React.useState<(typeof SUPPLIERS)[number] | null>(null);
+  const [suppliers, setSuppliers] = React.useState<SupplierUI[]>(INITIAL_SUPPLIERS);
+
+  const [editingSupplier, setEditingSupplier] = React.useState<SupplierUI | null>(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,11 +64,50 @@ export default function Suppliers() {
   const isAddSupplier = location.pathname.endsWith("/add-supplier");
 
   /* ---------- SEARCH ---------- */
-  const filteredSuppliers = SUPPLIERS.filter((s) =>
-    `${s.name} ${s.contactPerson} ${s.products}`
+  const filteredSuppliers = suppliers.filter((s) =>
+    `${s.name} ${s.contactPerson} ${s.products || ""}`
       .toLowerCase()
       .includes(searchValue.toLowerCase())
   );
+
+  /* ---------- DELETE ---------- */
+  const handleDelete = (id: number) => {
+    // optional confirm
+    const ok = window.confirm("Are you sure you want to delete this supplier?");
+    if (!ok) return;
+
+    setSuppliers((prev) => prev.filter((s) => s.id !== id));
+    if (editingSupplier?.id === id) setEditingSupplier(null);
+  };
+
+  /* ---------- SAVE (ADD / EDIT) ---------- */
+  const handleSave = (form: SupplierFormValues) => {
+    const mapped: Omit<SupplierUI, "id"> = {
+      name: form.companyName || "",
+      contactPerson: form.contactPerson || "",
+      phone: form.phone || "",
+      email: form.email || "",
+      address: form.address || "",
+      products: form.productsSupplied || "",
+      gst: form.gst || "",
+      status: form.active ? "Active" : "Inactive",
+    };
+
+    if (editingSupplier) {
+      // ✅ EDIT
+      setSuppliers((prev) =>
+        prev.map((s) => (s.id === editingSupplier.id ? { ...s, ...mapped } : s))
+      );
+      setEditingSupplier(null);
+      navigate("/dashboard/suppliers");
+      return;
+    }
+
+    // ✅ ADD
+    const nextId = suppliers.length ? Math.max(...suppliers.map((s) => s.id)) + 1 : 1;
+    setSuppliers((prev) => [{ id: nextId, ...mapped }, ...prev]);
+    navigate("/dashboard/suppliers");
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -97,14 +146,14 @@ export default function Suppliers() {
             contactPerson={s.contactPerson}
             phone={s.phone}
             email={s.email}
-            address={s.address}
-            products={s.products}
+            address={s.address ?? ""}
+            products={s.products ?? ""}
             gst={s.gst}
             status={s.status}
-            accentColor="#7C5CFF"
+            accentColor=""
             softColor="rgba(124,92,255,0.15)"
-            onEdit={() => setEditingSupplier(s)}
-            onDelete={() => console.log("Delete", s.id)}
+            onEdit={() => setEditingSupplier(s)}                 // ✅ works
+            onDelete={() => handleDelete(s.id)}                  // ✅ works
           />
         ))}
       </Flex>
@@ -134,8 +183,9 @@ export default function Suppliers() {
                     productsSupplied: editingSupplier.products,
                     active: editingSupplier.status === "Active",
                   }
-                : undefined
+                : { active: true } // default active
             }
+            onSave={handleSave}  // ✅ added
             onClose={() => {
               setEditingSupplier(null);
               navigate("/dashboard/suppliers");

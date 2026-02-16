@@ -7,6 +7,7 @@ export type FieldType =
   | "switch"
   | "file"
   | "date"
+  |  "button-group"
 
 export type Option = {
   label: string;

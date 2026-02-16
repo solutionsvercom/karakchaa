@@ -1,6 +1,14 @@
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "../../store/Store";
+import {
+  createEmployee,
+  updateEmployee,
+} from "../../features/EmployeesSlice";
+import { useNavigate } from "react-router-dom";
+
 import DynamicForm from "../../components/dynamicComponents/DynamicForm/DynamicForm";
 import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
-/* ---------- PROPS (ADDED) ---------- */
+
 interface AddEmployeeProps {
   mode: "create" | "edit";
   initialValues?: any;
@@ -18,6 +26,9 @@ type EmployeeField =
   | "active";
 
 const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+
   const fields: FormField<EmployeeField>[] = [
     {
       name: "name",
@@ -27,10 +38,19 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
       placeholder: "Enter full name",
       span: 2,
     },
-
-    { name: "phone", label: "Phone", type: "text", required: true, placeholder: "Enter phone number" },
-    { name: "email", label: "Email", type: "email", placeholder: "Enter email address" },
-
+    {
+      name: "phone",
+      label: "Phone",
+      type: "text",
+      required: true,
+      placeholder: "Enter phone number",
+    },
+    {
+      name: "email",
+      label: "Email",
+      type: "email",
+      placeholder: "Enter email address",
+    },
     {
       name: "role",
       label: "Role",
@@ -46,7 +66,6 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
         { label: "Delivery", value: "delivery" },
       ],
     },
-
     {
       name: "salary",
       label: "Monthly Salary (₹)",
@@ -54,15 +73,13 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
       required: true,
       placeholder: "Enter salary amount",
     },
-
     {
       name: "joinDate",
       label: "Join Date",
-      type: "date", 
+      type: "date",
       placeholder: "dd/mm/yyyy",
       span: 2,
     },
-
     {
       name: "address",
       label: "Address",
@@ -70,7 +87,6 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
       placeholder: "Enter address",
       span: 2,
     },
-
     {
       name: "emergencyContact",
       label: "Emergency Contact",
@@ -78,7 +94,6 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
       placeholder: "Enter emergency contact details",
       span: 2,
     },
-
     {
       name: "active",
       label: "Active Employee",
@@ -88,15 +103,13 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
   ];
 
   return (
-   <DynamicForm
-      title={mode === "edit" ? "Edit Employee" : "Add New Employee"}
+    <DynamicForm
+      // ❌ Removed title to avoid duplicate heading
       fields={fields}
-      initialValues={initialValues}
+      initialValues={initialValues || {}}
       submitText={mode === "edit" ? "Update" : "Create"}
       cancelText="Cancel"
-      onCancel={() => {
-        console.log("Cancel clicked");
-      }}
+      onCancel={() => navigate("/dashboard/employees")}
       confirm={{
         title:
           mode === "edit"
@@ -109,11 +122,27 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
         confirmText: mode === "edit" ? "Yes, Update" : "Yes, Create",
         cancelText: "No, go back",
       }}
-      onSubmit={(data) => {
-        if (mode === "create") {
-          console.log("POST /employees", data);
-        } else {
-          console.log("PUT /employees/:id", data);
+      onSubmit={async (data) => {
+        const formattedData = {
+          ...data,
+          salary: Number(data.salary),
+        };
+
+        try {
+          if (mode === "create") {
+            await dispatch(createEmployee(formattedData)).unwrap();
+          } else if (initialValues?._id) {
+            await dispatch(
+              updateEmployee({
+                id: initialValues._id,
+                data: formattedData,
+              })
+            ).unwrap();
+          }
+
+          navigate("/dashboard/employees"); // ✅ Auto close dialog
+        } catch (error: any) {
+          alert(error);
         }
       }}
     />

@@ -3,11 +3,10 @@ import { Text } from "@radix-ui/themes";
 import FieldRenderer from "./FieldRenderer";
 import { FormField } from "./types";
 import type { ReactNode } from "react";
-import { Flex,  Button } from "@radix-ui/themes";
+import { Flex, Button } from "@radix-ui/themes";
 import * as Dialog from "@radix-ui/react-dialog";
 import DynamicAlertDialog from "../DynamicAlertDialog";
 import { X } from "lucide-react";
-
 
 type Props<T extends string> = {
   title?: string;
@@ -23,29 +22,37 @@ type Props<T extends string> = {
     confirmText?: string;
     cancelText?: string;
   };
+  onFieldChange?: (fieldName: T, value: any) => void; //  ADD THIS
 };
 
 const DynamicForm = <T extends string>({
   title,
-fields,
+  fields,
   onSubmit,
   submitText,
   cancelText,
   onCancel,
   confirm,
   initialValues,
+  onFieldChange, //  ADD THIS
 }: Props<T>) => {
-  // const [values, setValues] = useState<Record<T, any>>({} as Record<T, any>);
   const [values, setValues] = useState<Record<T, any>>(
-  (initialValues ?? {}) as Record<T, any>
-);
-useEffect(() => {
-  if (initialValues) {
-    setValues(initialValues as Record<T, any>);
-  }
-}, [initialValues]);
+    (initialValues ?? {}) as Record<T, any>
+  );
+
+  useEffect(() => {
+    if (initialValues) {
+      setValues(initialValues as Record<T, any>);
+    }
+  }, [initialValues]);
+
   const setValue = (name: T, value: any) => {
     setValues((prev) => ({ ...prev, [name]: value }));
+    
+    //  ADD THIS - Call onFieldChange when value changes
+    if (onFieldChange) {
+      onFieldChange(name, value);
+    }
   };
 
   return (
@@ -56,23 +63,19 @@ useEffect(() => {
       }}
     >
       {/* FORM HEADER */}
-{title && (
-  <Flex justify="between" align="center" mb="4">
-    <Text weight="bold" size="4">
-      {title}
-    </Text>
+      {title && (
+        <Flex justify="between" align="center" mb="4">
+          <Text weight="bold" size="4">
+            {title}
+          </Text>
 
-   <Dialog.Close asChild>
-  <Button
-    variant="ghost"
-    className="dialog-close-icon"
-  >
-    <X size={18} />
-  </Button>
-</Dialog.Close>
-
-  </Flex>
-)}
+          <Dialog.Close asChild>
+            <Button variant="ghost" className="dialog-close-icon">
+              <X size={18} />
+            </Button>
+          </Dialog.Close>
+        </Flex>
+      )}
 
       {/* MAIN GRID */}
       <div
@@ -129,71 +132,70 @@ useEffect(() => {
                 </div>
               );
 
-              i += 3; // ⬅️ consume 3 fields
+              i += 3;
               continue;
             }
 
             /* ============================
                NORMAL FIELD
                ============================ */
-         elements.push(
-  <div
-    key={field.name}
-    style={{
-      gridColumn: field.span === 2 ? "span 2" : "span 1",
-    }}
-  >
-    {field.type === "switch" ? (
-      /* ✅ SWITCH ROW */
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          height: 36,
-        }}
-      >
-        <Text size="2" weight="medium">
-          {field.label}
-        </Text>
+            elements.push(
+              <div
+                key={field.name}
+                style={{
+                  gridColumn: field.span === 2 ? "span 2" : "span 1",
+                }}
+              >
+                {field.type === "switch" ? (
+                  /* ✅ SWITCH ROW */
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      height: 36,
+                    }}
+                  >
+                    <Text size="2" weight="medium">
+                      {field.label}
+                    </Text>
 
-        <FieldRenderer
-          field={field}
-          value={values[field.name]}
-          onChange={(v) => setValue(field.name, v)}
-        />
-      </div>
-    ) : (
-      /* ✅ NORMAL FIELD */
-      <>
-        <Text
-          as="label"
-          htmlFor={field.name}
-          size="2"
-          weight="medium"
-          style={{ marginBottom: 4, display: "block" }}
-        >
-          {field.label}
-          {field.required && <Text color="red"> *</Text>}
-        </Text>
+                    <FieldRenderer
+                      field={field}
+                      value={values[field.name]}
+                      onChange={(v) => setValue(field.name, v)}
+                    />
+                  </div>
+                ) : (
+                  /* ✅ NORMAL FIELD */
+                  <>
+                    <Text
+                      as="label"
+                      htmlFor={field.name}
+                      size="2"
+                      weight="medium"
+                      style={{ marginBottom: 4, display: "block" }}
+                    >
+                      {field.label}
+                      {field.required && <Text color="red"> *</Text>}
+                    </Text>
 
-        <FieldRenderer
-          field={field}
-          value={values[field.name]}
-          onChange={(v) => setValue(field.name, v)}
-        />
-      </>
-    )}
-  </div>
-);
-
+                    <FieldRenderer
+                      field={field}
+                      value={values[field.name]}
+                      onChange={(v) => setValue(field.name, v)}
+                    />
+                  </>
+                )}
+              </div>
+            );
 
             i++;
           }
 
           return elements;
         })()}
-           </div>
+      </div>
 
       {/* FORM FOOTER */}
       <Flex mt="3" gap="2">
@@ -218,17 +220,12 @@ useEffect(() => {
             </Button>
           </DynamicAlertDialog>
         ) : (
-          <Button
-            className="create-btn"
-            style={{ flex: 1 }}
-            type="submit"
-          >
+          <Button className="create-btn" style={{ flex: 1 }} type="submit">
             {submitText ?? "Create"}
           </Button>
         )}
       </Flex>
     </form>
-
   );
 };
 
