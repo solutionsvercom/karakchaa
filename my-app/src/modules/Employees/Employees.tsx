@@ -3,7 +3,6 @@ import React from "react";
 import {
   Flex,
   Button,
-  Text,
   Dialog,
   IconButton,
   DropdownMenu,
@@ -11,6 +10,13 @@ import {
 } from "@radix-ui/themes";
 import { Plus, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "../../store/Store";
+import {
+  fetchEmployees,
+  deleteEmployee,
+} from "../../features/EmployeesSlice";
+import type { Employee } from "../../features/EmployeesSlice";
 
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import Table, { Column } from "../../components/dynamicComponents/Table";
@@ -19,58 +25,13 @@ import { SummaryCard } from "../../components/dynamicComponents/Cards";
 
 /* ================= TYPES ================= */
 
-type Role = "staff" | "cashier" | "chef" | "delivery";
-
-type Employee = {
-  id: number;
-  name: string;
-  role: Role;
-  phone: string;
-  salary: number;
-  joinDate: string;
-  status: "Active" | "Inactive";
-};
-
-/* ================= DATA ================= */
-
-const employeesData: Employee[] = [
-  {
-    id: 1,
-    name: "Nitu Deka",
-    role: "staff",
-    phone: "9900000004",
-    salary: 15000,
-    joinDate: "15 Apr 2024",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Meera Kalita",
-    role: "cashier",
-    phone: "9900000002",
-    salary: 18000,
-    joinDate: "01 Mar 2024",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Rajan Choudhury",
-    role: "chef",
-    phone: "9900000003",
-    salary: 22000,
-    joinDate: "01 Feb 2024",
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "Kamal Sarma",
-    role: "delivery",
-    phone: "9900000005",
-    salary: 12000,
-    joinDate: "01 May 2024",
-    status: "Active",
-  },
-];
+type Role =
+  | "staff"
+  | "manager"
+  | "owner"
+  | "cashier"
+  | "chef"
+  | "delivery";
 
 /* ================= ROLE BADGES ================= */
 
@@ -79,6 +40,8 @@ const roleColorMap: Record<Role, "yellow" | "green" | "orange" | "cyan"> = {
   cashier: "green",
   chef: "orange",
   delivery: "cyan",
+  manager: "green",
+  owner: "orange",
 };
 
 /* ================= COMPONENT ================= */
@@ -88,27 +51,34 @@ export default function Employees() {
   const location = useLocation();
   const { id } = useParams();
 
+  const dispatch = useDispatch<AppDispatch>();
+  const { employees, loading } = useSelector(
+    (state: RootState) => state.employees
+  );
+
   const [search, setSearch] = React.useState("");
+
+  React.useEffect(() => {
+    dispatch(fetchEmployees(search));
+  }, [dispatch, search]);
 
   const isAddEmployee = location.pathname.endsWith("/add-employee");
   const isEditEmployee = location.pathname.includes("/edit-employee/");
   const isDialogOpen = isAddEmployee || isEditEmployee;
 
-  const employeeToEdit = employeesData.find(
-    (e) => e.id === Number(id)
-  );
+  const employeeToEdit = employees.find((e) => e._id === id);
 
   /* ================= SUMMARY ================= */
 
-  const totalEmployees = employeesData.length;
-  const activeEmployees = employeesData.filter(
-    (e) => e.status === "Active"
+  const totalEmployees = employees.length;
+  const activeEmployees = employees.filter(
+    (e) => e.active !== false
   ).length;
-  const inactiveEmployees = employeesData.filter(
-    (e) => e.status === "Inactive"
+  const inactiveEmployees = employees.filter(
+    (e) => e.active === false
   ).length;
-  const monthlySalary = employeesData.reduce(
-    (sum, e) => sum + e.salary,
+  const monthlySalary = employees.reduce(
+    (sum, e) => sum + (e.salary || 0),
     0
   );
 
@@ -120,7 +90,7 @@ export default function Employees() {
       header: "Employee",
       accessor: "name",
     },
-        {
+    {
       key: "role",
       header: "Role",
       accessor: "role",
@@ -128,8 +98,8 @@ export default function Employees() {
         <Badge color={roleColorMap[v]} radius="full">
           {v}
         </Badge>
-  ),
-},
+      ),
+    },
     {
       key: "phone",
       header: "Contact",
@@ -147,12 +117,12 @@ export default function Employees() {
       accessor: "joinDate",
     },
     {
-      key: "status",
+      key: "active",
       header: "Status",
-      accessor: "status",
+      accessor: "active",
       render: (v) => (
-        <Badge color="green" variant="soft">
-          {v}
+        <Badge color={v ? "green" : "red"} variant="soft">
+          {v ? "Active" : "Inactive"}
         </Badge>
       ),
     },
@@ -170,7 +140,9 @@ export default function Employees() {
           <DropdownMenu.Content align="end">
             <DropdownMenu.Item
               onClick={() =>
-                navigate(`/dashboard/employees/edit-employee/${row.id}`)
+                navigate(
+                  `/dashboard/employees/edit-employee/${row._id}`
+                )
               }
             >
               <Pencil size={14} /> Edit
@@ -179,7 +151,7 @@ export default function Employees() {
             <DropdownMenu.Item
               color="red"
               onClick={() =>
-                console.log("Delete employee:", row.id)
+                dispatch(deleteEmployee(row._id!))
               }
             >
               <Trash2 size={14} /> Delete
@@ -190,23 +162,12 @@ export default function Employees() {
     },
   ];
 
-  /* ================= FILTER ================= */
-
-  const filteredEmployees = employeesData.filter(
-    (emp) =>
-      emp.name.toLowerCase().includes(search.toLowerCase()) ||
-      emp.phone.includes(search)
-  );
-
   /* ================= UI ================= */
 
   return (
     <>
       <Flex direction="column" gap="5" width="100%">
-        {/* ===== TITLE ===== */}
-        
-
-        {/* ===== SUMMARY CARDS (4) ===== */}
+        {/* SUMMARY CARDS */}
         <div className="kb-summary-row">
           <SummaryCard
             title="Total Employees"
@@ -238,7 +199,7 @@ export default function Employees() {
           />
         </div>
 
-        {/* ===== SEARCH + ADD (FULL WIDTH) ===== */}
+        {/* SEARCH + ADD */}
         <Flex align="center" gap="3" width="100%">
           <div style={{ flex: 1, minWidth: 0 }}>
             <Searchbar
@@ -258,16 +219,22 @@ export default function Employees() {
           </Button>
         </Flex>
 
-        {/* ===== TABLE ===== */}
-        <Table
-          data={filteredEmployees}
-          columns={columns}
-          emptyMessage="No employees found"
-          hoverable
-        />
+        {/* TABLE */}
+        {loading ? (
+          <div style={{ textAlign: "center", padding: 40 }}>
+            Loading...
+          </div>
+        ) : (
+          <Table
+            data={employees}
+            columns={columns}
+            emptyMessage="No employees found"
+            hoverable
+          />
+        )}
       </Flex>
 
-      {/* ===== DIALOG ===== */}
+      {/* DIALOG */}
       <Dialog.Root
         open={isDialogOpen}
         onOpenChange={(open) => {
@@ -275,9 +242,21 @@ export default function Employees() {
         }}
       >
         <Dialog.Content maxWidth="480px">
+          <Dialog.Title>
+            {isEditEmployee ? "Edit Employee" : "Add Employee"}
+          </Dialog.Title>
+
+          <Dialog.Description>
+            {isEditEmployee
+              ? "Update employee details below."
+              : "Fill in the details to create a new employee."}
+          </Dialog.Description>
+
           <AddEmployee
             mode={isEditEmployee ? "edit" : "create"}
-            initialValues={isEditEmployee ? employeeToEdit : undefined}
+            initialValues={
+              isEditEmployee ? employeeToEdit || {} : {}
+            }
           />
         </Dialog.Content>
       </Dialog.Root>
