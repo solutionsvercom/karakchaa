@@ -1,15 +1,26 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 
+
+const token = localStorage.getItem("token");
+
+if (token) {
+  axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+}
+
 /* ================= TYPES ================= */
+
 
 export interface User {
   _id: string;
   email: string;
   name: string;
-  role: "admin" | "manager" | "staff";
+  role: string;
+  modules: string[];
   phoneNumber?: string;
 }
+
+
 
 interface AuthState {
   user: User | null;
@@ -180,11 +191,14 @@ const authSlice = createSlice({
       .addCase(verifyToken.pending, (state) => {
         state.loading = true;
       })
-      .addCase(verifyToken.fulfilled, (state, action: PayloadAction<User>) => {
-        state.loading = false;
-        state.isAuthenticated = true;
-        state.user = action.payload;
-      })
+
+    .addCase(verifyToken.fulfilled, (state, action: PayloadAction<User>) => {
+  state.loading = false;
+  state.isAuthenticated = true;
+  state.user = action.payload;
+  state.token = localStorage.getItem("token"); // IMPORTANT
+})
+
       .addCase(verifyToken.rejected, (state) => {
         state.loading = false;
         state.isAuthenticated = false;

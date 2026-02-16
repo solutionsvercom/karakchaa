@@ -15,7 +15,8 @@ import ReportsPage from "./pages/Dashboard/Reports";
 import SuppliersPage from "./pages/Dashboard/Suppliers";
 import StockmanagementPage from "./pages/Dashboard/Stockmanagement";
 import SalesPage from "./pages/Dashboard/Sales";
-
+import UsersPage from "./pages/Dashboard/Users"; // ✅ Fixed: Changed from Users to UsersPage
+import RolesPage from "./pages/Dashboard/Roles"; // ✅ Fixed: Changed from Roles to RolesPage
 import Login from "./pages/Login";
 
 function App() {
@@ -76,7 +77,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="customer/add-customer"
             element={
@@ -85,7 +85,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="customer/:id/edit-customer"
             element={
@@ -104,7 +103,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="stockmanagement/stock-history"
             element={
@@ -113,7 +111,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-           <Route
+          <Route
             path="stockmanagement/:id/add-stock"
             element={
               <ProtectedRoute allowedRoles={["admin", "manager"]}>
@@ -121,7 +119,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="stockmanagement/:id/remove-stock"
             element={
@@ -187,6 +184,58 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <FeedbackPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ===== USERS - Admin Only ===== */}
+          <Route
+            path="users"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <UsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="users/add-user"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <UsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="users/:id/edit-user"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <UsersPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ===== ROLES - Admin Only ===== */}
+          <Route
+            path="roles"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <RolesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="roles/add-role"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <RolesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="roles/:id/edit-role"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <RolesPage />
               </ProtectedRoute>
             }
           />

@@ -2,6 +2,7 @@ require('dotenv').config({ path: '../../.env' });
 
 const mongoose = require('mongoose');
 const User = require('../models/Users/UserSchema');
+const Role = require('../models/Users/RoleSchema');
 
 const createUsers = async() => {
 
@@ -11,30 +12,15 @@ const createUsers = async() => {
 
         console.log("Connected to DB:", mongoose.connection.name);
 
-        const users = [
+        // Get roles from DB
+        const adminRole = await Role.findOne({ name: "admin" });
+        const managerRole = await Role.findOne({ name: "manager" });
+        const staffRole = await Role.findOne({ name: "staff" });
 
-            {
-                name: "Admin User",
-                email: "admin@karakchaa.com",
-                password: "admin@123",
-                role: "admin"
-            },
-
-            {
-                name: "Manager User",
-                email: "manager@karakchaa.com",
-                password: "manager123",
-                role: "manager"
-            },
-
-            {
-                name: "Employee User",
-                email: "employee@karakchaa.com",
-                password: "employee123",
-                role: "staff"
-            }
-
-        ];
+        if (!adminRole || !managerRole || !staffRole) {
+            console.log("❌ Roles not found. Create roles first.");
+            process.exit();
+        }
 
         for (const userData of users) {
 
@@ -48,7 +34,7 @@ const createUsers = async() => {
 
                 await existingUser.save();
 
-                console.log(`${userData.role} password updated`);
+                console.log(`${userData.email} updated`);
 
             } else {
 
@@ -59,13 +45,13 @@ const createUsers = async() => {
 
                 await newUser.save();
 
-                console.log(`${userData.role} created`);
+                console.log(`${userData.email} created`);
 
             }
 
         }
 
-        console.log("All users processed");
+        console.log("✅ All users processed");
 
         process.exit();
 
