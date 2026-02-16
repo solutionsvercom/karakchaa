@@ -30,8 +30,26 @@ app.get('/api/health', (req, res) => {
 // Test routes for MongoDB
 app.use('/api/test', require('./routes/test'));
 
-const PORT = process.env.PORT || 5000;
+// Expense
+const expenseRoutes = require("./src/routes/ExpenseRoutes.js"); // adjust filename
+app.use("/api/expenses", expenseRoutes);
 
+
+// Supplier
+try {
+  const supplierRoutes = require("./src/routes/SupplierRoutes.js");
+  app.use("/api/suppliers", supplierRoutes);
+} catch (err) {
+  console.log("⚠️ Supplier route not found yet. Add it when ready.");
+}
+
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
+
+
+
+
+
+
