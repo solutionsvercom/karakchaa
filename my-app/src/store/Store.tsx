@@ -1,9 +1,9 @@
 
 import { configureStore } from "@reduxjs/toolkit";
 import customerReducer from "../features/CustomersSlice";
-// import productReducer from "../features/ProductsSlice";
+import productReducer from "../features/ProductsSlice";
 import stockReducer from "../features/StockmanagementSlice";
-// import salesReducer from "../features/SalesSlice";
+import salesReducer from "../features/SalesSlice";
 import employeesReducer from "../features/EmployeesSlice";
 import authReducer from "../features/AuthSlice";
 
@@ -12,8 +12,8 @@ export const store = configureStore({
     customer: customerReducer,
     auth: authReducer,
     stock: stockReducer,
-    // product : productReducer,
-    // sales : salesReducer,
+    product : productReducer,
+    sales : salesReducer,
     employees: employeesReducer,
   },
 });
