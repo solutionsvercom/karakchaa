@@ -13,12 +13,15 @@ export const store = configureStore({
 =======
 import productReducer from "../features/ProductsSlice";
 import salesReducer from "../features/SalesSlice";
+import employeesReducer from "../features/EmployeesSlice";
 
 export const store = configureStore({
   reducer: {
     customer: customerReducer,
     product : productReducer,
     sales : salesReducer,
+    employees: employeesReducer,
+>>>>>>> e279d8c36ae24903da95d253960efaa0d52b1310
   },
 });
 
