@@ -19,9 +19,13 @@ const stockRoutes = require('./src/routes/StockmanagementRoutes');
 const employeeRoutes = require('./src/routes/EmployeesRoutes');
 // const productRoutes = require('./src/routes/ProductRoutes');
 // const salesRoutes = require('./src/routes/SalesRoutes');
+const roleRoutes = require("./src/routes/RoleRoutes");
+
+
 
 /* ================= ROUTES USE ================= */
 app.use('/api/auth', authRoutes);
+app.use("/api/roles", roleRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/stock', stockRoutes);
 app.use('/api/employees', employeeRoutes);
