@@ -18,8 +18,11 @@ import {
   ChevronRight,
   ChevronDown,
   LogOut,
+  UserPlus,
+  Shield,
+  Key
 } from "lucide-react";
-import { ROLE_ACCESS } from "../../config/RoleConfig";
+
 
 const menuItems = [
   { label: 'Dashboard', path: '/dashboard', key: 'dashboard', icon: <LayoutDashboard size={16} /> },
@@ -32,6 +35,8 @@ const menuItems = [
   { label: 'Suppliers', path: '/dashboard/suppliers', key: 'suppliers', icon: <Truck size={16} /> },
   { label: 'Employees', path: '/dashboard/employees', key: 'employees', icon: <UserCog size={16} /> },
   { label: 'Reports', path: '/dashboard/reports', key: 'reports', icon: <BarChart3 size={16} /> },
+  { label: 'Users', path: '/dashboard/users', key: 'users', icon: <UserPlus size={16} /> },
+  { label: 'Roles', path: '/dashboard/roles', key: 'roles', icon: <Key size={16} /> },
 ];
 
 
@@ -108,10 +113,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       <nav className="kb-sidebar-menu">
         {menuItems
   .filter(item =>
-    user?.role &&
-    ROLE_ACCESS[user.role as keyof typeof ROLE_ACCESS]?.includes(item.key)
+    user?.modules?.includes(item.key)
   )
-  .map((item) => {
+  .map(item => {
 
 
           const active = location.pathname === item.path;
