@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 
 const API_URL = "http://localhost:5000/api/employees";
@@ -90,9 +90,15 @@ export const deleteEmployee = createAsyncThunk(
 const employeesSlice = createSlice({
   name: "employees",
   initialState,
-  reducers: {},
+  reducers: {
+    clearError: (state) => {
+      state.error = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
+
+      /* FETCH */
       .addCase(fetchEmployees.pending, (state) => {
         state.loading = true;
       })
@@ -105,25 +111,52 @@ const employeesSlice = createSlice({
         state.error = action.payload;
       })
 
+      /* CREATE */
+      .addCase(createEmployee.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(createEmployee.fulfilled, (state, action) => {
+        state.loading = false;
         state.employees.unshift(action.payload);
       })
+      .addCase(createEmployee.rejected, (state, action: any) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
+      /* UPDATE (Optimistic Ready) */
+      .addCase(updateEmployee.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(updateEmployee.fulfilled, (state, action) => {
+        state.loading = false;
+
         const index = state.employees.findIndex(
           (emp) => emp._id === action.payload._id
         );
+
         if (index !== -1) {
           state.employees[index] = action.payload;
         }
       })
+      .addCase(updateEmployee.rejected, (state, action: any) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
-      .addCase(deleteEmployee.fulfilled, (state, action) => {
+      /* DELETE (Optimistic) */
+      .addCase(deleteEmployee.pending, (state, action) => {
         state.employees = state.employees.filter(
-          (emp) => emp._id !== action.payload
+          (emp) => emp._id !== action.meta.arg
         );
+      })
+      .addCase(deleteEmployee.rejected, (state, action: any) => {
+        state.error = action.payload;
       });
   },
 });
 
+export const { clearError } = employeesSlice.actions;
 export default employeesSlice.reducer;

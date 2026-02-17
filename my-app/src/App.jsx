@@ -15,8 +15,8 @@ import ReportsPage from "./pages/Dashboard/Reports";
 import SuppliersPage from "./pages/Dashboard/Suppliers";
 import StockmanagementPage from "./pages/Dashboard/Stockmanagement";
 import SalesPage from "./pages/Dashboard/Sales";
-import UsersPage from "./pages/Dashboard/Users"; // ✅ Fixed: Changed from Users to UsersPage
-import RolesPage from "./pages/Dashboard/Roles"; // ✅ Fixed: Changed from Roles to RolesPage
+import UsersPage from "./pages/Dashboard/Users";
+import RolesPage from "./pages/Dashboard/Roles";
 import Login from "./pages/Login";
 
 function App() {
@@ -150,7 +150,23 @@ function App() {
 
           {/* EMPLOYEES */}
           <Route
-            path="employees/*"
+            path="employees"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <EmployeesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="employees/add-employee"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <EmployeesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="employees/:id/edit-employee"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <EmployeesPage />
@@ -188,7 +204,7 @@ function App() {
             }
           />
 
-          {/* ===== USERS - Admin Only ===== */}
+          {/* USERS */}
           <Route
             path="users"
             element={
@@ -214,7 +230,7 @@ function App() {
             }
           />
 
-          {/* ===== ROLES - Admin Only ===== */}
+          {/* ROLES */}
           <Route
             path="roles"
             element={
