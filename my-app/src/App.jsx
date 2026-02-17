@@ -182,6 +182,9 @@ function App() {
           <Route path="sales" element={<ProtectedRoute requiredModule="sales"><SalesPage /></ProtectedRoute>} />
           <Route path="suppliers/*" element={<ProtectedRoute requiredModule="suppliers"><SuppliersPage /></ProtectedRoute>} />
           <Route path="employees/*" element={<ProtectedRoute requiredModule="employees"><EmployeesPage /></ProtectedRoute>} />
+           <Route path="employees/add-employee" element={<ProtectedRoute requiredModule="employees"><EmployeesPage /></ProtectedRoute>} />
+          <Route path="employees/:id/edit-employee" element={<ProtectedRoute requiredModule="employees"><EmployeesPage /></ProtectedRoute>} />
+
           <Route path="expenses/*" element={<ProtectedRoute requiredModule="expenses"><ExpensesPage /></ProtectedRoute>} />
           <Route path="reports" element={<ProtectedRoute requiredModule="reports"><ReportsPage /></ProtectedRoute>} />
           <Route path="feedback" element={<ProtectedRoute requiredModule="feedback"><FeedbackPage /></ProtectedRoute>} />
