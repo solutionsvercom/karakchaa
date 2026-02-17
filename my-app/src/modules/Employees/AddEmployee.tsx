@@ -53,68 +53,65 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
     fetchRoles();
   }, []);
 
-  /* ================= VALIDATION (UPDATED) ================= */
-          const validate = (data: any) => {
-  const name = data.name?.trim();
-  const phone = data.phone?.trim();
-  const email = data.email?.trim();
-  const role = data.role;
-  const salary = Number(data.salary);
+  /* ================= VALIDATION ================= */
 
-  // 1️⃣ Name
-  if (!name) {
-    return "Full name is required";
-  }
+  const validate = (data: any) => {
+    const name             = data.name?.trim();
+    const phone            = data.phone?.trim();
+    const email            = data.email?.trim();
+    const emergencyContact = data.emergencyContact?.trim();
+    const role             = data.role;
+    const salary           = Number(data.salary);
+    const joinDate         = data.joinDate;
 
-  if (name.length < 3) {
-    return "Full name must be at least 3 characters";
-  }
+    // 1️⃣ Name
+    if (!name)
+      return "Full name is required";
+    if (name.length < 3)
+      return "Full name must be at least 3 characters";
+    if (!/^[a-zA-Z\s.'-]+$/.test(name))
+      return "Full name contains invalid characters";
 
-  if (!/^[a-zA-Z\s.'-]+$/.test(name)) {
-    return "Full name contains invalid characters";
-  }
+    // 2️⃣ Phone
+    if (!phone)
+      return "Phone number is required";
+    if (!/^\d{10}$/.test(phone))
+      return "Phone number must be exactly 10 digits";
 
-  // 2️⃣ Phone
-  if (!phone) {
-    return "Phone number is required";
-  }
-
-  if (!/^\d{10}$/.test(phone)) {
-    return "Phone number must be exactly 10 digits";
-  }
-
-  // 3️⃣ Email (optional but validated if provided)
-  if (email) {
-    const emailRegex =
-      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
-    if (!emailRegex.test(email)) {
+    // 3️⃣ Email — required
+    if (!email)
+      return "Email is required";
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email))
       return "Please enter a valid email address";
-    }
-  }
 
-  // 4️⃣ Role
-  if (!role) {
-    return "Please select a role";
-  }
+    // 4️⃣ Role
+    if (!role)
+      return "Please select a role";
 
-  // 5️⃣ Salary
-  if (!data.salary || isNaN(salary)) {
-    return "Salary is required";
-  }
+    // 5️⃣ Salary
+    if (!data.salary || isNaN(salary))
+      return "Salary is required";
+    if (salary <= 0)
+      return "Salary must be greater than 0";
+    if (salary > 10_000_000)
+      return "Salary amount seems unrealistic";
 
-  if (salary <= 0) {
-    return "Salary must be greater than 0";
-  }
+    // 6️⃣ Join Date — required, no future dates
+    if (!joinDate)
+      return "Join date is required";
+    const selected = new Date(joinDate);
+    const today    = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selected > today)
+      return "Join date cannot be in the future";
 
-  if (salary > 10000000) {
-    return "Salary amount seems unrealistic";
-  }
+    // 7️⃣ Emergency Contact — optional, 10 digits if provided
+    if (emergencyContact && !/^\d{10}$/.test(emergencyContact))
+      return "Emergency contact must be a 10-digit phone number";
 
-  return null;
-};
+    return null;
+  };
 
-  
   /* ================= FIELDS ================= */
 
   const fields: FormField<EmployeeField>[] = [
@@ -137,6 +134,7 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
       name: "email",
       label: "Email",
       type: "email",
+      required: true,
       placeholder: "Enter email address",
     },
     {
@@ -161,6 +159,7 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
       name: "joinDate",
       label: "Join Date",
       type: "date",
+      required: true,
       span: 2,
     },
     {
@@ -174,6 +173,7 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
       label: "Emergency Contact",
       type: "text",
       span: 2,
+      placeholder: "Enter 10 digit emergency contact number",
     },
     {
       name: "active",
@@ -211,7 +211,7 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
         cancelText="Cancel"
         onCancel={() => navigate("/dashboard/employees")}
         onFieldChange={(field, value) => {
-          if (field === "phone") {
+          if (field === "phone" || field === "emergencyContact") {
             return value.replace(/\D/g, "").slice(0, 10);
           }
           return value;
@@ -228,6 +228,7 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
           const formattedData = {
             ...data,
             salary: Number(data.salary),
+            active: typeof data.active === "boolean" ? data.active : true,
           };
 
           try {
