@@ -7,12 +7,12 @@ import {
   IconButton,
 } from '@radix-ui/themes'
 import {
-  EnvelopeClosedIcon,
   LockClosedIcon,
   EyeOpenIcon,
   EyeClosedIcon,
   PersonIcon,
 } from '@radix-ui/react-icons'
+import { IdCardIcon } from '@radix-ui/react-icons' // Company ID icon
 import { useState, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
@@ -28,9 +28,10 @@ const Login = () => {
   )
 
   const [showPassword, setShowPassword] = useState(false)
-  const [email, setEmail] = useState('')
+  // ✅ CHANGED: companyId instead of email
+  const [companyId, setCompanyId] = useState('')
   const [password, setPassword] = useState('')
-  const [emailFocused, setEmailFocused] = useState(false)
+  const [companyIdFocused, setCompanyIdFocused] = useState(false)
   const [passwordFocused, setPasswordFocused] = useState(false)
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 })
   const [isHovering, setIsHovering] = useState(false)
@@ -50,7 +51,6 @@ const Login = () => {
     if (isAuthenticated && user) {
       dispatch(clearError())
       
-      // Redirect based on role
       switch (user.role) {
         case 'admin':
         case 'manager':
@@ -70,7 +70,8 @@ const Login = () => {
     dispatch(clearError())
     
     try {
-      await dispatch(login({ email, password })).unwrap()
+      // ✅ CHANGED: send companyId instead of email
+      await dispatch(login({ companyId, password })).unwrap()
     } catch (error) {
       console.error('Login failed:', error)
     }
@@ -297,7 +298,8 @@ const Login = () => {
             {/* Login Form */}
             <form onSubmit={handleSubmit}>
               <Flex direction="column" gap="4">
-                {/* Email Input */}
+
+                {/* ✅ CHANGED: Company ID Input (was Email) */}
                 <div style={{ 
                   position: 'relative',
                   animation: 'fadeInUp 0.6s ease-out 0.4s both',
@@ -310,54 +312,55 @@ const Login = () => {
                     bottom: '-1px',
                     background: 'linear-gradient(135deg, #6366F1, #8B5CF6, #A855F7)',
                     borderRadius: '14px',
-                    opacity: emailFocused ? 0.6 : 0,
+                    opacity: companyIdFocused ? 0.6 : 0,
                     filter: 'blur(8px)',
                     transition: 'opacity 0.3s ease',
                     zIndex: -1,
-                    animation: emailFocused ? 'glowPulse 2s ease-in-out infinite' : 'none',
+                    animation: companyIdFocused ? 'glowPulse 2s ease-in-out infinite' : 'none',
                   }}></div>
                   <TextField.Root
                     size="3"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onFocus={() => setEmailFocused(true)}
-                    onBlur={() => setEmailFocused(false)}
+                    type="text"
+                    placeholder="Enter your Company ID"
+                    value={companyId}
+                    onChange={(e) => setCompanyId(e.target.value)}
+                    onFocus={() => setCompanyIdFocused(true)}
+                    onBlur={() => setCompanyIdFocused(false)}
                     onMouseEnter={() => setIsHovering(true)}
                     onMouseLeave={() => setIsHovering(false)}
                     required
                     disabled={loading}
                     style={{
-                      background: emailFocused ? 'rgba(50, 50, 70, 0.95)' : 'rgba(30, 30, 50, 0.95)',
-                      border: emailFocused ? '1px solid rgba(167, 139, 250, 0.7)' : '1px solid rgba(255, 255, 255, 0.2)',
+                      background: companyIdFocused ? 'rgba(50, 50, 70, 0.95)' : 'rgba(30, 30, 50, 0.95)',
+                      border: companyIdFocused ? '1px solid rgba(167, 139, 250, 0.7)' : '1px solid rgba(255, 255, 255, 0.2)',
                       color: '#FFFFFF',
                       height: '54px',
                       fontSize: '15px',
                       fontWeight: '500',
                       borderRadius: '14px',
                       transition: 'all 0.3s ease',
-                      transform: emailFocused ? 'translateY(-2px)' : 'translateY(0)',
-                      boxShadow: emailFocused ? '0 10px 30px rgba(139, 92, 246, 0.3)' : '0 0 0 transparent',
+                      transform: companyIdFocused ? 'translateY(-2px)' : 'translateY(0)',
+                      boxShadow: companyIdFocused ? '0 10px 30px rgba(139, 92, 246, 0.3)' : '0 0 0 transparent',
                     }}
                   >
                     <TextField.Slot>
                       <div style={{
-                        color: emailFocused ? '#A78BFA' : 'rgba(255, 255, 255, 0.6)',
+                        color: companyIdFocused ? '#A78BFA' : 'rgba(255, 255, 255, 0.6)',
                         transition: 'all 0.3s ease',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        transform: emailFocused ? 'scale(1.1)' : 'scale(1)',
-                        filter: emailFocused ? 'drop-shadow(0 0 6px rgba(139, 92, 246, 0.8))' : 'none',
+                        transform: companyIdFocused ? 'scale(1.1)' : 'scale(1)',
+                        filter: companyIdFocused ? 'drop-shadow(0 0 6px rgba(139, 92, 246, 0.8))' : 'none',
                       }}>
-                        <EnvelopeClosedIcon width="18" height="18" />
+                        {/* ID card icon to indicate Company ID */}
+                        <IdCardIcon width="18" height="18" />
                       </div>
                     </TextField.Slot>
                   </TextField.Root>
                 </div>
 
-                {/* Password Input */}
+                {/* Password Input — unchanged */}
                 <div style={{ 
                   position: 'relative',
                   animation: 'fadeInUp 0.6s ease-out 0.5s both',
@@ -525,7 +528,7 @@ const Login = () => {
         </Card>
       </Flex>
 
-      {/* Animations */}
+      {/* Animations — completely unchanged */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
         

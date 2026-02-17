@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import "./App.css";
 
 import DashboardLayout from "./components/DashboardLayout";
@@ -17,250 +18,189 @@ import StockmanagementPage from "./pages/Dashboard/Stockmanagement";
 import SalesPage from "./pages/Dashboard/Sales";
 import UsersPage from "./pages/Dashboard/Users";
 import RolesPage from "./pages/Dashboard/Roles";
+
 import Login from "./pages/Login";
 
+import { verifyToken } from "./features/AuthSlice";
+import { useAppDispatch, useAppSelector } from "./hooks/hooks";
+
+/* ==============================================
+   MODULE → ROUTE mapping (no TypeScript types)
+============================================== */
+const MODULE_ROUTES = {
+  dashboard:        "/dashboard/home",
+  pos:              "/dashboard/pos",
+  products:         "/dashboard/products",
+  customer:         "/dashboard/customer",
+  customers:        "/dashboard/customer",
+  stockmanagement:  "/dashboard/stockmanagement",
+  sales:            "/dashboard/sales",
+  suppliers:        "/dashboard/suppliers",
+  employees:        "/dashboard/employees",
+  expenses:         "/dashboard/expenses",
+  reports:          "/dashboard/reports",
+  feedback:         "/dashboard/feedback",
+  users:            "/dashboard/users",
+  roles:            "/dashboard/roles",
+};
+
+const MODULE_PRIORITY = [
+  "dashboard", "pos", "sales", "products", "customer",
+  "stockmanagement", "suppliers", "employees",
+  "expenses", "reports", "feedback", "users", "roles",
+];
+
+/* ==============================================
+   SMART REDIRECT
+============================================== */
+function DashboardRedirect() {
+  const { user } = useAppSelector((state) => state.auth);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) return;
+
+    if (user.role === "admin") {
+      navigate("/dashboard/home", { replace: true });
+      return;
+    }
+
+    // Normalize all user modules to lowercase
+    const userModules = (user.modules || []).map((m) => m.toLowerCase());
+
+    // Find the highest-priority module this user has
+    const firstModule = MODULE_PRIORITY.find((mod) =>
+      userModules.includes(mod) || userModules.includes(mod + "s")
+    );
+
+    if (firstModule) {
+      navigate(MODULE_ROUTES[firstModule], { replace: true });
+    } else {
+      navigate("/dashboard/no-access", { replace: true });
+    }
+  }, [user, navigate]);
+
+  return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
+      <div style={{
+        border: "4px solid #f3f3f3",
+        borderTop: "4px solid #8b5cf6",
+        borderRadius: "50%",
+        width: "40px", height: "40px",
+        animation: "spin 1s linear infinite",
+      }} />
+      <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+/* ==============================================
+   NO ACCESS PAGE
+============================================== */
+function NoAccessPage() {
+  const { user } = useAppSelector((state) => state.auth);
+
+  return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "70vh" }}>
+      <div style={{
+        backgroundColor: "white", padding: "48px", borderRadius: "12px",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.08)", textAlign: "center", maxWidth: "420px",
+      }}>
+        <div style={{ fontSize: "48px", marginBottom: "16px" }}>🔒</div>
+        <h2 style={{ color: "#1f2937", marginBottom: "8px", fontSize: "20px" }}>No Modules Assigned</h2>
+        <p style={{ color: "#6b7280", marginBottom: "4px" }}>
+          Your account doesn't have access to any modules yet.
+        </p>
+        <p style={{ color: "#9ca3af", fontSize: "14px", marginBottom: "8px" }}>
+          Logged in as: <strong>{user?.name}</strong> ({user?.role})
+        </p>
+        <p style={{ color: "#6b7280", fontSize: "14px" }}>
+          Please contact your administrator to request access.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ==============================================
+   MAIN APP
+============================================== */
 function App() {
+  const dispatch = useAppDispatch();
+  const { token, initializing } = useAppSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (token) {
+      dispatch(verifyToken());
+    }
+  }, [dispatch, token]);
+
+  if (initializing) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", backgroundColor: "#f5f5f5" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{
+            border: "4px solid #f3f3f3", borderTop: "4px solid #8b5cf6",
+            borderRadius: "50%", width: "50px", height: "50px",
+            animation: "spin 1s linear infinite", margin: "0 auto 20px"
+          }} />
+          <p style={{ color: "#666" }}>Initializing...</p>
+        </div>
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter>
       <Routes>
-
-        {/* Public */}
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
 
-        {/* Dashboard Layout */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "manager", "staff"]}>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        >
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
 
-          {/* Dashboard */}
-          <Route
-            index
-            element={
-              <ProtectedRoute allowedRoles={["admin", "manager", "staff"]}>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
+          {/* Smart redirect based on user modules */}
+          <Route index element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} />
 
-          {/* POS */}
-          <Route
-            path="pos"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "manager", "staff"]}>
-                <PosPage />
-              </ProtectedRoute>
-            }
-          />
+          {/* Dashboard home - requires dashboard module */}
+          <Route path="home" element={<ProtectedRoute requiredModule="dashboard"><DashboardPage /></ProtectedRoute>} />
 
-          {/* PRODUCTS */}
-          <Route
-            path="products/*"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "manager", "staff"]}>
-                <ProductsPage />
-              </ProtectedRoute>
-            }
-          />
+          {/* No modules assigned */}
+          <Route path="no-access" element={<NoAccessPage />} />
 
-          {/* CUSTOMERS */}
-          <Route
-            path="customer"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "manager"]}>
-                <CustomerPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="customer/add-customer"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "manager"]}>
-                <CustomerPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="customer/:id/edit-customer"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "manager"]}>
-                <CustomerPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="pos" element={<ProtectedRoute requiredModule="pos"><PosPage /></ProtectedRoute>} />
+          <Route path="products/*" element={<ProtectedRoute requiredModule="products"><ProductsPage /></ProtectedRoute>} />
 
-          {/* STOCK MANAGEMENT */}
-          <Route
-            path="stockmanagement"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "manager"]}>
-                <StockmanagementPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="stockmanagement/stock-history"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "manager"]}>
-                <StockmanagementPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="stockmanagement/:id/add-stock"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "manager"]}>
-                <StockmanagementPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="stockmanagement/:id/remove-stock"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "manager"]}>
-                <StockmanagementPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="customer" element={<ProtectedRoute requiredModule="customer"><CustomerPage /></ProtectedRoute>} />
+          <Route path="customer/add-customer" element={<ProtectedRoute requiredModule="customer"><CustomerPage /></ProtectedRoute>} />
+          <Route path="customer/:id/edit-customer" element={<ProtectedRoute requiredModule="customer"><CustomerPage /></ProtectedRoute>} />
 
-          {/* SALES */}
-          <Route
-            path="sales"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "manager"]}>
-                <SalesPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="stockmanagement" element={<ProtectedRoute requiredModule="stockmanagement"><StockmanagementPage /></ProtectedRoute>} />
+          <Route path="stockmanagement/stock-history" element={<ProtectedRoute requiredModule="stockmanagement"><StockmanagementPage /></ProtectedRoute>} />
+          <Route path="stockmanagement/:id/add-stock" element={<ProtectedRoute requiredModule="stockmanagement"><StockmanagementPage /></ProtectedRoute>} />
+          <Route path="stockmanagement/:id/remove-stock" element={<ProtectedRoute requiredModule="stockmanagement"><StockmanagementPage /></ProtectedRoute>} />
 
-          {/* SUPPLIERS */}
-          <Route
-            path="suppliers/*"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "manager"]}>
-                <SuppliersPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="sales" element={<ProtectedRoute requiredModule="sales"><SalesPage /></ProtectedRoute>} />
+          <Route path="suppliers/*" element={<ProtectedRoute requiredModule="suppliers"><SuppliersPage /></ProtectedRoute>} />
+          <Route path="employees/*" element={<ProtectedRoute requiredModule="employees"><EmployeesPage /></ProtectedRoute>} />
+           <Route path="employees/add-employee" element={<ProtectedRoute requiredModule="employees"><EmployeesPage /></ProtectedRoute>} />
+          <Route path="employees/:id/edit-employee" element={<ProtectedRoute requiredModule="employees"><EmployeesPage /></ProtectedRoute>} />
 
-          {/* EMPLOYEES */}
-          <Route
-            path="employees"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <EmployeesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="employees/add-employee"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <EmployeesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="employees/:id/edit-employee"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <EmployeesPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="expenses/*" element={<ProtectedRoute requiredModule="expenses"><ExpensesPage /></ProtectedRoute>} />
+          <Route path="reports" element={<ProtectedRoute requiredModule="reports"><ReportsPage /></ProtectedRoute>} />
+          <Route path="feedback" element={<ProtectedRoute requiredModule="feedback"><FeedbackPage /></ProtectedRoute>} />
 
-          {/* EXPENSES */}
-          <Route
-            path="expenses/*"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <ExpensesPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="users" element={<ProtectedRoute allowedRoles={["admin"]}><UsersPage /></ProtectedRoute>} />
+          <Route path="users/add-user" element={<ProtectedRoute allowedRoles={["admin"]}><UsersPage /></ProtectedRoute>} />
+          <Route path="users/:id/edit-user" element={<ProtectedRoute allowedRoles={["admin"]}><UsersPage /></ProtectedRoute>} />
 
-          {/* REPORTS */}
-          <Route
-            path="reports"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "manager"]}>
-                <ReportsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* FEEDBACK */}
-          <Route
-            path="feedback"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <FeedbackPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* USERS */}
-          <Route
-            path="users"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <UsersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="users/add-user"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <UsersPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="users/:id/edit-user"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <UsersPage />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* ROLES */}
-          <Route
-            path="roles"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <RolesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="roles/add-role"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <RolesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="roles/:id/edit-role"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <RolesPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="roles" element={<ProtectedRoute allowedRoles={["admin"]}><RolesPage /></ProtectedRoute>} />
+          <Route path="roles/add-role" element={<ProtectedRoute allowedRoles={["admin"]}><RolesPage /></ProtectedRoute>} />
+          <Route path="roles/:id/edit-role" element={<ProtectedRoute allowedRoles={["admin"]}><RolesPage /></ProtectedRoute>} />
 
         </Route>
 
-        {/* Catch all */}
         <Route path="*" element={<Navigate to="/login" replace />} />
-
       </Routes>
     </BrowserRouter>
   );

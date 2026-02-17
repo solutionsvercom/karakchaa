@@ -8,6 +8,8 @@ export type FieldType =
   | "file"
   | "date"
   |  "button-group"
+  | "password"
+  | "isActive"
 
 export type Option = {
   label: string;
