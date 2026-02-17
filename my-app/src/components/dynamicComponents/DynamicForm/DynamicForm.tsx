@@ -36,15 +36,25 @@ const DynamicForm = <T extends string>({
   initialValues,
   onFieldChange, //  ADD THIS
 }: Props<T>) => {
-  const [values, setValues] = useState<Record<T, any>>(
-    (initialValues ?? {}) as Record<T, any>
-  );
+    const [values, setValues] = useState<Record<T, any>>(
+  (initialValues ?? {}) as Record<T, any>
+);
 
-  useEffect(() => {
-    if (initialValues) {
-      setValues(initialValues as Record<T, any>);
-    }
-  }, [initialValues]);
+useEffect(() => {
+  if (initialValues) {
+    setValues((prev) => ({
+      ...prev,
+      ...initialValues,
+    }));
+  }
+}, [initialValues]);
+
+
+
+    useEffect(() => {
+  setValues((initialValues ?? {}) as Record<T, any>);
+}, [initialValues]);
+
 
   const setValue = (name: T, value: any) => {
     setValues((prev) => ({ ...prev, [name]: value }));
