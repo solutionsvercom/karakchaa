@@ -1,264 +1,244 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Flex, Text, Button, TextField, Select } from "@radix-ui/themes";
-import { UserPlus, Save, X } from "lucide-react";
+import { Text, TextField } from "@radix-ui/themes";
+import DynamicForm from "../../components/dynamicComponents/DynamicForm/DynamicForm";
+import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
 
 interface AddUserProps {
   mode: "create" | "edit";
   initialValues?: {
     name: string;
-    email: string;
-    role: string; // This is the role ID
+    companyId: string;  // used for login
+    email: string;      // contact only
+    role: string;
     phoneNumber?: string;
+    isActive?: boolean;
   };
   userId?: string;
   roles: any[];
   onSuccess: () => void;
 }
 
+type UserField =
+  | "name"
+  | "companyId"
+  | "email"
+  | "phoneNumber"
+  | "role"
+  | "password"
+  |  "isActive";
+
 const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps) => {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
 
-  const [form, setForm] = useState({
-    name: initialValues?.name || "",
-    email: initialValues?.email || "",
-    password: "",
-    role: initialValues?.role || "", // Store role ID
-    phoneNumber: initialValues?.phoneNumber || "",
-  });
+  // Check if the currently logged-in user is admin
+  const isAdmin = (localStorage.getItem("userRole") || "") === "admin";
 
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  /* ================= UPDATE FORM ================= */
-  const updateForm = (field: string, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-  };
+  /* ================= FIELDS ================= */
+  const fields: FormField<UserField>[] = [
+    {
+      name: "name",
+      label: "Full Name",
+      type: "text",
+      required: true,
+      span: 2,
+      placeholder: "Enter full name",
+    },
 
-  /* ================= GET ROLE NAME BY ID ================= */
-  const getRoleName = (roleId: string) => {
-    const role = roles.find(r => r._id === roleId);
-    return role ? role.name : "";
-  };
+    // Company ID:
+    //   - create mode → always editable
+    //   - edit + admin → editable
+    //   - edit + non-admin → shown as locked TextField below (not in DynamicForm)
+    ...(mode === "create" || (mode === "edit" && isAdmin)
+      ? ([
+          {
+            name: "companyId",
+            label: "Company ID",
+            type: "text",
+            required: true,
+            span: 2,
+            placeholder: "Enter Company ID (used for login, e.g. john.karakchaa)",
+          },
+        ] as FormField<UserField>[])
+      : []),
 
-  /* ================= SUBMIT HANDLER ================= */
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    {
+      name: "email",
+      label: "Email (contact only — not used for login)",
+      type: "email",
+      span: 2,
+      placeholder: "Enter personal email address",
+    },
+    {
+      name: "phoneNumber",
+      label: "Phone Number",
+      type: "text",
+      span: 2,
+      placeholder: "Enter phone number",
+    },
+    {
+      name: "role",
+      label: "Role",
+      type: "select",
+      span: 2,
+      placeholder: "Select role",
+      options: roles.map((r) => ({
+        value: r._id,
+        label: r.name.charAt(0).toUpperCase() + r.name.slice(1),
+      })),
+    },
+
+    // Password only on create
+    ...(mode === "create"
+      ? ([
+          {
+            name: "password",
+            label: "Password",
+            type: "password",
+            required: true,
+            span: 2,
+            placeholder: "Enter password (min 6 characters)",
+          },
+        ] as FormField<UserField>[])
+      : []),
+      
+       {
+      name: "isActive",
+      label: "Active User",
+      type: "switch",
+      span: 2,
+    },
+  ];
+
+  /* ================= SUBMIT ================= */
+  const handleSubmit = async (data: Record<UserField, any>) => {
     setError("");
 
-    // Validation
-    if (!form.name.trim() || !form.email.trim()) {
-      setError("Please enter name and email");
+    if (!data.name?.trim()) {
+      setError("Please enter a name");
       return;
     }
-
-    if (mode === "create" && !form.password) {
+    if ((mode === "create" || isAdmin) && !data.companyId?.trim()) {
+      setError("Please enter a Company ID");
+      return;
+    }
+    if (mode === "create" && !data.password) {
       setError("Password is required");
       return;
     }
-
-    if (mode === "create" && form.password.length < 6) {
+    if (mode === "create" && data.password?.length < 6) {
       setError("Password must be at least 6 characters");
       return;
     }
 
     try {
-      setLoading(true);
       const payload: any = {
-        name: form.name,
-        email: form.email,
-        role: form.role || "staff", // Send role ID
-        phoneNumber: form.phoneNumber,
+        name: data.name,
+        // Non-admin in edit mode: keep original companyId
+        companyId: mode === "edit" && !isAdmin
+          ? initialValues?.companyId
+          : data.companyId,
+        email: data.email,
+        role: data.role || "staff",
+        phoneNumber: data.phoneNumber,
+        isActive: data.isActive,
       };
 
       if (mode === "create") {
-        payload.password = form.password;
-        await axios.post(
-          "http://localhost:5000/api/auth/register",
-          payload,
-          { headers }
-        );
+        payload.password = data.password;
+        await axios.post("http://localhost:5000/api/auth/register", payload, { headers });
       } else if (mode === "edit" && userId) {
-        await axios.put(
-          `http://localhost:5000/api/auth/users/${userId}`,
-          payload,
-          { headers }
-        );
+        await axios.put(`http://localhost:5000/api/auth/users/${userId}`, payload, { headers });
       }
 
       onSuccess();
       navigate("/dashboard/users");
-    } catch (error: any) {
-      setError(error.response?.data?.message || "Failed to save user");
-    } finally {
-      setLoading(false);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to save user");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Flex direction="column" gap="4">
-        {/* Title */}
-        <Flex align="center" gap="2" mb="2">
-          <UserPlus size={20} style={{ color: "#8b5cf6" }} />
-          <Text size="5" weight="bold" style={{ color: "#1f2937" }}>
-            {mode === "edit" ? "Edit User" : "Add New User"}
-          </Text>
-        </Flex>
+    <>
+      {/* ERROR */}
+      {error && (
+        <div style={{
+          padding: "12px",
+          background: "#fef2f2",
+          border: "1px solid #fecaca",
+          borderRadius: "8px",
+          color: "#dc2626",
+          fontSize: "14px",
+          marginBottom: "12px",
+        }}>
+          {error}
+        </div>
+      )}
 
-        {/* Error Message */}
-        {error && (
-          <div style={{
-            padding: "12px",
-            background: "#fef2f2",
-            border: "1px solid #fecaca",
-            borderRadius: "8px",
-            color: "#dc2626",
-            fontSize: "14px"
-          }}>
-            {error}
-          </div>
-        )}
-
-        {/* Name Input */}
-        <div>
-          <Text size="2" weight="medium" mb="2" style={{ display: "block", color: "#374151" }}>
-            Full Name *
+      {/* LOCKED COMPANY ID — edit mode, non-admin only
+          Using TextField.Root (Radix component) avoids raw <input> lint warnings:
+          - no missing label/title/placeholder axe warning
+          - no "move inline styles to CSS" Edge Tools warning           */}
+      {mode === "edit" && !isAdmin && (
+        <div style={{ marginBottom: "12px" }}>
+          <Text
+            size="2"
+            weight="medium"
+            style={{ display: "block", marginBottom: 4, color: "#374151" }}
+          >
+            Company ID
           </Text>
           <TextField.Root
-            placeholder="Enter full name"
-            value={form.name}
-            onChange={(e) => updateForm("name", e.target.value)}
-            disabled={loading}
-            style={{ width: "100%" }}
+            aria-label="Company ID (read-only, contact admin to change)"
+            placeholder="Company ID"
+            value={initialValues?.companyId || ""}
+            readOnly
+            disabled
+            size="2"
+            radius="large"
+            variant="surface"
+            style={{ height: 35, fontSize: 13, opacity: 0.55, cursor: "not-allowed" }}
           />
-        </div>
-
-        {/* Email Input */}
-        <div>
-          <Text size="2" weight="medium" mb="2" style={{ display: "block", color: "#374151" }}>
-            Email *
+          <Text size="1" style={{ color: "#9ca3af", marginTop: "4px", display: "block" }}>
+            Only an admin can change the Company ID
           </Text>
-          <TextField.Root
-            type="email"
-            placeholder="Enter email address"
-            value={form.email}
-            onChange={(e) => updateForm("email", e.target.value)}
-            disabled={loading || mode === "edit"} // Can't change email in edit mode
-            style={{ width: "100%" }}
-          />
-          {mode === "edit" && (
-            <Text size="1" style={{ color: "#6b7280", marginTop: "4px", display: "block" }}>
-              Email cannot be changed
-            </Text>
-          )}
         </div>
+      )}
 
-        {/* Phone Number Input */}
-        <div>
-          <Text size="2" weight="medium" mb="2" style={{ display: "block", color: "#374151" }}>
-            Phone Number
-          </Text>
-          <TextField.Root
-            type="tel"
-            placeholder="Enter phone number"
-            value={form.phoneNumber}
-            onChange={(e) => updateForm("phoneNumber", e.target.value)}
-            disabled={loading}
-            style={{ width: "100%" }}
-          />
-        </div>
-
-        {/* Role Select */}
-        <div>
-          <Text size="2" weight="medium" mb="2" style={{ display: "block", color: "#374151" }}>
-            Role
-          </Text>
-          <Select.Root
-            value={form.role}
-            onValueChange={(value) => updateForm("role", value)}
-            disabled={loading}
-          >
-            <Select.Trigger 
-              style={{ 
-                width: "100%",
-                cursor: loading ? "not-allowed" : "pointer"
-              }}
-              placeholder="Select role"
-            />
-            <Select.Content>
-              <Select.Group>
-                <Select.Label>Select Role</Select.Label>
-                {roles.map(role => (
-                  <Select.Item key={role._id} value={role._id}>
-                    {role.name.charAt(0).toUpperCase() + role.name.slice(1)}
-                  </Select.Item>
-                ))}
-              </Select.Group>
-            </Select.Content>
-          </Select.Root>
-          {form.role && (
-            <Text size="1" style={{ color: "#6b7280", marginTop: "4px", display: "block" }}>
-              Selected: {getRoleName(form.role)}
-            </Text>
-          )}
-        </div>
-
-        {/* Password Input (only for create mode) */}
-        {mode === "create" && (
-          <div>
-            <Text size="2" weight="medium" mb="2" style={{ display: "block", color: "#374151" }}>
-              Password *
-            </Text>
-            <TextField.Root
-              type="password"
-              placeholder="Enter password (min 6 characters)"
-              value={form.password}
-              onChange={(e) => updateForm("password", e.target.value)}
-              disabled={loading}
-              style={{ width: "100%" }}
-            />
-            <Text size="1" style={{ color: "#6b7280", marginTop: "4px", display: "block" }}>
-              Password must be at least 6 characters
-            </Text>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <Flex gap="3" justify="center" mt="2">
-          <Button
-            type="button"
-            variant="soft"
-            onClick={() => navigate("/dashboard/users")}
-            disabled={loading}
-            style={{
-              background: "#f3f4f6",
-              color: "#374151",
-              cursor: loading ? "not-allowed" : "pointer"
-            }}
-          >
-            <X size={16} />
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={loading}
-            style={{
-              background: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
-              color: "white",
-              cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.6 : 1
-            }}
-          >
-            <Save size={16} />
-            {loading ? "Saving..." : mode === "edit" ? "Update User" : "Create User"}
-          </Button>
-        </Flex>
-      </Flex>
-    </form>
+      {/* DYNAMIC FORM */}
+      <DynamicForm
+        title={mode === "edit" ? "Edit User" : "Add New User"}
+        fields={fields}
+        initialValues={{
+          name: initialValues?.name || "",
+          companyId: initialValues?.companyId || "",
+          email: initialValues?.email || "",
+          phoneNumber: initialValues?.phoneNumber || "",
+          role: initialValues?.role || "",
+          password: "",
+          isActive: initialValues?.isActive ?? true,
+        }}
+        submitText={mode === "edit" ? "Update User" : "Create User"}
+        cancelText="Cancel"
+        onCancel={() => navigate("/dashboard/users")}
+        confirm={{
+          title: mode === "edit"
+            ? "Are you sure you want to update?"
+            : "Are you absolutely sure?",
+          description: mode === "edit"
+            ? "This will update the user details."
+            : "This action cannot be undone.",
+          confirmText: mode === "edit" ? "Yes, Update" : "Yes, Create",
+          cancelText: "No, go back",
+        }}
+        onSubmit={handleSubmit}
+      />
+    </>
   );
 };
 

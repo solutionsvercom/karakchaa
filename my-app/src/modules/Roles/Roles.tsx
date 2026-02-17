@@ -11,6 +11,7 @@ import {
 } from "@radix-ui/themes";
 import { DotsVerticalIcon } from "@radix-ui/react-icons";
 import Table, { Column } from "../../components/dynamicComponents/Table";
+import Searchbar from "../../components/dynamicComponents/Searchbar";
 import AddRole from "./AddRole";
 
 /* ================= TYPES ================= */
@@ -29,6 +30,7 @@ export default function Roles() {
 
   const [roles, setRoles] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
 
   const isAdd = location.pathname.endsWith("/add-role");
   const isEdit = location.pathname.endsWith("/edit-role");
@@ -62,6 +64,13 @@ export default function Roles() {
     modules: r?.modules || [],
     moduleCount: r?.modules?.length || 0,
   })) || [];
+
+  /* ================= SEARCH ================= */
+  const filteredRoles = formattedRoles.filter((r) =>
+    `${r.name} ${r.modules.join(" ")}`
+      .toLowerCase()
+      .includes(searchValue.toLowerCase())
+  );
 
   /* ================= DELETE ROLE ================= */
   const handleDelete = async (roleId: string, roleName: string) => {
@@ -108,7 +117,6 @@ export default function Roles() {
       header: "Modules",
       render: (_, row) => (
         <Flex gap="2" wrap="wrap">
-          {/* ✅ Show ALL modules without truncation */}
           {row.modules.map((module: string) => (
             <span key={module} style={{
               padding: "4px 10px",
@@ -170,10 +178,10 @@ export default function Roles() {
               Roles
             </Text>
             <Text size="2" style={{ color: "#6b7280" }}>
-              Manage user roles and permissions
+              {filteredRoles.length} roles found
             </Text>
           </div>
-          <Button 
+          <Button
             onClick={() => navigate("/dashboard/roles/add-role")}
             style={{
               background: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
@@ -185,9 +193,18 @@ export default function Roles() {
           </Button>
         </Flex>
 
+        {/* ===== SEARCH ===== */}
+        <div style={{ maxWidth: 420 }}>
+          <Searchbar
+            searchValue={searchValue}
+            onSearchChange={setSearchValue}
+            placeholder="Search roles..."
+          />
+        </div>
+
         {/* ===== TABLE ===== */}
         <Table
-          data={formattedRoles}
+          data={filteredRoles}
           columns={columns}
           emptyMessage="No roles found"
           hoverable

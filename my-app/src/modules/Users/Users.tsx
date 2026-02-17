@@ -12,15 +12,17 @@ import {
 } from "@radix-ui/themes";
 import { DotsVerticalIcon } from "@radix-ui/react-icons";
 import Table, { Column } from "../../components/dynamicComponents/Table";
+import Searchbar from "../../components/dynamicComponents/Searchbar";
 import AddUser from "./AddUser";
 
 /* ================= TYPES ================= */
 type UserRow = {
   id: string;
   name: string;
-  email: string;
+  companyId: string;   // ✅ login credential
+  email: string;       // contact only
   role: string;
-  roleName: string; // ✅ Added roleName
+  roleName: string;
   phoneNumber?: string;
   isActive: boolean;
 };
@@ -34,6 +36,7 @@ export default function Users() {
   const [users, setUsers] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
 
   const isAdd = location.pathname.endsWith("/add-user");
   const isEdit = location.pathname.endsWith("/edit-user");
@@ -72,28 +75,43 @@ export default function Users() {
 
   const userToEdit = users.find((u) => u._id === id);
 
-  /* ================= HELPER: Get Role Name by ID ================= */
-  const getRoleName = (roleId: string) => {
-    const role = roles.find(r => r._id === roleId);
-    return role ? role.name : roleId; // Fallback to roleId if not found
+  /* ================= HELPER: Get Role Info ================= */
+  const getRoleInfo = (userRole: any) => {
+    if (typeof userRole === "object" && userRole !== null) {
+      return { id: userRole._id || "", name: userRole.name || "Unknown" };
+    }
+    if (typeof userRole === "string") {
+      const role = roles.find((r) => r._id === userRole);
+      return { id: userRole, name: role ? role.name : "Unknown" };
+    }
+    return { id: "", name: "Unknown" };
   };
 
-  const formattedUsers: UserRow[] = users?.map((u) => ({
-    id: u?._id || "",
-    name: u?.name || "",
-    email: u?.email || "",
-    role: u?.role || "",
-    roleName: getRoleName(u?.role) || u?.role || "", // ✅ Get role name
-    phoneNumber: u?.phoneNumber || "",
-    isActive: u?.isActive ?? true,
-  })) || [];
+  /* ================= FORMAT USERS ================= */
+  const formattedUsers: UserRow[] = users?.map((u) => {
+    const roleInfo = getRoleInfo(u?.role);
+    return {
+      id: u?._id || "",
+      name: u?.name || "",
+      companyId: u?.companyId || "—",     // ✅
+      email: u?.email || "",
+      role: roleInfo.id,
+      roleName: u?.roleName || roleInfo.name,
+      phoneNumber: u?.phoneNumber || "",
+      isActive: u?.isActive ?? true,
+    };
+  }) || [];
+
+  /* ================= SEARCH (name, email, phone) ================= */
+  const filteredUsers = formattedUsers.filter((u) =>
+    `${u.name} ${u.email} ${u.phoneNumber}`
+      .toLowerCase()
+      .includes(searchValue.toLowerCase())
+  );
 
   /* ================= DELETE USER ================= */
   const handleDelete = async (userId: string, userName: string) => {
-    if (!window.confirm(`Are you sure you want to delete "${userName}"?`)) {
-      return;
-    }
-
+    if (!window.confirm(`Are you sure you want to delete "${userName}"?`)) return;
     try {
       await axios.delete(`http://localhost:5000/api/auth/users/${userId}`, { headers });
       fetchUsers();
@@ -110,13 +128,10 @@ export default function Users() {
       header: "User",
       render: (_, row) => (
         <Flex align="center" gap="3">
-          <Avatar 
-            fallback={row.name[0]?.toUpperCase() || "U"} 
+          <Avatar
+            fallback={row.name[0]?.toUpperCase() || "U"}
             radius="full"
-            style={{
-              background: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
-              color: "white"
-            }}
+            style={{ background: "linear-gradient(135deg, #8b5cf6, #7c3aed)", color: "white" }}
           />
           <div>
             <Text weight="medium" style={{ display: "block", color: "#1f2937" }}>
@@ -127,6 +142,26 @@ export default function Users() {
             </Text>
           </div>
         </Flex>
+      ),
+    },
+    // ✅ Company ID column
+    {
+      key: "companyId",
+      header: "Company ID",
+      render: (_, row) => (
+        <Text
+          size="2"
+          style={{
+            color: "#374151",
+            fontWeight: "500",
+            fontFamily: "monospace",
+            background: "#f3f4f6",
+            padding: "3px 8px",
+            borderRadius: "6px",
+          }}
+        >
+          {row.companyId}
+        </Text>
       ),
     },
     {
@@ -144,10 +179,10 @@ export default function Users() {
             textTransform: "capitalize",
             display: "inline-flex",
             alignItems: "center",
-            gap: "6px"
+            gap: "6px",
           }}>
             <Shield size={12} />
-            {row.roleName} {/* ✅ Display roleName instead of role */}
+            {row.roleName}
           </div>
         </Flex>
       ),
@@ -172,7 +207,7 @@ export default function Users() {
           borderRadius: "6px",
           fontSize: "12px",
           fontWeight: "500",
-          display: "inline-block"
+          display: "inline-block",
         }}>
           {row.isActive ? "Active" : "Inactive"}
         </div>
@@ -188,11 +223,8 @@ export default function Users() {
               <DotsVerticalIcon />
             </Button>
           </DropdownMenu.Trigger>
-
           <DropdownMenu.Content align="end">
-            <DropdownMenu.Item
-              onClick={() => navigate(`/dashboard/users/${row.id}/edit-user`)}
-            >
+            <DropdownMenu.Item onClick={() => navigate(`/dashboard/users/${row.id}/edit-user`)}>
               <Pencil size={14} /> Edit
             </DropdownMenu.Item>
             <DropdownMenu.Item
@@ -211,31 +243,37 @@ export default function Users() {
   return (
     <>
       <Flex direction="column" gap="5" width="100%">
-        {/* ===== PAGE TITLE ===== */}
         <Flex justify="between" align="center">
           <div>
             <Text size="6" weight="bold" style={{ display: "block", marginBottom: "4px", color: "#1f2937" }}>
               Users
             </Text>
             <Text size="2" style={{ color: "#6b7280" }}>
-              Manage system users and their access
+              {filteredUsers.length} users found
             </Text>
           </div>
-          <Button 
+          <Button
             onClick={() => navigate("/dashboard/users/add-user")}
             style={{
               background: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
               color: "white",
-              cursor: "pointer"
+              cursor: "pointer",
             }}
           >
             + Add User
           </Button>
         </Flex>
 
-        {/* ===== TABLE ===== */}
+        <div style={{ maxWidth: 420 }}>
+          <Searchbar
+            searchValue={searchValue}
+            onSearchChange={setSearchValue}
+            placeholder="Search users..."
+          />
+        </div>
+
         <Table
-          data={formattedUsers}
+          data={filteredUsers}
           columns={columns}
           emptyMessage="No users found"
           hoverable
@@ -259,9 +297,13 @@ export default function Users() {
               userToEdit
                 ? {
                     name: userToEdit.name,
-                    email: userToEdit.email,
-                    role: userToEdit.role,
+                    companyId: userToEdit.companyId || "",   // ✅
+                    email: userToEdit.email || "",
+                    role: typeof userToEdit.role === "object"
+                      ? userToEdit.role._id
+                      : userToEdit.role,
                     phoneNumber: userToEdit.phoneNumber || "",
+                    isActive: userToEdit.isActive ?? true,
                   }
                 : undefined
             }

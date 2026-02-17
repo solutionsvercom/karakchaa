@@ -30,13 +30,13 @@ const menuItems = [
   { label: 'Products', path: '/dashboard/products', key: 'products', icon: <Package size={16} /> },
   { label: 'Sales', path: '/dashboard/sales', key: 'sales', icon: <TrendingUp size={16} /> },
   { label: 'Stock Management', path: '/dashboard/stockmanagement', key: 'stockmanagement', icon: <Store size={16} /> },
-  { label: 'Customers', path: '/dashboard/customer', key: 'customers', icon: <Users size={16} /> },
+  { label: 'Customers', path: '/dashboard/customer', key: 'customer', icon: <Users size={16} /> },
   { label: 'Expenses', path: '/dashboard/expenses', key: 'expenses', icon: <Wallet size={16} /> },
   { label: 'Suppliers', path: '/dashboard/suppliers', key: 'suppliers', icon: <Truck size={16} /> },
   { label: 'Employees', path: '/dashboard/employees', key: 'employees', icon: <UserCog size={16} /> },
   { label: 'Reports', path: '/dashboard/reports', key: 'reports', icon: <BarChart3 size={16} /> },
-  { label: 'Users', path: '/dashboard/users', key: 'users', icon: <UserPlus size={16} /> },
-  { label: 'Roles', path: '/dashboard/roles', key: 'roles', icon: <Key size={16} /> },
+  { label: 'User Management', path: '/dashboard/users', key: 'users', icon: <UserPlus size={16} /> },
+  { label: 'Role Management', path: '/dashboard/roles', key: 'roles', icon: <Key size={16} /> },
 ];
 
 

@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Flex, Text, Checkbox, Button } from "@radix-ui/themes";
-import { Shield, CheckCheck } from "lucide-react";
+import { Shield, CheckCheck, X } from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
+import DynamicAlertDialog from "../../components/dynamicComponents/DynamicAlertDialog";
 
 const MODULES = [
   "dashboard",
@@ -10,13 +12,13 @@ const MODULES = [
   "products",
   "sales",
   "stockmanagement",
-  "customers",
+  "customer",
   "expenses",
   "suppliers",
   "employees",
   "reports",
   "users",
-  "roles"
+  "roles",
 ];
 
 interface AddRoleProps {
@@ -41,32 +43,24 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
 
   /* ================= TOGGLE MODULE ================= */
   const toggleModule = (module: string) => {
-    setModules(prev =>
-      prev.includes(module) ? prev.filter(m => m !== module) : [...prev, module]
+    setModules((prev) =>
+      prev.includes(module) ? prev.filter((m) => m !== module) : [...prev, module]
     );
   };
 
-  /* ================= SELECT ALL MODULES ================= */
+  /* ================= SELECT ALL ================= */
   const selectAllModules = () => {
-    if (modules.length === MODULES.length) {
-      // If all are selected, deselect all
-      setModules([]);
-    } else {
-      // Select all
-      setModules([...MODULES]);
-    }
+    setModules(modules.length === MODULES.length ? [] : [...MODULES]);
   };
 
-  /* ================= SUBMIT HANDLER ================= */
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  /* ================= SUBMIT ================= */
+  const handleSubmit = async () => {
     setError("");
 
     if (!name.trim()) {
       setError("Please enter a role name");
       return;
     }
-
     if (modules.length === 0) {
       setError("Please select at least one module");
       return;
@@ -77,186 +71,184 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
       const payload = { name, modules };
 
       if (mode === "edit" && roleId) {
-        await axios.put(
-          `http://localhost:5000/api/roles/${roleId}`,
-          payload,
-          { headers }
-        );
+        await axios.put(`http://localhost:5000/api/roles/${roleId}`, payload, { headers });
       } else {
-        await axios.post(
-          "http://localhost:5000/api/roles",
-          payload,
-          { headers }
-        );
+        await axios.post("http://localhost:5000/api/roles", payload, { headers });
       }
 
       onSuccess();
       navigate("/dashboard/roles");
-    } catch (error: any) {
-      setError(error.response?.data?.message || "Failed to save role");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to save role");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Flex direction="column" gap="4">
-        {/* Title */}
-        <Flex align="center" gap="2" mb="2">
-          <Shield size={20} style={{ color: "#8b5cf6" }} />
-          <Text size="5" weight="bold" style={{ color: "#1f2937" }}>
+    <Flex direction="column" gap="4">
+
+      {/* ===== TITLE (matches DynamicForm header) ===== */}
+      <Flex justify="between" align="center" mb="0">
+        <Flex align="center" gap="2">
+          
+          <Text weight="bold" size="4">
             {mode === "edit" ? "Edit Role" : "Add New Role"}
           </Text>
         </Flex>
+         <Dialog.Close asChild>
+                    <Button variant="ghost" className="dialog-close-icon">
+                      <X size={18} />
+                    </Button>
+                  </Dialog.Close>
+      </Flex>
 
-        {/* Error Message */}
-        {error && (
-          <div style={{
-            padding: "12px",
-            background: "#fef2f2",
-            border: "1px solid #fecaca",
+      {/* ===== ERROR ===== */}
+      {error && (
+        <div style={{
+          padding: "12px",
+          background: "#fef2f2",
+          border: "1px solid #fecaca",
+          borderRadius: "8px",
+          color: "#dc2626",
+          fontSize: "14px",
+        }}>
+          {error}
+        </div>
+      )}
+
+      {/* ===== ROLE NAME ===== */}
+      <div>
+        <Text size="2" weight="medium" style={{ display: "block", marginBottom: 4, color: "#374151" }}>
+          Role Name <Text color="red">*</Text>
+        </Text>
+        <input
+          type="text"
+          placeholder="Enter role name (e.g., Manager, Staff)"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: "10px 12px",
+            fontSize: "14px",
+            border: "1px solid #e5e7eb",
             borderRadius: "8px",
-            color: "#dc2626",
-            fontSize: "14px"
-          }}>
-            {error}
-          </div>
-        )}
+            outline: "none",
+            transition: "border-color 0.2s",
+            fontFamily: "inherit",
+            boxSizing: "border-box",
+          }}
+          onFocus={(e) => (e.target.style.borderColor = "#8b5cf6")}
+          onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+        />
+      </div>
 
-        {/* Role Name Input */}
-        <div>
-          <Text size="2" weight="medium" mb="2" style={{ display: "block", color: "#374151" }}>
-            Role Name *
+      {/* ===== MODULES ===== */}
+      <div>
+        <Flex justify="between" align="center" mb="2">
+          <Text size="2" weight="medium" style={{ color: "#374151" }}>
+            Permissions <Text color="red">*</Text>{" "}
+            <Text style={{ color: "#6b7280" }}>({modules.length} selected)</Text>
           </Text>
-          <input
-            type="text"
-            placeholder="Enter role name (e.g., Manager, Staff)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={loading}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              fontSize: "14px",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              outline: "none",
-              transition: "border-color 0.2s",
-              fontFamily: "inherit"
-            }}
-            onFocus={(e) => e.target.style.borderColor = "#8b5cf6"}
-            onBlur={(e) => e.target.style.borderColor = "#e5e7eb"}
-          />
-        </div>
-
-        {/* Modules Selection */}
-        <div>
-          {/* ✅ Permissions Header with Select All Button */}
-          <Flex justify="between" align="center" mb="2">
-            <Text size="2" weight="medium" style={{ color: "#374151" }}>
-              Permissions * ({modules.length} selected)
-            </Text>
-            <Button
-              type="button"
-              variant="soft"
-              size="1"
-              onClick={selectAllModules}
-              disabled={loading}
-              style={{
-                background: modules.length === MODULES.length ? "#ede9fe" : "#f3f4f6",
-                color: modules.length === MODULES.length ? "#7c3aed" : "#374151",
-                cursor: loading ? "not-allowed" : "pointer",
-                fontSize: "12px",
-                fontWeight: "600",
-                padding: "6px 12px",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px"
-              }}
-            >
-              <CheckCheck size={14} />
-              {modules.length === MODULES.length ? "Deselect All" : "Select All"}
-            </Button>
-          </Flex>
-
-          <div style={{
-            maxHeight: "280px",
-            overflowY: "auto",
-            padding: "12px",
-            background: "#fafafa",
-            borderRadius: "8px",
-            border: "1px solid #e5e7eb"
-          }}>
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
-              gap: "10px"
-            }}>
-              {MODULES.map(module => (
-                <label
-                  key={module}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    padding: "10px 12px",
-                    background: modules.includes(module) ? "#ede9fe" : "white",
-                    border: modules.includes(module) ? "2px solid #8b5cf6" : "2px solid #e5e7eb",
-                    borderRadius: "8px",
-                    cursor: loading ? "not-allowed" : "pointer",
-                    transition: "all 0.2s",
-                    fontSize: "13px",
-                    fontWeight: "500",
-                    opacity: loading ? 0.6 : 1,
-                    color: modules.includes(module) ? "#7c3aed" : "#374151"
-                  }}
-                >
-                  <Checkbox
-                    checked={modules.includes(module)}
-                    onCheckedChange={() => !loading && toggleModule(module)}
-                    disabled={loading}
-                    style={{
-                      borderColor: modules.includes(module) ? "#8b5cf6" : "#d1d5db"
-                    }}
-                  />
-                  <span style={{ textTransform: "capitalize" }}>{module}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <Flex gap="3" mt="3" justify="center">
           <Button
             type="button"
             variant="soft"
-            onClick={() => navigate("/dashboard/roles")}
+            size="1"
+            onClick={selectAllModules}
             disabled={loading}
             style={{
-              background: "#f3f4f6",
-              color: "#374151",
-              cursor: loading ? "not-allowed" : "pointer"
+              background: modules.length === MODULES.length ? "#ede9fe" : "#f3f4f6",
+              color: modules.length === MODULES.length ? "#7c3aed" : "#374151",
+              cursor: loading ? "not-allowed" : "pointer",
+              fontSize: "12px",
+              fontWeight: "600",
+              padding: "6px 12px",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
             }}
           >
+            <CheckCheck size={14} />
+            {modules.length === MODULES.length ? "Deselect All" : "Select All"}
+          </Button>
+        </Flex>
+
+        <div style={{
+          maxHeight: "280px",
+          overflowY: "auto",
+          padding: "12px",
+          background: "#fafafa",
+          borderRadius: "8px",
+          border: "1px solid #e5e7eb",
+        }}>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+            gap: "10px",
+          }}>
+            {MODULES.map((module) => (
+              <label
+                key={module}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "10px 12px",
+                  background: modules.includes(module) ? "#ede9fe" : "white",
+                  border: modules.includes(module) ? "2px solid #8b5cf6" : "2px solid #e5e7eb",
+                  borderRadius: "8px",
+                  cursor: loading ? "not-allowed" : "pointer",
+                  transition: "all 0.2s",
+                  fontSize: "13px",
+                  fontWeight: "500",
+                  opacity: loading ? 0.6 : 1,
+                  color: modules.includes(module) ? "#7c3aed" : "#374151",
+                }}
+              >
+                <Checkbox
+                  checked={modules.includes(module)}
+                  onCheckedChange={() => !loading && toggleModule(module)}
+                  disabled={loading}
+                  style={{ borderColor: modules.includes(module) ? "#8b5cf6" : "#d1d5db" }}
+                />
+                <span style={{ textTransform: "capitalize" }}>{module}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ===== FOOTER (matches DynamicForm footer) ===== */}
+      <Flex mt="3" gap="2">
+        <Dialog.Close asChild>
+          <Button className="button outline" style={{ flex: 1 }} disabled={loading}>
             Cancel
           </Button>
+        </Dialog.Close>
+
+        <DynamicAlertDialog
+          title={mode === "edit" ? "Are you sure you want to update?" : "Are you absolutely sure?"}
+          description={
+            mode === "edit"
+              ? "This will update the role and its permissions."
+              : "This action cannot be undone."
+          }
+          cancelText="No, go back"
+          actionText={mode === "edit" ? "Yes, Update" : "Yes, Create"}
+          onAction={handleSubmit}
+        >
           <Button
-            type="submit"
+            className="create-btn"
+            style={{ flex: 1 }}
             disabled={loading}
-            style={{
-              background: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
-              color: "white",
-              cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.6 : 1
-            }}
           >
             {loading ? "Saving..." : mode === "edit" ? "Update Role" : "Create Role"}
           </Button>
-        </Flex>
+        </DynamicAlertDialog>
       </Flex>
-    </form>
+
+    </Flex>
   );
 };
 
