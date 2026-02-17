@@ -22,8 +22,6 @@ export const store = configureStore({
     expenses: expensesReducer,
     suppliers: suppliersReducer,
       
-      
-
   },
 });
 
