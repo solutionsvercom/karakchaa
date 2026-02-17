@@ -37,6 +37,9 @@ app.use("/api/sales", require("./src/routes/Sale"));
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/suppliers", supplierRoutes);
 
+
+
+
 /* ================= BASIC ROUTES ================= */
 app.get('/', (req, res) => {
     res.json({ message: 'Backend server is running!' });
