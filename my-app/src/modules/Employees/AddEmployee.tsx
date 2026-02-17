@@ -53,24 +53,68 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
     fetchRoles();
   }, []);
 
-  /* ================= VALIDATION ================= */
+  /* ================= VALIDATION (UPDATED) ================= */
+          const validate = (data: any) => {
+  const name = data.name?.trim();
+  const phone = data.phone?.trim();
+  const email = data.email?.trim();
+  const role = data.role;
+  const salary = Number(data.salary);
 
-  const validate = (data: any) => {
-    if (!data.name?.trim()) return "Full name is required";
+  // 1️⃣ Name
+  if (!name) {
+    return "Full name is required";
+  }
 
-    if (!data.phone) return "Phone number is required";
+  if (name.length < 3) {
+    return "Full name must be at least 3 characters";
+  }
 
-    if (!/^\d{10}$/.test(data.phone))
-      return "Phone number must be exactly 10 digits";
+  if (!/^[a-zA-Z\s.'-]+$/.test(name)) {
+    return "Full name contains invalid characters";
+  }
 
-    if (!data.role) return "Please select a role";
+  // 2️⃣ Phone
+  if (!phone) {
+    return "Phone number is required";
+  }
 
-    if (!data.salary || Number(data.salary) <= 0)
-      return "Salary must be greater than 0";
+  if (!/^\d{10}$/.test(phone)) {
+    return "Phone number must be exactly 10 digits";
+  }
 
-    return null;
-  };
+  // 3️⃣ Email (optional but validated if provided)
+  if (email) {
+    const emailRegex =
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
+    if (!emailRegex.test(email)) {
+      return "Please enter a valid email address";
+    }
+  }
+
+  // 4️⃣ Role
+  if (!role) {
+    return "Please select a role";
+  }
+
+  // 5️⃣ Salary
+  if (!data.salary || isNaN(salary)) {
+    return "Salary is required";
+  }
+
+  if (salary <= 0) {
+    return "Salary must be greater than 0";
+  }
+
+  if (salary > 10000000) {
+    return "Salary amount seems unrealistic";
+  }
+
+  return null;
+};
+
+  
   /* ================= FIELDS ================= */
 
   const fields: FormField<EmployeeField>[] = [
