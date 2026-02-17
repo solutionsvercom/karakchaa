@@ -1,4 +1,5 @@
 const User = require('../models/Users/UserSchema');
+const Role = require("../models/Users/RoleSchema");
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
@@ -11,29 +12,39 @@ exports.register = async(req, res) => {
     try {
         const { name, email, password, role, phoneNumber } = req.body;
 
-        // Validate required fields
-        if (!name || !email || !password) {
+        if (!name || !email || !password || !role) {
             return res.status(400).json({
                 success: false,
-                message: 'Please provide name, email, and password'
+                message: "Please provide name, email, password and role"
             });
         }
 
-        // Check if user already exists
         const existingUser = await User.findOne({ email });
+
         if (existingUser) {
             return res.status(400).json({
                 success: false,
-                message: 'User with this email already exists'
+                message: "User already exists"
             });
         }
 
-        // Create new user
+        // ✅ GET ROLE DOCUMENT
+        const roleDoc = await Role.findById(role);
+
+        if (!roleDoc) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid role"
+            });
+        }
+
+        // ✅ CREATE USER WITH roleName
         const user = new User({
             name,
             email,
             password,
-            role: role || 'staff',
+            role: roleDoc._id,
+            roleName: roleDoc.name,
             phoneNumber
         });
 
@@ -41,24 +52,17 @@ exports.register = async(req, res) => {
 
         res.status(201).json({
             success: true,
-            message: 'User registered successfully',
-            data: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                phoneNumber: user.phoneNumber
-            }
+            message: "User created successfully",
+            user
         });
+
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error registering user',
-            error: error.message
+            message: error.message
         });
     }
 };
-
 /* =========================
    LOGIN
 ========================= */
@@ -75,7 +79,8 @@ exports.login = async(req, res) => {
             });
         }
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email }).populate("role");
+
         console.log('👤 User found:', user ? 'YES' : 'NO'); // ✅ ADD THIS
         console.log('👤 User details:', user ? { id: user._id, email: user.email, role: user.role } : 'N/A'); // ✅ ADD THIS
 
@@ -112,24 +117,25 @@ exports.login = async(req, res) => {
         const token = jwt.sign({
                 userId: user._id,
                 email: user.email,
-                role: user.role,
+                role: user.role.name,
                 name: user.name
             },
             JWT_SECRET, { expiresIn: JWT_EXPIRES_IN }
         );
 
+
         res.json({
             success: true,
-            message: 'Login successful',
             token,
             user: {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role,
-                phoneNumber: user.phoneNumber
+                role: user.role.name,
+                modules: user.role.modules
             }
         });
+
     } catch (error) {
         console.error('❌ Login error:', error); // ✅ ADD THIS
         res.status(500).json({
@@ -144,12 +150,15 @@ exports.login = async(req, res) => {
 ========================= */
 exports.getCurrentUser = async(req, res) => {
     try {
-        const user = await User.findById(req.user.userId).select('-password');
+
+        const user = await User.findById(req.user.userId)
+            .populate("role") // IMPORTANT
+            .select("-password");
 
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: 'User not found'
+                message: "User not found"
             });
         }
 
@@ -159,20 +168,20 @@ exports.getCurrentUser = async(req, res) => {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role,
-                phoneNumber: user.phoneNumber,
-                isActive: user.isActive,
-                lastLogin: user.lastLogin
+                role: user.role.name, // FIX
+                modules: user.role.modules, // FIX
+                phoneNumber: user.phoneNumber
             }
         });
+
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error fetching user',
-            error: error.message
+            message: error.message
         });
     }
 };
+
 
 /* =========================
    GET ALL USERS (ADMIN ONLY)
