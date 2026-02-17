@@ -1,63 +1,60 @@
 const mongoose = require("mongoose");
 
-const saleSchema = new mongoose.Schema(
-  {
+const saleSchema = new mongoose.Schema({
     invoiceNumber: {
-      type: String,
-      required: true,
-      unique: true,
+        type: String,
+        required: true,
+        unique: true,
     },
 
     product: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
-      required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+        required: true,
     },
 
     quantity: {
-      type: Number,
-      required: true,
-      min: 1,
+        type: Number,
+        required: true,
+        min: 1,
     },
 
     sellingPrice: {
-      type: Number,
-      required: true,
+        type: Number,
+        required: true,
     },
 
     totalAmount: {
-      type: Number,
-      required: true,
+        type: Number,
+        required: true,
     },
 
     customer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Customer",
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Customer",
     },
 
     paymentMethod: {
-      type: String,
-      enum: ["Cash", "Card", "UPI"],
-      required: true,
+        type: String,
+        enum: ["Cash", "Card", "UPI"],
+        required: true,
     },
 
     paymentStatus: {
-      type: String,
-      enum: ["Completed", "Pending", "Cancelled"],
-      default: "Completed",
+        type: String,
+        enum: ["Completed", "Pending", "Cancelled"],
+        default: "Completed",
     },
 
     soldBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Employee",
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Employee",
     },
 
     soldAt: {
-      type: Date,
-      default: Date.now,
+        type: Date,
+        default: Date.now,
     },
-  },
-  { timestamps: true }
-);
+}, { timestamps: true });
 
 module.exports = mongoose.model("Sale", saleSchema);

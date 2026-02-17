@@ -105,9 +105,16 @@ const AddSupplier = ({
       cancelText="Cancel"
       onCancel={onClose}
       onSubmit={(data) => {
-        onSave(data);   // ✅ actually save
-        onClose();      // ✅ close dialog
-      }}
+      const phone = String(data.phone ?? "").trim();
+      if (!/^\d{10}$/.test(phone)) {
+        alert("Phone number must be exactly 10 digits");
+        return;
+      }
+
+  onSave({ ...data, phone }); // keep cleaned phone
+  onClose();
+}}
+
     />
   );
 };

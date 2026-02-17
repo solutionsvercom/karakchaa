@@ -1,9 +1,8 @@
-// src/components/dynamicComponents/LowStockAlert.tsx
 import React from "react";
-import { Flex, Text, Button } from "@radix-ui/themes";
+import { Flex, Text, Button, Badge } from "@radix-ui/themes";
 import { Package, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { StockItem, getStockLabel } from "../../../modules/Stockmanagement/Stockmanagement";
+import { StockItem } from "../../../features/StockmanagementSlice";
 
 interface LowStockAlertProps {
   products: StockItem[];
@@ -18,11 +17,16 @@ export const LowStockAlert: React.FC<LowStockAlertProps> = ({
 
   // Filter only low stock and out of stock products
   const lowStockProducts = products.filter(
-    (product) => product.status === "low-stock" || product.status === "out-of-stock"
+    (product) => product.status === "Low Stock" || product.status === "Out of Stock"
   );
 
   const handleViewAll = () => {
-    navigate("/Dashboard/Stockmanagement");
+    navigate("/dashboard/stockmanagement");
+  };
+
+  // Helper function to get badge color
+  const getStockColor = (status: string): "yellow" | "red" => {
+    return status === "Out of Stock" ? "red" : "yellow";
   };
 
   return (
@@ -31,7 +35,7 @@ export const LowStockAlert: React.FC<LowStockAlertProps> = ({
         <Text weight="bold" size="4">
           Low Stock Alert
         </Text>
-        {showViewAll && (
+        {showViewAll && lowStockProducts.length > 0 && (
           <Button
             variant="ghost"
             size="2"
@@ -76,46 +80,33 @@ export const LowStockAlert: React.FC<LowStockAlertProps> = ({
           <Flex direction="column" gap="2">
             {lowStockProducts.slice(0, 5).map((product) => (
               <Flex
-                key={product.id}
+                key={product._id}
                 justify="between"
                 align="center"
                 p="3"
                 style={{
                   borderRadius: "8px",
                   backgroundColor:
-                    product.status === "out-of-stock"
+                    product.status === "Out of Stock"
                       ? "var(--red-a2)"
                       : "var(--orange-a2)",
                   border:
-                    product.status === "out-of-stock"
+                    product.status === "Out of Stock"
                       ? "1px solid var(--red-a6)"
                       : "1px solid var(--orange-a6)",
                 }}
               >
                 <Flex direction="column" gap="1">
                   <Text weight="medium" size="3">
-                    {product.product}
+                    {product.productName}
                   </Text>
                   <Text size="2" color="gray">
-                    Current: {product.currentStock} | Min: {product.minLevel}
+                    Current: {product.currentStock} | Min: {product.minStockLevel}
                   </Text>
                 </Flex>
-                <Flex
-                  px="3"
-                  py="1"
-                  style={{
-                    borderRadius: "4px",
-                    backgroundColor:
-                      product.status === "out-of-stock"
-                        ? "var(--red-9)"
-                        : "var(--orange-9)",
-                    color: "white",
-                  }}
-                >
-                  <Text size="2" weight="medium">
-                    {getStockLabel(product.status)}
-                  </Text>
-                </Flex>
+                <Badge color={getStockColor(product.status)} variant="soft">
+                  {product.status}
+                </Badge>
               </Flex>
             ))}
 

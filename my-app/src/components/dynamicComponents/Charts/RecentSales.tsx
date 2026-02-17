@@ -3,7 +3,7 @@ import React from "react";
 import { Flex, Text, Button } from "@radix-ui/themes";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { SaleTransaction } from "../../../modules/Sales/Sales"; // 👈 IMPORT TYPE
+import type { SaleTransaction } from "../../../modules/Sales/Sales"; // 👈 IMPORT TYPE
 
 interface RecentSalesProps {
   sales: SaleTransaction[]; // 👈 USE IMPORTED TYPE

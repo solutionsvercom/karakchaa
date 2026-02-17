@@ -152,7 +152,10 @@ export default function Suppliers() {
             status={s.status}
             accentColor=""
             softColor="rgba(124,92,255,0.15)"
-            onEdit={() => setEditingSupplier(s)}                 // ✅ works
+            onEdit={() => {
+            navigate(`/dashboard/suppliers/edit-supplier/${s.id}`); // ✅ URL with id
+            setEditingSupplier(s);
+            }}                 // ✅ works
             onDelete={() => handleDelete(s.id)}                  // ✅ works
           />
         ))}

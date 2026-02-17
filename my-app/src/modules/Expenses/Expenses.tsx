@@ -207,7 +207,9 @@ export default function Expenses() {
 
           <DropdownMenu.Content align="end">
             {/* ✅ FIX: open edit using local state */}
-            <DropdownMenu.Item onClick={() => setEditingExpense(row)}>
+            <DropdownMenu.Item onClick={() => {
+              navigate(`/dashboard/expenses/edit-expense/${row._id}`);
+              setEditingExpense(row)}}>
               <Pencil size={14} /> Edit
             </DropdownMenu.Item>
 
