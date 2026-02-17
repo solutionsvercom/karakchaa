@@ -16,7 +16,7 @@ import Table, { Column } from "../../components/dynamicComponents/Table";
 import AddExpense from "./AddExpense";
 
 import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "../../store/Store";
+import type { RootState, AppDispatch } from "../../store/Store";
 import {
   fetchExpenses,
   fetchExpenseTotals,
@@ -60,44 +60,14 @@ const getCategoryColor = (
   return colors[category] || "gray";
 };
 
-/* ================= (For Reports.tsx compatibility) ================= */
-
-export type ExpenseTransaction = {
-  amount: number;
-  date: string | Date;
-};
-
-export const calculateExpenseTotals = (data: ExpenseTransaction[]) => {
-  const now = new Date();
-
-  const totalExpenses = (data || []).reduce(
-    (sum, expense) => sum + Number((expense as any).amount || 0),
-    0
-  );
-
-  const thisMonthExpenses = (data || [])
-    .filter((expense) => {
-      const expenseDate = new Date((expense as any).date);
-      return (
-        expenseDate.getMonth() === now.getMonth() &&
-        expenseDate.getFullYear() === now.getFullYear()
-      );
-    })
-    .reduce((sum, expense) => sum + Number((expense as any).amount || 0), 0);
-
-  const totalTransactions = (data || []).length;
-  const averageExpense =
-    totalTransactions > 0 ? Math.round(totalExpenses / totalTransactions) : 0;
-
-  return { totalExpenses, thisMonthExpenses, totalTransactions, averageExpense };
-};
-
 /* ================= COMPONENT ================= */
 
 export default function Expenses() {
   const navigate = useNavigate();
   const location = useLocation();
-  const dispatch = useDispatch<any>();
+
+  // ✅ FIXED DISPATCH TYPING
+  const dispatch = useDispatch<AppDispatch>();
 
   const { expenses, totals, loading, error } = useSelector(
     (state: RootState) => state.expenses
@@ -108,7 +78,6 @@ export default function Expenses() {
   const [search, setSearch] = React.useState("");
   const [category, setCategory] = React.useState("All Categories");
 
-  // ✅ Like Suppliers: keep the expense being edited in local state
   const [editingExpense, setEditingExpense] = React.useState<Expense | null>(
     null
   );
@@ -116,13 +85,15 @@ export default function Expenses() {
   const isAdd = location.pathname.endsWith("/add-expense");
   const isDialogOpen = isAdd || !!editingExpense;
 
-  // load list + totals
+  /* ================= LOAD DATA ================= */
+
   useEffect(() => {
     dispatch(fetchExpenses());
     dispatch(fetchExpenseTotals());
   }, [dispatch]);
 
-  /* ---------- SEARCH + FILTER ---------- */
+  /* ================= FILTER ================= */
+
   const filteredExpenses = safeExpenses.filter((expense: Expense) => {
     const matchesSearch = `${expense.title} ${expense.vendor ?? ""} ${
       expense.category
@@ -137,12 +108,15 @@ export default function Expenses() {
     return matchesSearch && matchesCategory;
   });
 
-  /* ---------- TABLE COLUMNS ---------- */
+  /* ================= TABLE COLUMNS ================= */
+
   const columns: Column<Expense>[] = [
     {
       key: "title",
       header: "Title",
-      render: (_: any, row: Expense) => <Text weight="medium">{row.title}</Text>,
+      render: (_: any, row: Expense) => (
+        <Text weight="medium">{row.title}</Text>
+      ),
     },
     {
       key: "category",
@@ -206,10 +180,12 @@ export default function Expenses() {
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Content align="end">
-            {/* ✅ FIX: open edit using local state */}
-            <DropdownMenu.Item onClick={() => {
-              navigate(`/dashboard/expenses/edit-expense/${row._id}`);
-              setEditingExpense(row)}}>
+            <DropdownMenu.Item
+              onClick={() => {
+                navigate(`/dashboard/expenses/edit-expense/${row._id}`);
+                setEditingExpense(row);
+              }}
+            >
               <Pencil size={14} /> Edit
             </DropdownMenu.Item>
 
@@ -225,7 +201,8 @@ export default function Expenses() {
                 if (deleteExpense.fulfilled.match(res)) {
                   dispatch(fetchExpenses());
                   dispatch(fetchExpenseTotals());
-                  if (editingExpense?._id === row._id) setEditingExpense(null);
+                  if (editingExpense?._id === row._id)
+                    setEditingExpense(null);
                 }
               }}
             >
@@ -237,13 +214,14 @@ export default function Expenses() {
     },
   ];
 
-  // ✅ CRITICAL: DatePicker expects Date object → convert here
   const editInitialValues = React.useMemo(() => {
     if (!editingExpense) return undefined;
 
     return {
       ...editingExpense,
-      date: editingExpense.date ? new Date(editingExpense.date) : new Date(),
+      date: editingExpense.date
+        ? new Date(editingExpense.date)
+        : new Date(),
       vendor: editingExpense.vendor ?? "",
       notes: editingExpense.notes ?? "",
     };
@@ -275,7 +253,9 @@ export default function Expenses() {
           />
           <SummaryCard
             title="Total Records"
-            value={String(totals?.totalTransactions ?? filteredExpenses.length)}
+            value={String(
+              totals?.totalTransactions ?? filteredExpenses.length
+            )}
             accentColor="#FF9100"
             softColor="#FFF3E0"
             icon="⚠️"
@@ -313,7 +293,10 @@ export default function Expenses() {
                 "Taxes",
                 "Miscellaneous",
               ].map((item) => (
-                <DropdownMenu.Item key={item} onClick={() => setCategory(item)}>
+                <DropdownMenu.Item
+                  key={item}
+                  onClick={() => setCategory(item)}
+                >
                   {item}
                 </DropdownMenu.Item>
               ))}
@@ -322,24 +305,23 @@ export default function Expenses() {
 
           <Button
             style={{ whiteSpace: "nowrap" }}
-            onClick={() => navigate("/dashboard/expenses/add-expense")}
+            onClick={() =>
+              navigate("/dashboard/expenses/add-expense")
+            }
           >
             + Add Expense
           </Button>
         </Flex>
 
         <Table
-  columns={columns}
-  data={filteredExpenses}
-  loading={loading}
-  // emptyText="No expenses found."
-  hoverable
-  striped
-/>
-
+          columns={columns}
+          data={filteredExpenses}
+          loading={loading}
+          hoverable
+          striped
+        />
       </Flex>
 
-      {/* ✅ Dialog opens for Add OR Edit */}
       <Dialog.Root
         open={isDialogOpen}
         onOpenChange={(open) => {
@@ -351,9 +333,11 @@ export default function Expenses() {
       >
         <Dialog.Content maxWidth="450px">
           <AddExpense
-            key={editingExpense ? editingExpense._id : "create"} // ✅ remount form
+            key={editingExpense ? editingExpense._id : "create"}
             mode={editingExpense ? "edit" : "create"}
-            initialValues={editingExpense ? editInitialValues : undefined}
+            initialValues={
+              editingExpense ? editInitialValues : undefined
+            }
             onClose={() => {
               setEditingExpense(null);
               navigate("/dashboard/expenses");
