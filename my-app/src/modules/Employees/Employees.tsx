@@ -8,7 +8,7 @@ import {
   DropdownMenu,
   Badge,
 } from "@radix-ui/themes";
-import { Plus, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, X } from "lucide-react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../store/Store";
@@ -23,23 +23,19 @@ import Table, { Column } from "../../components/dynamicComponents/Table";
 import AddEmployee from "./AddEmployee";
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
 
-/* ================= TYPES ================= */
+/* ================= ROLE COLOR ================= */
 
-type Role =
-  | "staff"
-  | "manager"
-  | "owner"
-  | "cashier"
-  | "chef"
-  | "delivery";
-
-const roleColorMap: Record<Role, "yellow" | "green" | "orange" | "cyan"> = {
-  staff: "yellow",
-  cashier: "green",
-  chef: "orange",
-  delivery: "cyan",
-  manager: "green",
-  owner: "orange",
+const getRoleColor = (role: string): "yellow" | "green" | "orange" | "cyan" | "blue" | "gray" => {
+  const map: Record<string, "yellow" | "green" | "orange" | "cyan" | "blue" | "gray"> = {
+    staff: "yellow",
+    cashier: "green",
+    chef: "orange",
+    delivery: "cyan",
+    manager: "green",
+    owner: "orange",
+    admin: "blue",
+  };
+  return map[role?.toLowerCase()] ?? "gray";
 };
 
 export default function Employees() {
@@ -104,7 +100,6 @@ export default function Employees() {
     [navigate]
   );
 
-  /* ✅ CONFIRM DELETE ADDED HERE */
   const handleDelete = React.useCallback(
     (id: string | undefined, name?: string) => {
       if (!id) return;
@@ -133,8 +128,8 @@ export default function Employees() {
         key: "role",
         header: "Role",
         accessor: "role",
-        render: (v: Role) => (
-          <Badge color={roleColorMap[v]} radius="full">
+        render: (v: string) => (
+          <Badge color={getRoleColor(v)} radius="full">
             {v}
           </Badge>
         ),
@@ -185,9 +180,7 @@ export default function Employees() {
 
               <DropdownMenu.Item
                 color="red"
-                onClick={() =>
-                  handleDelete(row._id, row.name)
-                }
+                onClick={() => handleDelete(row._id, row.name)}
               >
                 <Trash2 size={14} /> Delete
               </DropdownMenu.Item>
@@ -276,15 +269,23 @@ export default function Employees() {
         }}
       >
         <Dialog.Content maxWidth="480px">
-          <Dialog.Title>
-            {isEditEmployee ? "Edit Employee" : "Add Employee"}
-          </Dialog.Title>
 
-          <Dialog.Description>
-            {isEditEmployee
-              ? "Update employee details below."
-              : "Fill in the details to create a new employee."}
-          </Dialog.Description>
+          {/* ✅ Header: title on left, X on right */}
+          <Flex justify="between" align="center" mb="4">
+            <Dialog.Title mb="0">
+              {isEditEmployee ? "Edit Employee" : "Add Employee"}
+            </Dialog.Title>
+
+            <IconButton
+              variant="ghost"
+              color="gray"
+              radius="full"
+              type="button"
+              onClick={() => navigate("/dashboard/employees")}
+            >
+              <X size={18} />
+            </IconButton>
+          </Flex>
 
           {isEditEmployee && !employeeToEdit ? (
             <div style={{ padding: 40, textAlign: "center" }}>
