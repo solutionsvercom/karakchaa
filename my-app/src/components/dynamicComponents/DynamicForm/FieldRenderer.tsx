@@ -29,6 +29,7 @@ const FieldRenderer = <T extends string>({
   return (
     <input
       type="number"
+      min={0}
       value={value === 0 ? "" : value}
       placeholder="0"
       onChange={(e) => {
@@ -60,6 +61,24 @@ const FieldRenderer = <T extends string>({
     />
   );
 
+  case "password":
+    return (
+      <TextField.Root
+        id={id}
+        type="password"
+        placeholder={field.placeholder}
+        value={value ?? ""}
+        size="2"
+        radius="large"
+        variant="surface"
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          height: 35,
+          fontSize: 13,
+        }}
+      />
+    );
+
 
   case "text":
   case "email":
@@ -78,8 +97,7 @@ const FieldRenderer = <T extends string>({
     fontSize: 13,        
   }}
 />
-
-      );
+);
 
     case "textarea":
       return (

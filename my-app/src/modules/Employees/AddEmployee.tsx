@@ -5,9 +5,12 @@ import {
   updateEmployee,
 } from "../../features/EmployeesSlice";
 import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 import DynamicForm from "../../components/dynamicComponents/DynamicForm/DynamicForm";
 import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
+import { Callout } from "@radix-ui/themes";
 
 interface AddEmployeeProps {
   mode: "create" | "edit";
@@ -29,26 +32,109 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
+  const [error, setError] = useState<string | null>(null);
+  const [roles, setRoles] = useState<any[]>([]);
+
+  /* ================= FETCH ROLES ================= */
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get("http://localhost:5000/api/roles", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setRoles(res.data.roles || []);
+      } catch (err) {
+        console.error("Failed to fetch roles", err);
+      }
+    };
+
+    fetchRoles();
+  }, []);
+
+  /* ================= VALIDATION ================= */
+
+  const validate = (data: any) => {
+    const name             = data.name?.trim();
+    const phone            = data.phone?.trim();
+    const email            = data.email?.trim();
+    const emergencyContact = data.emergencyContact?.trim();
+    const role             = data.role;
+    const salary           = Number(data.salary);
+    const joinDate         = data.joinDate;
+
+    // 1️⃣ Name
+    if (!name)
+      return "Full name is required";
+    if (name.length < 3)
+      return "Full name must be at least 3 characters";
+    if (!/^[a-zA-Z\s.'-]+$/.test(name))
+      return "Full name contains invalid characters";
+
+    // 2️⃣ Phone
+    if (!phone)
+      return "Phone number is required";
+    if (!/^\d{10}$/.test(phone))
+      return "Phone number must be exactly 10 digits";
+
+    // 3️⃣ Email — required
+    if (!email)
+      return "Email is required";
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email))
+      return "Please enter a valid email address";
+
+    // 4️⃣ Role
+    if (!role)
+      return "Please select a role";
+
+    // 5️⃣ Salary
+    if (!data.salary || isNaN(salary))
+      return "Salary is required";
+    if (salary <= 0)
+      return "Salary must be greater than 0";
+    if (salary > 10_000_000)
+      return "Salary amount seems unrealistic";
+
+    // 6️⃣ Join Date — required, no future dates
+    if (!joinDate)
+      return "Join date is required";
+    const selected = new Date(joinDate);
+    const today    = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selected > today)
+      return "Join date cannot be in the future";
+
+    // 7️⃣ Emergency Contact — optional, 10 digits if provided
+    if (emergencyContact && !/^\d{10}$/.test(emergencyContact))
+      return "Emergency contact must be a 10-digit phone number";
+
+    return null;
+  };
+
+  /* ================= FIELDS ================= */
+
   const fields: FormField<EmployeeField>[] = [
     {
       name: "name",
       label: "Full Name",
       type: "text",
       required: true,
-      placeholder: "Enter full name",
       span: 2,
+      placeholder: "Enter full name",
     },
     {
       name: "phone",
       label: "Phone",
       type: "text",
       required: true,
-      placeholder: "Enter phone number",
+      placeholder: "Enter 10 digit phone number",
     },
     {
       name: "email",
       label: "Email",
       type: "email",
+      required: true,
       placeholder: "Enter email address",
     },
     {
@@ -57,14 +143,10 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
       type: "select",
       required: true,
       placeholder: "Select role",
-      options: [
-        { label: "Staff", value: "staff" },
-        { label: "Manager", value: "manager" },
-        { label: "Owner", value: "owner" },
-        { label: "Cashier", value: "cashier" },
-        { label: "Chef", value: "chef" },
-        { label: "Delivery", value: "delivery" },
-      ],
+      options: roles.map((r) => ({
+        label: r.name,
+        value: r.name,
+      })),
     },
     {
       name: "salary",
@@ -77,22 +159,21 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
       name: "joinDate",
       label: "Join Date",
       type: "date",
-      placeholder: "dd/mm/yyyy",
+      required: true,
       span: 2,
     },
     {
       name: "address",
       label: "Address",
       type: "textarea",
-      placeholder: "Enter address",
       span: 2,
     },
     {
       name: "emergencyContact",
       label: "Emergency Contact",
       type: "text",
-      placeholder: "Enter emergency contact details",
       span: 2,
+      placeholder: "Enter 10 digit emergency contact number",
     },
     {
       name: "active",
@@ -102,50 +183,73 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
     },
   ];
 
-  return (
-    <DynamicForm
-      // ❌ Removed title to avoid duplicate heading
-      fields={fields}
-      initialValues={initialValues || {}}
-      submitText={mode === "edit" ? "Update" : "Create"}
-      cancelText="Cancel"
-      onCancel={() => navigate("/dashboard/employees")}
-      confirm={{
-        title:
-          mode === "edit"
-            ? "Are you sure you want to update?"
-            : "Are you absolutely sure?",
-        description:
-          mode === "edit"
-            ? "This will update the employee details."
-            : "This action cannot be undone.",
-        confirmText: mode === "edit" ? "Yes, Update" : "Yes, Create",
-        cancelText: "No, go back",
-      }}
-      onSubmit={async (data) => {
-        const formattedData = {
-          ...data,
-          salary: Number(data.salary),
-        };
+  /* ================= UI ================= */
 
-        try {
-          if (mode === "create") {
-            await dispatch(createEmployee(formattedData)).unwrap();
-          } else if (initialValues?._id) {
-            await dispatch(
-              updateEmployee({
-                id: initialValues._id,
-                data: formattedData,
-              })
-            ).unwrap();
+  return (
+    <>
+      {error && (
+        <Callout.Root color="red" style={{ marginBottom: 16 }}>
+          <Callout.Text>{error}</Callout.Text>
+        </Callout.Root>
+      )}
+
+      <DynamicForm
+        fields={fields}
+        initialValues={{
+          name: "",
+          phone: "",
+          email: "",
+          role: "",
+          salary: "",
+          joinDate: undefined,
+          address: "",
+          emergencyContact: "",
+          active: true,
+          ...initialValues,
+        }}
+        submitText={mode === "edit" ? "Update" : "Create"}
+        cancelText="Cancel"
+        onCancel={() => navigate("/dashboard/employees")}
+        onFieldChange={(field, value) => {
+          if (field === "phone" || field === "emergencyContact") {
+            return value.replace(/\D/g, "").slice(0, 10);
+          }
+          return value;
+        }}
+        onSubmit={async (data) => {
+          setError(null);
+
+          const validationError = validate(data);
+          if (validationError) {
+            setError(validationError);
+            return;
           }
 
-          navigate("/dashboard/employees"); // ✅ Auto close dialog
-        } catch (error: any) {
-          alert(error);
-        }
-      }}
-    />
+          const formattedData = {
+            ...data,
+            salary: Number(data.salary),
+            active: typeof data.active === "boolean" ? data.active : true,
+          };
+
+          try {
+            if (mode === "create") {
+              await dispatch(createEmployee(formattedData)).unwrap();
+            } else if (initialValues?._id) {
+              await dispatch(
+                updateEmployee({
+                  id: initialValues._id,
+                  data: formattedData,
+                })
+              ).unwrap();
+            }
+
+            navigate("/dashboard/employees");
+          } catch (err: any) {
+            setError(err || "Something went wrong");
+          }
+        }}
+      />
+    </>
   );
 };
 

@@ -20,8 +20,7 @@ const EmployeesSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["staff", "manager", "owner", "cashier", "chef", "delivery"],
-      required: true,
+      required: true,             // ✅ enum removed
     },
 
     salary: {
