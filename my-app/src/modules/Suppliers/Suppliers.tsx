@@ -6,56 +6,27 @@ import Searchbar from "../../components/dynamicComponents/Searchbar";
 import AddSupplier, { SupplierFormValues } from "./AddSupplier";
 import { SupplierCard } from "../../components/dynamicComponents/SupplierCard";
 
-/* ---------------- INITIAL DATA ---------------- */
+/* ---------------- API ---------------- */
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const SUPPLIERS_API = `${API_BASE}/api/suppliers`;
+
+/* ---------------- DATA TYPE (MongoDB) ---------------- */
 type SupplierUI = {
-  id: number;
-  name: string;
+  _id: string;
+  companyName: string;
   contactPerson: string;
   phone?: string;
   email?: string;
   address?: string;
-  products?: string;
+  productsSupplied?: string;
   gst?: string;
-  status: "Active" | "Inactive";
+  paymentTerms?: string;
+  active: boolean;
 };
-
-const INITIAL_SUPPLIERS: SupplierUI[] = [
-  {
-    id: 1,
-    name: "Fresh Foods Guwahati",
-    contactPerson: "Sanjay Gogoi",
-    phone: "9800000002",
-    email: "info@freshfoods.com",
-    address: "Wholesale Market, Guwahati",
-    products: "Vegetables, Fruits, Dairy products",
-    gst: "18AABCT5678BZZB",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "Assam Tea Distributors",
-    contactPerson: "Mohan Das",
-    phone: "9800000001",
-    email: "mohan@assam-tea.com",
-    address: "Tea Market, Guwahati, Assam",
-    products: "Tea leaves, Green tea, Specialty teas",
-    gst: "18AABCT1234ATZA",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Bakery Supplies Co",
-    contactPerson: "Anita Devi",
-    address: "Industrial Area, Guwahati",
-    products: "Flour, Sugar, Bakery ingredients",
-    status: "Inactive",
-  },
-];
 
 export default function Suppliers() {
   const [searchValue, setSearchValue] = React.useState("");
-  const [suppliers, setSuppliers] = React.useState<SupplierUI[]>(INITIAL_SUPPLIERS);
-
+  const [suppliers, setSuppliers] = React.useState<SupplierUI[]>([]);
   const [editingSupplier, setEditingSupplier] = React.useState<SupplierUI | null>(null);
 
   const navigate = useNavigate();
@@ -63,50 +34,97 @@ export default function Suppliers() {
 
   const isAddSupplier = location.pathname.endsWith("/add-supplier");
 
+  /* ---------- FETCH LIST ---------- */
+  const fetchSuppliers = async () => {
+    try {
+      const res = await fetch(SUPPLIERS_API);
+      const json = await res.json();
+
+      // backend may return { items: [...] } or { data: [...] }
+      const items = json?.items || json?.data || json || [];
+      setSuppliers(Array.isArray(items) ? items : []);
+    } catch (e) {
+      console.error("Failed to load suppliers", e);
+      setSuppliers([]);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchSuppliers();
+  }, []);
+
   /* ---------- SEARCH ---------- */
   const filteredSuppliers = suppliers.filter((s) =>
-    `${s.name} ${s.contactPerson} ${s.products || ""}`
+    `${s.companyName} ${s.contactPerson} ${s.productsSupplied || ""}`
       .toLowerCase()
       .includes(searchValue.toLowerCase())
   );
 
   /* ---------- DELETE ---------- */
-  const handleDelete = (id: number) => {
-    // optional confirm
+  const handleDelete = async (id: string) => {
     const ok = window.confirm("Are you sure you want to delete this supplier?");
     if (!ok) return;
 
-    setSuppliers((prev) => prev.filter((s) => s.id !== id));
-    if (editingSupplier?.id === id) setEditingSupplier(null);
+    try {
+      await fetch(`${SUPPLIERS_API}/${id}`, { method: "DELETE" });
+      setSuppliers((prev) => prev.filter((s) => s._id !== id));
+      if (editingSupplier?._id === id) setEditingSupplier(null);
+    } catch (e) {
+      console.error("Delete failed", e);
+      alert("Delete failed. Please try again.");
+    }
   };
 
   /* ---------- SAVE (ADD / EDIT) ---------- */
-  const handleSave = (form: SupplierFormValues) => {
-    const mapped: Omit<SupplierUI, "id"> = {
-      name: form.companyName || "",
+  const handleSave = async (form: SupplierFormValues) => {
+    const payload = {
+      companyName: form.companyName || "",
       contactPerson: form.contactPerson || "",
       phone: form.phone || "",
       email: form.email || "",
       address: form.address || "",
-      products: form.productsSupplied || "",
       gst: form.gst || "",
-      status: form.active ? "Active" : "Inactive",
+      paymentTerms: form.paymentTerms || "",
+      productsSupplied: form.productsSupplied || "",
+      active: !!form.active,
     };
 
-    if (editingSupplier) {
-      // ✅ EDIT
-      setSuppliers((prev) =>
-        prev.map((s) => (s.id === editingSupplier.id ? { ...s, ...mapped } : s))
-      );
-      setEditingSupplier(null);
-      navigate("/dashboard/suppliers");
-      return;
-    }
+    try {
+      if (editingSupplier) {
+        const res = await fetch(`${SUPPLIERS_API}/${editingSupplier._id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
 
-    // ✅ ADD
-    const nextId = suppliers.length ? Math.max(...suppliers.map((s) => s.id)) + 1 : 1;
-    setSuppliers((prev) => [{ id: nextId, ...mapped }, ...prev]);
-    navigate("/dashboard/suppliers");
+        const json = await res.json();
+        const updated = json?.data || json;
+
+        setSuppliers((prev) =>
+          prev.map((s) => (s._id === editingSupplier._id ? updated : s))
+        );
+
+        setEditingSupplier(null);
+        navigate("/dashboard/suppliers");
+        return;
+      }
+
+      // ADD
+      const res = await fetch(SUPPLIERS_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json();
+      const created = json?.data || json;
+
+      setSuppliers((prev) => [created, ...prev]);
+      navigate("/dashboard/suppliers");
+    } catch (e) {
+      console.error("Save failed", e);
+      alert("Save failed. Please try again.");
+    }
   };
 
   return (
@@ -141,22 +159,22 @@ export default function Suppliers() {
       <Flex wrap="wrap" gap="4">
         {filteredSuppliers.map((s) => (
           <SupplierCard
-            key={s.id}
-            name={s.name}
+            key={s._id}
+            name={s.companyName}
             contactPerson={s.contactPerson}
             phone={s.phone}
             email={s.email}
             address={s.address ?? ""}
-            products={s.products ?? ""}
+            products={s.productsSupplied ?? ""}
             gst={s.gst}
-            status={s.status}
+            status={s.active ? "Active" : "Inactive"}
             accentColor=""
             softColor="rgba(124,92,255,0.15)"
             onEdit={() => {
-            navigate(`/dashboard/suppliers/edit-supplier/${s.id}`); // ✅ URL with id
-            setEditingSupplier(s);
-            }}                 // ✅ works
-            onDelete={() => handleDelete(s.id)}                  // ✅ works
+              navigate(`/dashboard/suppliers/edit-supplier/${s._id}`);
+              setEditingSupplier(s);
+            }}
+            onDelete={() => handleDelete(s._id)}
           />
         ))}
       </Flex>
@@ -177,18 +195,19 @@ export default function Suppliers() {
             initialValues={
               editingSupplier
                 ? {
-                    companyName: editingSupplier.name,
+                    companyName: editingSupplier.companyName,
                     contactPerson: editingSupplier.contactPerson,
                     phone: editingSupplier.phone,
                     email: editingSupplier.email,
                     address: editingSupplier.address,
                     gst: editingSupplier.gst,
-                    productsSupplied: editingSupplier.products,
-                    active: editingSupplier.status === "Active",
+                    paymentTerms: editingSupplier.paymentTerms,
+                    productsSupplied: editingSupplier.productsSupplied,
+                    active: editingSupplier.active,
                   }
-                : { active: true } // default active
+                : { active: true }
             }
-            onSave={handleSave}  // ✅ added
+            onSave={handleSave}
             onClose={() => {
               setEditingSupplier(null);
               navigate("/dashboard/suppliers");

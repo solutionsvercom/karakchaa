@@ -21,7 +21,7 @@ type AddSupplierProps = {
   onClose: () => void;
   initialValues?: SupplierFormValues;
   mode?: "add" | "edit";
-  onSave: (data: SupplierFormValues) => void; // ✅ added
+  onSave: (data: SupplierFormValues) => void;
 };
 
 /* ---------- COMPONENT ---------- */
@@ -105,16 +105,15 @@ const AddSupplier = ({
       cancelText="Cancel"
       onCancel={onClose}
       onSubmit={(data) => {
-      const phone = String(data.phone ?? "").trim();
-      if (!/^\d{10}$/.test(phone)) {
-        alert("Phone number must be exactly 10 digits");
-        return;
-      }
+        const phone = String(data.phone ?? "").trim();
+        if (!/^\d{10}$/.test(phone)) {
+          alert("Phone number must be exactly 10 digits");
+          return;
+        }
 
-  onSave({ ...data, phone }); // keep cleaned phone
-  onClose();
-}}
-
+        onSave({ ...data, phone });
+        onClose();
+      }}
     />
   );
 };
