@@ -2,7 +2,11 @@ import { useState } from "react";
 import { Flex, Text, Button } from "@radix-ui/themes";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Check } from "lucide-react";
+import { useDispatch } from "react-redux";
+
 import { useCart } from "./CartContext";
+import { AppDispatch } from "../../store/Store";
+import { createSale } from "../../features/SalesSlice";
 
 type OrderType = "dine-in" | "takeaway" | "delivery" | "online";
 type PaymentMethod = "cash" | "upi" | "gpay" | "phonepe" | "paytm" | "card";
@@ -14,7 +18,11 @@ interface CheckoutDialogProps {
 }
 
 export const CheckoutDialog = ({ open, onClose, discount }: CheckoutDialogProps) => {
+  const dispatch = useDispatch<AppDispatch>();
+  
+
   const { items, total, clearCart } = useCart();
+
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [orderType, setOrderType] = useState<OrderType>("dine-in");
@@ -23,26 +31,41 @@ export const CheckoutDialog = ({ open, onClose, discount }: CheckoutDialogProps)
 
   const discountedTotal = Math.max(total - discount, 0);
 
-  const handleCompleteOrder = () => {
-    const orderData = {
-      items,
-      customerName,
-      phone,
-      orderType,
-      paymentMethod,
-      notes,
-      subtotal: total,
-      discount,
-      total: discountedTotal,
-      timestamp: new Date().toISOString(),
-    };
+  /* 🔥 REAL POS CHECKOUT */
+const handleCompleteOrder = async () => {
+  if (!items.length) return;
 
-    console.log("ORDER PLACED:", orderData);
-    
-    // Clear cart and close dialog
+  try {
+    for (const item of items) {
+   await dispatch(
+      createSale({
+        productId: item.id,
+        quantity: item.quantity,
+
+        // ⭐ ENUM MUST MATCH SCHEMA EXACTLY
+        paymentMethod:
+          paymentMethod === "cash"
+            ? "Cash"
+            : paymentMethod === "card"
+            ? "Card"
+            : "UPI",
+
+        paymentStatus: "Completed",
+      })
+    );  
+
+
+    }
+
     clearCart();
+    console.log("Dispatching sale:", items);
+
     onClose();
-  };
+  } catch (error) {
+    console.error("Checkout failed:", error);
+  }
+};
+
 
   const orderTypeButtons: { value: OrderType; label: string }[] = [
     { value: "dine-in", label: "Dine In" },
@@ -54,9 +77,9 @@ export const CheckoutDialog = ({ open, onClose, discount }: CheckoutDialogProps)
   const paymentMethodButtons: { value: PaymentMethod; label: string; icon?: string }[] = [
     { value: "cash", label: "Cash", icon: "💵" },
     { value: "upi", label: "UPI", icon: "📱" },
-    { value: "phonepe", label: "PhonePe",icon: "📱" },
-    { value: "gpay", label: "GPay",icon: "📱" },
-    { value: "paytm", label: "Paytm",icon: "📱" },
+    { value: "phonepe", label: "PhonePe", icon: "📱" },
+    { value: "gpay", label: "GPay", icon: "📱" },
+    { value: "paytm", label: "Paytm", icon: "📱" },
     { value: "card", label: "Card", icon: "💳" },
   ];
 
@@ -77,8 +100,8 @@ export const CheckoutDialog = ({ open, onClose, discount }: CheckoutDialogProps)
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-           background: "Canvas", 
-color: "CanvasText",
+            background: "Canvas",
+            color: "CanvasText",
             padding: 24,
             width: 540,
             maxHeight: "90vh",
@@ -113,17 +136,13 @@ color: "CanvasText",
             </Text>
 
             <Flex justify="between" mb="2">
-              <Text size="2" >
-                {items.length} item(s)
-              </Text>
+              <Text size="2">{items.length} item(s)</Text>
               <Text size="2">₹{total}</Text>
             </Flex>
 
             {discount > 0 && (
               <Flex justify="between" mb="3">
-                <Text size="2">
-                  Discount
-                </Text>
+                <Text size="2">Discount</Text>
                 <Text size="2" color="red">
                   -₹{discount}
                 </Text>
@@ -157,8 +176,6 @@ color: "CanvasText",
                   padding: "0 12px",
                   border: "1px solid var(--gray-a6)",
                   borderRadius: 8,
-                 
-                  
                   fontSize: 14,
                 }}
               />
@@ -179,8 +196,6 @@ color: "CanvasText",
                   padding: "0 12px",
                   border: "1px solid var(--gray-a6)",
                   borderRadius: 8,
-                  
-                  
                   fontSize: 14,
                 }}
               />
@@ -203,11 +218,9 @@ color: "CanvasText",
                     border: "none",
                     borderRadius: 8,
                     background: orderType === btn.value ? "var(--green-9)" : "var(--gray-a3)",
-                    
                     fontWeight: 500,
                     fontSize: 14,
                     cursor: "pointer",
-                    transition: "all 0.2s",
                   }}
                 >
                   {btn.label}
@@ -237,7 +250,6 @@ color: "CanvasText",
                     border: "none",
                     borderRadius: 8,
                     background: paymentMethod === btn.value ? "var(--green-9)" : "var(--gray-a3)",
-                    
                     fontWeight: 500,
                     fontSize: 13,
                     cursor: "pointer",
@@ -269,8 +281,6 @@ color: "CanvasText",
                 padding: 12,
                 border: "1px solid var(--gray-a6)",
                 borderRadius: 8,
-                
-                
                 fontSize: 14,
                 resize: "vertical",
                 fontFamily: "inherit",
@@ -278,13 +288,10 @@ color: "CanvasText",
             />
           </div>
 
-          {/* FOOTER BUTTONS */}
+          {/* FOOTER */}
           <Flex gap="3">
             <Dialog.Close asChild>
-              <Button
-                variant="outline"
-                style={{ flex: 1, height: 44, cursor: "pointer" }}
-              >
+              <Button variant="outline" style={{ flex: 1, height: 44, cursor: "pointer" }}>
                 Cancel
               </Button>
             </Dialog.Close>

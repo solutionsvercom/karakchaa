@@ -57,6 +57,14 @@ function App() {
               </ProtectedRoute>
             }
           />
+           <Route
+            path="pos/create-sale"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "manager"]}>
+                <PosPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* PRODUCTS */}
           <Route
@@ -137,6 +145,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          
 
           {/* SUPPLIERS */}
           <Route

@@ -54,16 +54,31 @@ export const createSale = createAsyncThunk<
   Sale,
   any,
   { rejectValue: string }
->("sales/create", async (payload, thunkAPI) => {
-  try {
-    const res = await axios.post(BASE_URL, payload);
-    return res.data.data;
-  } catch (error: any) {
-    return thunkAPI.rejectWithValue(
-      error.response?.data?.message || "Error creating sale"
-    );
+>(
+  "sales/create",
+  async (payload, thunkAPI) => {
+    try {
+        const body = {
+      product: payload.productId,
+      quantity: payload.quantity,
+      sellingPrice: payload.sellingPrice,
+      paymentMethod: payload.paymentMethod,
+      paymentStatus: payload.paymentStatus,
+      customer: payload.customer,
+    };
+
+
+      const res = await axios.post(BASE_URL, body);
+
+      return res.data.data;
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Error creating sale"
+      );
+    }
   }
-});
+);
+
 
 export const updateSale = createAsyncThunk<
   Sale,
