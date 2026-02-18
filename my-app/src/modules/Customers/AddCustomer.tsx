@@ -1,17 +1,18 @@
 import DynamicForm from "../../components/dynamicComponents/DynamicForm/DynamicForm";
 import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
-import { useDispatch, useSelector } from "react-redux"; // ✅ Add useSelector
-import { 
-  createCustomer, 
+import { useDispatch, useSelector } from "react-redux";
+import {
+  createCustomer,
   updateCustomer,
-  fetchCustomers, 
+  fetchCustomers,
   fetchCustomerStats,
-  clearError // ✅ Import clearError
+  clearError,
+  setError, // ✅ Import setError
 } from "../../features/CustomersSlice";
-import { AppDispatch, RootState } from "../../store/Store"; // ✅ Add RootState
+import { AppDispatch, RootState } from "../../store/Store";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react"; // ✅ Add useEffect
-import { Callout } from "@radix-ui/themes"; // ✅ Import Callout for error display
+import { useEffect } from "react";
+import { Callout } from "@radix-ui/themes";
 
 interface AddCustomerProps {
   mode: "create" | "edit";
@@ -69,11 +70,9 @@ const AddCustomer = ({ mode, initialValues, customerId }: AddCustomerProps) => {
 
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  
-  // ✅ Get error from Redux state
+
   const error = useSelector((state: RootState) => state.customer.error);
 
-  // ✅ Clear error when component unmounts
   useEffect(() => {
     return () => {
       dispatch(clearError());
@@ -82,7 +81,7 @@ const AddCustomer = ({ mode, initialValues, customerId }: AddCustomerProps) => {
 
   return (
     <>
-      {/* ✅ Show error alert if exists */}
+      {/* Show error alert if exists */}
       {error && (
         <Callout.Root color="red" style={{ marginBottom: "16px" }}>
           <Callout.Text>{error}</Callout.Text>
@@ -112,7 +111,20 @@ const AddCustomer = ({ mode, initialValues, customerId }: AddCustomerProps) => {
         }}
         onSubmit={async (data) => {
           try {
-            dispatch(clearError()); // Clear previous errors
+            dispatch(clearError());
+
+            // ✅ Phone number validation — must be exactly 10 digits
+            const digits = data.phone.replace(/\D/g, "");
+            if (digits.length !== 10) {
+              dispatch(
+                setError(
+                  digits.length < 10
+                    ? `Phone number is too short (${digits.length}/10 digits)`
+                    : `Phone number is too long (${digits.length}/10 digits)`
+                )
+              );
+              return; // ✅ Stop submission
+            }
 
             const payload = {
               fullName: data.name,
@@ -138,7 +150,6 @@ const AddCustomer = ({ mode, initialValues, customerId }: AddCustomerProps) => {
 
             navigate("/dashboard/customer");
           } catch (error) {
-            // Error is already in Redux state, just log it
             console.error("Failed:", error);
           }
         }}

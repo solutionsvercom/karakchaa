@@ -44,9 +44,6 @@ const BASE_URL = "http://localhost:5000/api/customers";
 
 /* ================= ASYNC THUNKS ================= */
 
-/**
- * Fetch all customers
- */
 export const fetchCustomers = createAsyncThunk<
   Customer[],
   void,
@@ -55,7 +52,6 @@ export const fetchCustomers = createAsyncThunk<
   try {
     const response = await axios.get(`${BASE_URL}/all`);
     return response.data?.data ?? [];
-
   } catch (error: any) {
     return thunkAPI.rejectWithValue(
       error.response?.data?.message || "Error fetching customers"
@@ -63,9 +59,6 @@ export const fetchCustomers = createAsyncThunk<
   }
 });
 
-/**
- * Fetch customer stats
- */
 export const fetchCustomerStats = createAsyncThunk<
   CustomerStats,
   void,
@@ -74,11 +67,10 @@ export const fetchCustomerStats = createAsyncThunk<
   try {
     const response = await axios.get(`${BASE_URL}/stats`);
     return response.data?.data ?? {
-  totalCustomers: 0,
-  totalPurchases: 0,
-  totalRevenue: 0,
-};
-
+      totalCustomers: 0,
+      totalPurchases: 0,
+      totalRevenue: 0,
+    };
   } catch (error: any) {
     return thunkAPI.rejectWithValue(
       error.response?.data?.message || "Error fetching stats"
@@ -86,9 +78,6 @@ export const fetchCustomerStats = createAsyncThunk<
   }
 });
 
-/**
- * Create customer
- */
 export const createCustomer = createAsyncThunk<
   Customer,
   Partial<Customer>,
@@ -98,20 +87,17 @@ export const createCustomer = createAsyncThunk<
     const response = await axios.post(`${BASE_URL}/create`, data);
     return response.data.data;
   } catch (error: any) {
-  if (error.response?.status === 409) {
+    if (error.response?.status === 409) {
+      return thunkAPI.rejectWithValue(
+        "Customer already exists with this name and phone number"
+      );
+    }
     return thunkAPI.rejectWithValue(
-      "Customer already exists with this name and phone number"
+      error.response?.data?.message || "Error creating customer"
     );
   }
-  return thunkAPI.rejectWithValue(
-    error.response?.data?.message || "Error creating customer"
-  );
-}
 });
 
-/**
- * Update customer
- */
 export const updateCustomer = createAsyncThunk<
   Customer,
   { id: string; data: Partial<Customer> },
@@ -121,20 +107,17 @@ export const updateCustomer = createAsyncThunk<
     const response = await axios.put(`${BASE_URL}/update/${id}`, data);
     return response.data.data;
   } catch (error: any) {
-  if (error.response?.status === 409) {
+    if (error.response?.status === 409) {
+      return thunkAPI.rejectWithValue(
+        "Customer already exists with this name and phone number"
+      );
+    }
     return thunkAPI.rejectWithValue(
-      "Customer already exists with this name and phone number"
+      error.response?.data?.message || "Error updating customer"
     );
   }
-  return thunkAPI.rejectWithValue(
-    error.response?.data?.message || "Error updating customer"
-  );
-}
 });
 
-/**
- * Delete customer
- */
 export const deleteCustomer = createAsyncThunk<
   string,
   string,
@@ -153,12 +136,15 @@ export const deleteCustomer = createAsyncThunk<
 /* ================= SLICE ================= */
 
 const customersSlice = createSlice({
-  name: "customer", // ✅ FIXED: Changed from "customer" to "customers"
+  name: "customer",
   initialState,
   reducers: {
-    // Clear error manually if needed
     clearError: (state) => {
       state.error = null;
+    },
+    // ✅ NEW: manually set an error message
+    setError: (state, action: PayloadAction<string>) => {
+      state.error = action.payload;
     },
   },
 
@@ -170,23 +156,19 @@ const customersSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      
       .addCase(
-  fetchCustomers.fulfilled,
-  (state, action: PayloadAction<Customer[]>) => {
-    state.loading = false;
-    
-    const uniqueCustomers = action.payload.reduce((acc, customer) => {
-      if (!acc.find((c) => c._id === customer._id)) {
-        acc.push(customer);
-      }
-      return acc;
-    }, [] as Customer[]);
-    
-    state.customers = uniqueCustomers;
-  }
-)
-
+        fetchCustomers.fulfilled,
+        (state, action: PayloadAction<Customer[]>) => {
+          state.loading = false;
+          const uniqueCustomers = action.payload.reduce((acc, customer) => {
+            if (!acc.find((c) => c._id === customer._id)) {
+              acc.push(customer);
+            }
+            return acc;
+          }, [] as Customer[]);
+          state.customers = uniqueCustomers;
+        }
+      )
       .addCase(fetchCustomers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch customers";
@@ -214,21 +196,18 @@ const customersSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-     .addCase(
-  createCustomer.fulfilled,
-  (state, action: PayloadAction<Customer>) => {
-    state.loading = false;
-
-    const exists = state.customers.find(
-      (c) => c._id === action.payload._id
-    );
-
-    if (!exists) {
-      state.customers.unshift(action.payload);
-    }
-  }
-)
-
+      .addCase(
+        createCustomer.fulfilled,
+        (state, action: PayloadAction<Customer>) => {
+          state.loading = false;
+          const exists = state.customers.find(
+            (c) => c._id === action.payload._id
+          );
+          if (!exists) {
+            state.customers.unshift(action.payload);
+          }
+        }
+      )
       .addCase(createCustomer.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to create customer";
@@ -240,21 +219,19 @@ const customersSlice = createSlice({
         state.error = null;
       })
       .addCase(
-  updateCustomer.fulfilled,
-  (state, action: PayloadAction<Customer>) => {
-    state.loading = false;
-    
-    const index = state.customers.findIndex(
-      (c) => c._id === action.payload._id
-    );
-    
-    if (index !== -1) {
-      state.customers[index] = action.payload;
-    } else {
-      state.customers.unshift(action.payload);
-    }
-  }
-)
+        updateCustomer.fulfilled,
+        (state, action: PayloadAction<Customer>) => {
+          state.loading = false;
+          const index = state.customers.findIndex(
+            (c) => c._id === action.payload._id
+          );
+          if (index !== -1) {
+            state.customers[index] = action.payload;
+          } else {
+            state.customers.unshift(action.payload);
+          }
+        }
+      )
       .addCase(updateCustomer.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to update customer";
@@ -283,5 +260,5 @@ const customersSlice = createSlice({
 
 /* ================= EXPORT ================= */
 
-export const { clearError } = customersSlice.actions;
+export const { clearError, setError } = customersSlice.actions;
 export default customersSlice.reducer;
