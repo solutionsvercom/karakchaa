@@ -8,7 +8,7 @@ import {
   DropdownMenu,
   Badge,
 } from "@radix-ui/themes";
-import { Plus, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, X } from "lucide-react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../store/Store";
@@ -23,28 +23,20 @@ import Table, { Column } from "../../components/dynamicComponents/Table";
 import AddEmployee from "./AddEmployee";
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
 
-/* ================= TYPES ================= */
+/* ================= ROLE COLOR ================= */
 
-type Role =
-  | "staff"
-  | "manager"
-  | "owner"
-  | "cashier"
-  | "chef"
-  | "delivery";
-
-/* ================= ROLE BADGES ================= */
-
-const roleColorMap: Record<Role, "yellow" | "green" | "orange" | "cyan"> = {
-  staff: "yellow",
-  cashier: "green",
-  chef: "orange",
-  delivery: "cyan",
-  manager: "green",
-  owner: "orange",
+const getRoleColor = (role: string): "yellow" | "green" | "orange" | "cyan" | "blue" | "gray" => {
+  const map: Record<string, "yellow" | "green" | "orange" | "cyan" | "blue" | "gray"> = {
+    staff: "yellow",
+    cashier: "green",
+    chef: "orange",
+    delivery: "cyan",
+    manager: "green",
+    owner: "orange",
+    admin: "blue",
+  };
+  return map[role?.toLowerCase()] ?? "gray";
 };
-
-/* ================= COMPONENT ================= */
 
 export default function Employees() {
   const navigate = useNavigate();
@@ -57,151 +49,187 @@ export default function Employees() {
   );
 
   const [search, setSearch] = React.useState("");
+  const [debouncedSearch, setDebouncedSearch] = React.useState("");
+
+  /* ================= DEBOUNCE ================= */
+  React.useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [search]);
 
   React.useEffect(() => {
-    dispatch(fetchEmployees(search));
-  }, [dispatch, search]);
+    dispatch(fetchEmployees(debouncedSearch));
+  }, [dispatch, debouncedSearch]);
 
-  const isAddEmployee = location.pathname.endsWith("/add-employee");
-  const isEditEmployee = location.pathname.includes("/edit-employee/");
+  /* ================= ROUTE LOGIC ================= */
+
+  const isAddEmployee = location.pathname.endsWith("add-employee");
+  const isEditEmployee = location.pathname.endsWith("edit-employee");
   const isDialogOpen = isAddEmployee || isEditEmployee;
 
-  const employeeToEdit = employees.find((e) => e._id === id);
+  const employeeToEdit = React.useMemo(() => {
+    return employees.find(
+      (e) => String(e._id) === String(id)
+    );
+  }, [employees, id]);
 
   /* ================= SUMMARY ================= */
 
-  const totalEmployees = employees.length;
-  const activeEmployees = employees.filter(
-    (e) => e.active !== false
-  ).length;
-  const inactiveEmployees = employees.filter(
-    (e) => e.active === false
-  ).length;
-  const monthlySalary = employees.reduce(
-    (sum, e) => sum + (e.salary || 0),
-    0
+  const summary = React.useMemo(() => {
+    const total = employees.length;
+    const active = employees.filter((e) => e.active !== false).length;
+    const inactive = employees.filter((e) => e.active === false).length;
+    const salary = employees.reduce(
+      (sum, e) => sum + (e.salary || 0),
+      0
+    );
+
+    return { total, active, inactive, salary };
+  }, [employees]);
+
+  /* ================= ACTION HANDLERS ================= */
+
+  const handleEdit = React.useCallback(
+    (id: string | undefined) => {
+      if (!id) return;
+      navigate(`/dashboard/employees/${id}/edit-employee`);
+    },
+    [navigate]
   );
 
-  /* ================= TABLE ================= */
+  const handleDelete = React.useCallback(
+    (id: string | undefined, name?: string) => {
+      if (!id) return;
 
-  const columns: Column<Employee>[] = [
-    {
-      key: "name",
-      header: "Employee",
-      accessor: "name",
-    },
-    {
-      key: "role",
-      header: "Role",
-      accessor: "role",
-      render: (v: Role) => (
-        <Badge color={roleColorMap[v]} radius="full">
-          {v}
-        </Badge>
-      ),
-    },
-    {
-      key: "phone",
-      header: "Contact",
-      accessor: "phone",
-    },
-    {
-      key: "salary",
-      header: "Salary",
-      accessor: "salary",
-      render: (v) => `₹${v.toLocaleString()}`,
-    },
-    {
-      key: "joinDate",
-      header: "Join Date",
-      accessor: "joinDate",
-    },
-    {
-      key: "active",
-      header: "Status",
-      accessor: "active",
-      render: (v) => (
-        <Badge color={v ? "green" : "red"} variant="soft">
-          {v ? "Active" : "Inactive"}
-        </Badge>
-      ),
-    },
-    {
-      key: "actions",
-      header: "Actions",
-      render: (_v, row) => (
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger>
-            <IconButton variant="soft" radius="full">
-              <MoreVertical size={16} />
-            </IconButton>
-          </DropdownMenu.Trigger>
+      const confirmed = window.confirm(
+        `Are you sure you want to delete employee "${name}"?`
+      );
 
-          <DropdownMenu.Content align="end">
-            <DropdownMenu.Item
-              onClick={() =>
-                navigate(
-                  `/dashboard/employees/edit-employee/${row._id}`
-                )
-              }
-            >
-              <Pencil size={14} /> Edit
-            </DropdownMenu.Item>
+      if (!confirmed) return;
 
-            <DropdownMenu.Item
-              color="red"
-              onClick={() =>
-                dispatch(deleteEmployee(row._id!))
-              }
-            >
-              <Trash2 size={14} /> Delete
-            </DropdownMenu.Item>
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
-      ),
+      dispatch(deleteEmployee(id));
     },
-  ];
+    [dispatch]
+  );
+
+  /* ================= TABLE COLUMNS ================= */
+
+  const columns: Column<Employee>[] = React.useMemo(
+    () => [
+      {
+        key: "name",
+        header: "Employee",
+        accessor: "name",
+      },
+      {
+        key: "role",
+        header: "Role",
+        accessor: "role",
+        render: (v: string) => (
+          <Badge color={getRoleColor(v)} radius="full">
+            {v}
+          </Badge>
+        ),
+      },
+      {
+        key: "phone",
+        header: "Contact",
+        accessor: "phone",
+      },
+      {
+        key: "salary",
+        header: "Salary",
+        accessor: "salary",
+        render: (v) => `₹${v.toLocaleString()}`,
+      },
+      {
+        key: "joinDate",
+        header: "Join Date",
+        accessor: "joinDate",
+      },
+      {
+        key: "active",
+        header: "Status",
+        accessor: "active",
+        render: (v) => (
+          <Badge color={v ? "green" : "red"} variant="soft">
+            {v ? "Active" : "Inactive"}
+          </Badge>
+        ),
+      },
+      {
+        key: "actions",
+        header: "Actions",
+        render: (_v, row) => (
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              <IconButton variant="soft" radius="full">
+                <MoreVertical size={16} />
+              </IconButton>
+            </DropdownMenu.Trigger>
+
+            <DropdownMenu.Content align="end">
+              <DropdownMenu.Item
+                onClick={() => handleEdit(row._id)}
+              >
+                <Pencil size={14} /> Edit
+              </DropdownMenu.Item>
+
+              <DropdownMenu.Item
+                color="red"
+                onClick={() => handleDelete(row._id, row.name)}
+              >
+                <Trash2 size={14} /> Delete
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+        ),
+      },
+    ],
+    [handleEdit, handleDelete]
+  );
 
   /* ================= UI ================= */
 
   return (
     <>
       <Flex direction="column" gap="5" width="100%">
-        {/* SUMMARY CARDS */}
         <div className="kb-summary-row">
           <SummaryCard
             title="Total Employees"
-            value={String(totalEmployees)}
+            value={String(summary.total)}
             accentColor="#7C4DFF"
             softColor="#F0E9FF"
             icon="👥"
           />
           <SummaryCard
             title="Active"
-            value={String(activeEmployees)}
+            value={String(summary.active)}
             accentColor="#00C853"
             softColor="#E5F9EE"
             icon="✅"
           />
           <SummaryCard
             title="Inactive"
-            value={String(inactiveEmployees)}
+            value={String(summary.inactive)}
             accentColor="#FF9100"
             softColor="#FFF3E0"
             icon="⏸️"
           />
           <SummaryCard
             title="Monthly Salary"
-            value={`₹${monthlySalary.toLocaleString()}`}
+            value={`₹${summary.salary.toLocaleString()}`}
             accentColor="#2962FF"
             softColor="#E3F2FD"
             icon="₹"
           />
         </div>
 
-        {/* SEARCH + ADD */}
         <Flex align="center" gap="3" width="100%">
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ flex: 1 }}>
             <Searchbar
               searchValue={search}
               onSearchChange={setSearch}
@@ -210,7 +238,6 @@ export default function Employees() {
           </div>
 
           <Button
-            style={{ whiteSpace: "nowrap" }}
             onClick={() =>
               navigate("/dashboard/employees/add-employee")
             }
@@ -219,7 +246,6 @@ export default function Employees() {
           </Button>
         </Flex>
 
-        {/* TABLE */}
         {loading ? (
           <div style={{ textAlign: "center", padding: 40 }}>
             Loading...
@@ -234,7 +260,8 @@ export default function Employees() {
         )}
       </Flex>
 
-      {/* DIALOG */}
+      {/* ================= DIALOG ================= */}
+
       <Dialog.Root
         open={isDialogOpen}
         onOpenChange={(open) => {
@@ -242,22 +269,44 @@ export default function Employees() {
         }}
       >
         <Dialog.Content maxWidth="480px">
-          <Dialog.Title>
-            {isEditEmployee ? "Edit Employee" : "Add Employee"}
-          </Dialog.Title>
 
-          <Dialog.Description>
-            {isEditEmployee
-              ? "Update employee details below."
-              : "Fill in the details to create a new employee."}
-          </Dialog.Description>
+          {/* ✅ Header: title on left, X on right */}
+          <Flex justify="between" align="center" mb="4">
+            <Dialog.Title mb="0">
+              {isEditEmployee ? "Edit Employee" : "Add Employee"}
+            </Dialog.Title>
 
-          <AddEmployee
-            mode={isEditEmployee ? "edit" : "create"}
-            initialValues={
-              isEditEmployee ? employeeToEdit || {} : {}
-            }
-          />
+            <IconButton
+              variant="ghost"
+              color="gray"
+              radius="full"
+              type="button"
+              onClick={() => navigate("/dashboard/employees")}
+            >
+              <X size={18} />
+            </IconButton>
+          </Flex>
+
+          {isEditEmployee && !employeeToEdit ? (
+            <div style={{ padding: 40, textAlign: "center" }}>
+              Loading...
+            </div>
+          ) : (
+            <AddEmployee
+              key={employeeToEdit?._id || "create"}
+              mode={isEditEmployee ? "edit" : "create"}
+              initialValues={
+                employeeToEdit
+                  ? {
+                      ...employeeToEdit,
+                      joinDate: employeeToEdit.joinDate
+                        ? new Date(employeeToEdit.joinDate)
+                        : undefined,
+                    }
+                  : undefined
+              }
+            />
+          )}
         </Dialog.Content>
       </Dialog.Root>
     </>
