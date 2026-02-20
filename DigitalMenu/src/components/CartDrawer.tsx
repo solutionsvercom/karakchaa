@@ -1,0 +1,287 @@
+import { useMemo, useState } from "react";
+import { useEffect } from "react";
+
+import { useCart } from "../context/CartContext";
+import {
+  X,
+  ShoppingBag,
+  User,
+  Phone,
+  Hash,
+  UtensilsCrossed,
+  Package,
+  Trash2,
+  Minus,
+  Plus,
+} from "lucide-react";
+
+type Props = {
+  open: boolean;
+  onClose: () => void;
+};
+
+type OrderType = "dinein" | "takeaway";
+
+export default function CartDrawer({ open, onClose }: Props) {
+  const { items, subtotal, totalQty, inc, dec, remove, clear } = useCart();
+
+  const list = Object.values(items);
+
+  const [orderType, setOrderType] = useState<OrderType>("dinein");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [table, setTable] = useState("");
+  const [notes, setNotes] = useState("");
+  useEffect(() => {
+  if (open) {
+    document.body.classList.add("cart-open");
+  } else {
+    document.body.classList.remove("cart-open");
+  }
+
+  return () => document.body.classList.remove("cart-open");
+}, [open]);
+
+
+  const currencySubtotal = useMemo(() => `₹${subtotal}`, [subtotal]);
+
+  return (
+    <>
+      {/* BACKDROP */}
+      <div
+        className={`cartBackdrop ${open ? "cartBackdropOpen" : ""}`}
+        onClick={onClose}
+      />
+
+      {/* DRAWER */}
+      <aside
+        className={`cartDrawer ${open ? "cartDrawerOpen" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* HEADER */}
+        <div className="cartHeader">
+          <div>
+            <div className="cartTitle">Your Order</div>
+            <div className="cartSub">{totalQty} item(s)</div>
+          </div>
+
+          <button className="iconBtn" onClick={onClose} title="Close cart">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* BODY */}
+        <div className="cartBodyPro">
+
+          {/* ITEMS */}
+          <div className="cartSection">
+            {list.length === 0 ? (
+              <div className="emptyCartPro">
+                <ShoppingBag size={40} />
+                <div>Your cart is empty</div>
+              </div>
+            ) : (
+              <div className="orderList">
+
+                {list.map(({ item, qty }) => (
+                  <div className="orderRow" key={item.id}>
+
+                    {/* IMAGE */}
+                    <div className="orderThumb">
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} />
+                      ) : (
+                        <ShoppingBag size={18} />
+                      )}
+                    </div>
+
+                    {/* INFO */}
+                    <div className="orderInfo">
+                      <div className="orderName">{item.name}</div>
+                      <div className="orderPrice">₹{item.price}</div>
+                    </div>
+
+                    {/* QTY */}
+                   <div className="orderRight">
+
+  <div className="qtyPillCart">
+
+    <button
+      className="qtyPillBtn"
+      onClick={() => dec(item.id)}
+      title="Decrease quantity"
+    >
+      <Minus size={16} />
+    </button>
+
+    <div className="qtyPillValue">
+      {qty}
+    </div>
+
+    <button
+      className="qtyPillBtn qtyPillBtnPrimary"
+      onClick={() => inc(item.id)}
+      title="Increase quantity"
+    >
+      <Plus size={16} />
+    </button>
+
+  </div>
+
+  {/* MOVE TRASH AFTER + */}
+  <button
+    className="trashBtn"
+    onClick={() => remove(item.id)}
+    title="Remove item"
+  >
+    <Trash2 size={16} />
+  </button>
+
+</div>
+
+                  </div>
+                ))}
+
+              </div>
+            )}
+          </div>
+
+          {/* ORDER TYPE */}
+          <div className="cartSection">
+            <div className="cartSectionTitle">Order Type</div>
+
+            <div className="orderTypeGrid">
+
+              <button
+                className={`orderTypeCard ${
+                  orderType === "dinein" ? "orderTypeCardActive" : ""
+                }`}
+                onClick={() => setOrderType("dinein")}
+              >
+                <UtensilsCrossed size={22} />
+                <div>Dine In</div>
+              </button>
+
+              <button
+                className={`orderTypeCard ${
+                  orderType === "takeaway" ? "orderTypeCardActive" : ""
+                }`}
+                onClick={() => setOrderType("takeaway")}
+              >
+                <Package size={22} />
+                <div>Takeaway</div>
+              </button>
+
+            </div>
+          </div>
+
+          {/* DETAILS */}
+          <div className="cartSection">
+            <div className="cartSectionTitle">Your Details</div>
+
+            <div className="formStack">
+
+              <div className="inputWrap">
+                <User className="inputIcon" size={18} />
+                <input
+                  className="textInput"
+                  placeholder="Your Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+
+              <div className="inputWrap">
+                <Phone className="inputIcon" size={18} />
+                <input
+                  className="textInput"
+                  placeholder="Phone Number"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
+
+              <div className="inputWrap">
+                <Hash className="inputIcon" size={18} />
+                <input
+                  className="textInput"
+                  placeholder="Table Number"
+                  value={table}
+                  onChange={(e) => setTable(e.target.value)}
+                />
+              </div>
+
+            </div>
+          </div>
+
+          {/* NOTES */}
+          <div className="cartSection">
+            <div className="cartSectionTitle">Special Instructions</div>
+
+            <textarea
+              className="textArea"
+              placeholder="Any special requests..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          </div>
+
+          {/* CLEAR */}
+          {list.length > 0 && (
+ <div className="cartSection clearCartWrap">
+  <button className="secondaryBtnPro clearCartBtn" onClick={clear}>
+    <Trash2 size={16} />
+    Clear Cart
+  </button>
+</div>
+
+
+          )}
+
+        </div>
+{/* Footer */}
+<div className="cartFooterPro">
+
+  {/* Order Summary Card */}
+  <div className="orderSummaryCard">
+
+    <div className="summaryTitle">
+      Order Summary
+    </div>
+
+    <div className="summaryRow">
+      <span>Subtotal</span>
+      <span>₹{subtotal}</span>
+    </div>
+
+    <div className="summaryRow">
+      <span>Tax (5%)</span>
+      <span>₹{Math.round(subtotal * 0.05)}</span>
+    </div>
+
+    <div className="summaryDivider"></div>
+
+    <div className="summaryRow totalRow">
+      <span>Total</span>
+      <span>
+        ₹{Math.round(subtotal + subtotal * 0.05)}
+      </span>
+    </div>
+
+  </div>
+
+  {/* Checkout Button */}
+  <button
+    className="checkoutBtnPro"
+    disabled={list.length === 0}
+  >
+    Place Order — ₹{Math.round(subtotal + subtotal * 0.05)}
+  </button>
+
+</div>
+
+
+      </aside>
+    </>
+  );
+}
