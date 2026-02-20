@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
-import { API_BASE_URL } from "../config/api";
 /* ================= TYPES ================= */
 
 export interface StockHistoryItem {
@@ -50,7 +49,7 @@ const initialState: StockState = {
 
 /* ================= API BASE ================= */
 
-const BASE_URL = `${API_BASE_URL}/stock`;
+const BASE_URL = `http://localhost:5000/api/stock`;
 
 /* ================= ASYNC THUNKS ================= */
 

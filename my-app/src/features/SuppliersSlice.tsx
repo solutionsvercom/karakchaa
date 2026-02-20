@@ -1,12 +1,12 @@
 // src/features/SuppliersSlice.ts
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../store/Store";
-import { API_BASE_URL } from "../config/api";
+
 /**
  * ✅ Adjust this if your API base is different
  * Example: `${import.meta.env.VITE_API_BASE_URL}/api/suppliers`
  */
-const BASE_URL = `${API_BASE_URL}/suppliers`;
+const BASE_URL = `http://localhost:5000/api/suppliers`;
 
 /* -------------------- TYPES -------------------- */
 export type Supplier = {

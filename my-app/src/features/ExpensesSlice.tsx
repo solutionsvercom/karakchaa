@@ -63,7 +63,8 @@ const initialState: ExpensesState = {
 
 /* ================= API BASE ================= */
 
-const BASE_URL = `${API_BASE_URL}/expenses`;
+const BASE_URL = `http://localhost:5000/api/expenses`; // ✅ CHANGED: point to backend API
+
 
 /* ================= ASYNC THUNKS ================= */
 
