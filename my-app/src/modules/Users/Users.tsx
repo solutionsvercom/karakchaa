@@ -131,13 +131,13 @@ export default function Users() {
           <Avatar
             fallback={row.name[0]?.toUpperCase() || "U"}
             radius="full"
-            style={{ background: "linear-gradient(135deg, #8b5cf6, #7c3aed)", color: "white" }}
+            
           />
           <div>
-            <Text weight="medium" style={{ display: "block", color: "#1f2937" }}>
+            <Text weight="medium" style={{ display: "block",  }}>
               {row.name}
             </Text>
-            <Text size="2" style={{ color: "#6b7280" }}>
+            <Text size="2">
               {row.email}
             </Text>
           </div>
@@ -168,13 +168,13 @@ export default function Users() {
       key: "role",
       header: "Role",
       render: (_, row) => (
-        <Flex align="center" gap="2">
+        <Flex align="center" gap="1">
           <div style={{
             padding: "4px 12px",
             background: "#ede9fe",
-            color: "#7c3aed",
+            color: "var(--accent-10)",
             borderRadius: "6px",
-            fontSize: "13px",
+            fontSize: "11px",
             fontWeight: "500",
             textTransform: "capitalize",
             display: "inline-flex",
@@ -191,7 +191,8 @@ export default function Users() {
       key: "phone",
       header: "Phone Number",
       render: (_, row) => (
-        <Text size="2" style={{ color: "#374151" }}>
+        <Text size="2" style={{ color: "#374151", background: "#f3f4f6", padding: "3px 8px",
+            borderRadius: "6px", fontFamily: "monospace" }}>
           {row.phoneNumber || "—"}
         </Text>
       ),
@@ -203,9 +204,9 @@ export default function Users() {
         <div style={{
           padding: "4px 10px",
           background: row.isActive ? "#ecfdf5" : "#fef2f2",
-          color: row.isActive ? "#059669" : "#dc2626",
+          color: row.isActive ? "#0d9224" : "#dc2626",
           borderRadius: "6px",
-          fontSize: "12px",
+          fontSize: "11px",
           fontWeight: "500",
           display: "inline-block",
         }}>
@@ -224,12 +225,12 @@ export default function Users() {
             </Button>
           </DropdownMenu.Trigger>
           <DropdownMenu.Content align="end">
-            <DropdownMenu.Item onClick={() => navigate(`/dashboard/users/${row.id}/edit-user`)}>
+            <DropdownMenu.Item  onClick={() => navigate(`/dashboard/users/${row.id}/edit-user`)}>
               <Pencil size={14} /> Edit
             </DropdownMenu.Item>
-            <DropdownMenu.Item
+            <DropdownMenu.Item color="red"
               onClick={() => handleDelete(row.id, row.name)}
-              style={{ color: "#dc2626" }}
+              
             >
               <Trash2 size={14} /> Delete
             </DropdownMenu.Item>
@@ -245,17 +246,17 @@ export default function Users() {
       <Flex direction="column" gap="5" width="100%">
         <Flex justify="between" align="center">
           <div>
-            <Text size="6" weight="bold" style={{ display: "block", marginBottom: "4px", color: "#1f2937" }}>
+            <Text size="6" weight="bold" style={{ display: "block", marginBottom: "4px",  }}>
               Users
             </Text>
-            <Text size="2" style={{ color: "#6b7280" }}>
+            <Text size="2" >
               {filteredUsers.length} users found
             </Text>
           </div>
           <Button
             onClick={() => navigate("/dashboard/users/add-user")}
             style={{
-              background: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+             
               color: "white",
               cursor: "pointer",
             }}

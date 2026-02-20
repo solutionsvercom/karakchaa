@@ -1,5 +1,6 @@
 import type { MenuItem } from "../types/menu";
 import { useCart } from "../context/CartContext";
+import { Minus, Plus } from "lucide-react";
 
 type Props = {
   item: MenuItem;
@@ -7,61 +8,97 @@ type Props = {
 
 export default function MenuCard({ item }: Props) {
   const { add, inc, dec, getQty } = useCart();
+
   const qty = getQty(item.id);
   const disabled = !item.available;
 
   return (
-    <div className={`menuCard ${disabled ? "menuCardDisabled" : ""}`}>
-      <div className="menuCardMedia" aria-hidden>
-        {item.image ? (
-          <img
-            className="menuCardImg"
-            src={item.image}
-            alt={item.name}
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = "none";
-            }}
-          />
-        ) : null}
-        <div className="menuCardPlaceholder">👜</div>
-      </div>
+    <div className="menuCard">
 
+      {/* IMAGE */}
+      <div className="menuCardMedia">
+
+  <img
+  alt= {
+    item.name
+}
+    src={item.image}
+    className={`menuCardImg ${!item.available ? "menuCardImgDisabled" : ""}`}
+  />
+
+  {!item.available && (
+    <div className="menuCardUnavailableOverlay">
+      <span className="menuCardUnavailableBadge">
+        Not Available
+      </span>
+    </div>
+  )}
+
+</div>
+
+
+      {/* BODY */}
       <div className="menuCardBody">
-        <div className="menuCardTopRow">
-          <div className="menuCardTitle">{item.name}</div>
-          <div className="menuCardPrice">₹{item.price}</div>
+
+        {/* NAME + PRICE INLINE */}
+        <div className="menuCardHeaderRow">
+
+          <div className="menuCardTitle">
+            {item.name}
+          </div>
+
+          <div className="menuCardPrice">
+            ₹{item.price}
+          </div>
+
         </div>
 
-        <div className="menuCardSubRow">{item.category}</div>
+        {/* CATEGORY */}
+        <div className="menuCardCategory">
+          {item.category}
+        </div>
 
-        <div className="menuCardBottomRow">
-          <div className="qtyPill">
+
+        {/* ADD BUTTON OR QTY */}
+        {qty === 0 ? (
+
+         <button
+  className={`addCartBtn ${!item.available ? "addCartBtnDisabled" : ""}`}
+  onClick={() => add(item)}
+  disabled={!item.available}
+>
+  {item.available ? "+ Add to Cart" : "Unavailable"}
+</button>
+
+
+        ) : (
+
+          <div className="qtyControl">
+
             <button
-              className="qtyPillBtn"
+              className="qtyBtn qtyMinus"
               onClick={() => dec(item.id)}
-              disabled={qty === 0}
-              aria-label="Decrease quantity"
+              title="Decrease quantity"
             >
-              −
+              <Minus size={14} />
             </button>
 
-            <div className="qtyPillValue" aria-label={`Quantity ${qty}`}>
+            <div className="qtyNumber">
               {qty}
             </div>
 
             <button
-              className="qtyPillBtn qtyPillBtnPrimary"
-              onClick={() => (qty === 0 ? add(item) : inc(item.id))}
-              disabled={disabled}
-              aria-label="Increase quantity"
-              title={disabled ? "Item not available" : "Add"}
+              className="qtyBtn qtyPlus"
+              onClick={() => inc(item.id)}
+              title="Increase quantity"
             >
-              +
+              <Plus size={14} />
             </button>
+
           </div>
 
-          {!item.available ? <div className="outBadge">Out</div> : null}
-        </div>
+        )}
+
       </div>
     </div>
   );

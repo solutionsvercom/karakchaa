@@ -25,6 +25,7 @@ export type FormField<T extends string = string> = {
   required?: boolean;
   options?: Option[];
   rows?: number;
+  suffix?: React.ReactNode;
 
   span?: 1 | 2; // 1 = half width, 2 = full width
    compact?: boolean;
