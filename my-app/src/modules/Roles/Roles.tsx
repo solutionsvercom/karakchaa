@@ -98,15 +98,15 @@ export default function Roles() {
             width: "40px",
             height: "40px",
             borderRadius: "10px",
-            background: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+            background: "var(--accent-10)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             boxShadow: "0 2px 8px rgba(139, 92, 246, 0.3)"
           }}>
-            <Shield size={18} color="white" />
+            <Shield size={18}  />
           </div>
-          <Text weight="medium" style={{ textTransform: "capitalize", color: "#1f2937" }}>
+          <Text weight="medium" style={{ textTransform: "capitalize",  }}>
             {row.name}
           </Text>
         </Flex>
@@ -122,8 +122,7 @@ export default function Roles() {
               padding: "4px 10px",
               fontSize: "12px",
               fontWeight: "500",
-              color: "#7c3aed",
-              background: "#ede9fe",
+              background: "var(--accent-5)",
               borderRadius: "6px",
               textTransform: "capitalize"
             }}>
@@ -155,9 +154,9 @@ export default function Roles() {
             >
               <Pencil size={14} /> Edit
             </DropdownMenu.Item>
-            <DropdownMenu.Item
+            <DropdownMenu.Item color="red"
               onClick={() => handleDelete(row.id, row.name)}
-              style={{ color: "#dc2626" }}
+              
             >
               <Trash2 size={14} /> Delete
             </DropdownMenu.Item>
@@ -174,17 +173,17 @@ export default function Roles() {
         {/* ===== PAGE TITLE ===== */}
         <Flex justify="between" align="center">
           <div>
-            <Text size="6" weight="bold" style={{ display: "block", marginBottom: "4px", color: "#1f2937" }}>
+            <Text size="6" weight="bold" style={{ display: "block", marginBottom: "4px",  }}>
               Roles
             </Text>
-            <Text size="2" style={{ color: "#6b7280" }}>
+            <Text size="2">
               {filteredRoles.length} roles found
             </Text>
           </div>
           <Button
             onClick={() => navigate("/dashboard/roles/add-role")}
             style={{
-              background: "linear-gradient(135deg, #8b5cf6, #7c3aed)",
+             
               color: "white",
               cursor: "pointer"
             }}

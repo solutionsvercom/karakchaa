@@ -107,10 +107,10 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
       {error && (
         <div style={{
           padding: "12px",
-          background: "#fef2f2",
+         
           border: "1px solid #fecaca",
           borderRadius: "8px",
-          color: "#dc2626",
+          
           fontSize: "14px",
         }}>
           {error}
@@ -119,37 +119,49 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
 
       {/* ===== ROLE NAME ===== */}
       <div>
-        <Text size="2" weight="medium" style={{ display: "block", marginBottom: 4, color: "#374151" }}>
+        <Text size="2" weight="medium" style={{ display: "block", marginBottom: 4,  }}>
           Role Name <Text color="red">*</Text>
         </Text>
-        <input
-          type="text"
-          placeholder="Enter role name (e.g., Manager, Staff)"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: "10px 12px",
-            fontSize: "14px",
-            border: "1px solid #e5e7eb",
-            borderRadius: "8px",
-            outline: "none",
-            transition: "border-color 0.2s",
-            fontFamily: "inherit",
-            boxSizing: "border-box",
-          }}
-          onFocus={(e) => (e.target.style.borderColor = "#8b5cf6")}
-          onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
-        />
+      <input
+  type="text"
+  placeholder="Enter role name (e.g., Manager, Staff)"
+  value={name}
+  onChange={(e) => setName(e.target.value)}
+  disabled={loading}
+  style={{
+    width: "100%",
+    padding: "10px 12px",
+    fontSize: "14px",
+
+    // ✅ match customer form
+    backgroundColor: "transparent",
+    
+    border: "1px solid var(--accent-6)",
+    borderRadius: "8px",
+
+    outline: "none",
+    transition: "border-color 0.2s, box-shadow 0.2s",
+    fontFamily: "inherit",
+    boxSizing: "border-box",
+  }}
+  onFocus={(e) => {
+    e.target.style.borderColor = "var(--accent-9)";
+    e.target.style.boxShadow = "0 0 0 1px var(--accent-9)";
+  }}
+  onBlur={(e) => {
+    e.target.style.borderColor = "var(--accent-6)";
+    e.target.style.boxShadow = "none";
+  }}
+/>
+
       </div>
 
       {/* ===== MODULES ===== */}
       <div>
         <Flex justify="between" align="center" mb="2">
-          <Text size="2" weight="medium" style={{ color: "#374151" }}>
+          <Text size="2" weight="medium">
             Permissions <Text color="red">*</Text>{" "}
-            <Text style={{ color: "#6b7280" }}>({modules.length} selected)</Text>
+            <Text>({modules.length} selected)</Text>
           </Text>
           <Button
             type="button"
@@ -158,8 +170,8 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
             onClick={selectAllModules}
             disabled={loading}
             style={{
-              background: modules.length === MODULES.length ? "#ede9fe" : "#f3f4f6",
-              color: modules.length === MODULES.length ? "#7c3aed" : "#374151",
+              background: modules.length === MODULES.length ? "var(--accent-5)" : "var(--accent-2)",
+              color: modules.length === MODULES.length ? "var(--accent-11)" : "var(--accent-11)",
               cursor: loading ? "not-allowed" : "pointer",
               fontSize: "12px",
               fontWeight: "600",
@@ -178,7 +190,7 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
           maxHeight: "280px",
           overflowY: "auto",
           padding: "12px",
-          background: "#fafafa",
+          
           borderRadius: "8px",
           border: "1px solid #e5e7eb",
         }}>
@@ -195,22 +207,22 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
                   alignItems: "center",
                   gap: "10px",
                   padding: "10px 12px",
-                  background: modules.includes(module) ? "#ede9fe" : "white",
-                  border: modules.includes(module) ? "2px solid #8b5cf6" : "2px solid #e5e7eb",
+                  background: modules.includes(module) ? "var(--accent-5)" : "transparent",
+                  border: modules.includes(module) ? "2px solid var(--accent-10)" : "2px solid var(--accent-3)",
                   borderRadius: "8px",
                   cursor: loading ? "not-allowed" : "pointer",
                   transition: "all 0.2s",
                   fontSize: "13px",
                   fontWeight: "500",
                   opacity: loading ? 0.6 : 1,
-                  color: modules.includes(module) ? "#7c3aed" : "#374151",
+                 
                 }}
               >
                 <Checkbox
                   checked={modules.includes(module)}
                   onCheckedChange={() => !loading && toggleModule(module)}
                   disabled={loading}
-                  style={{ borderColor: modules.includes(module) ? "#8b5cf6" : "#d1d5db" }}
+                  style={{ borderColor: modules.includes(module) ? "var(--accent-10)" : "var(--accent-3)" }}
                 />
                 <span style={{ textTransform: "capitalize" }}>{module}</span>
               </label>

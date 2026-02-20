@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 
+
 /* ================= TYPES ================= */
 
 export interface User {
@@ -37,7 +38,7 @@ const initialState: AuthState = {
 
 /* ================= API BASE ================= */
 
-const BASE_URL = "http://localhost:5000/api/auth";
+const BASE_URL = "http://localhost:5000/api/auth"; // ✅ CHANGED: point to backend API
 
 /* ================= AXIOS INTERCEPTOR ================= */
 

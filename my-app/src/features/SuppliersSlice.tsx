@@ -6,7 +6,7 @@ import type { RootState } from "../store/Store";
  * ✅ Adjust this if your API base is different
  * Example: `${import.meta.env.VITE_API_BASE_URL}/api/suppliers`
  */
-const BASE_URL = "/api/suppliers";
+const BASE_URL = `http://localhost:5000/api/suppliers`;
 
 /* -------------------- TYPES -------------------- */
 export type Supplier = {

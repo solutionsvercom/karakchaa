@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
-
 /* ================= TYPES ================= */
 
 export interface StockHistoryItem {
@@ -50,7 +49,7 @@ const initialState: StockState = {
 
 /* ================= API BASE ================= */
 
-const BASE_URL = "http://localhost:5000/api/stock";
+const BASE_URL = `http://localhost:5000/api/stock`;
 
 /* ================= ASYNC THUNKS ================= */
 

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import "./App.css";
+import { verifyToken, setInitialized } from "./features/AuthSlice";
 
 import DashboardLayout from "./components/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -21,7 +22,6 @@ import RolesPage from "./pages/Dashboard/Roles";
 
 import Login from "./pages/Login";
 
-import { verifyToken } from "./features/AuthSlice";
 import { useAppDispatch, useAppSelector } from "./hooks/hooks";
 
 /* ==============================================
@@ -127,13 +127,19 @@ function NoAccessPage() {
 ============================================== */
 function App() {
   const dispatch = useAppDispatch();
-  const { token, initializing } = useAppSelector((state) => state.auth);
+  const { initializing } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
-    if (token) {
+    const storedToken = localStorage.getItem("token");
+    
+    if (storedToken) {
+      // Token exists, verify it
       dispatch(verifyToken());
+    } else {
+      // No token, skip initialization and go to login
+      dispatch(setInitialized());
     }
-  }, [dispatch, token]);
+  }, [dispatch]);
 
   if (initializing) {
     return (
@@ -186,7 +192,7 @@ function App() {
           <Route path="sales" element={<ProtectedRoute requiredModule="sales"><SalesPage /></ProtectedRoute>} />
           <Route path="suppliers/*" element={<ProtectedRoute requiredModule="suppliers"><SuppliersPage /></ProtectedRoute>} />
           <Route path="employees/*" element={<ProtectedRoute requiredModule="employees"><EmployeesPage /></ProtectedRoute>} />
-           <Route path="employees/add-employee" element={<ProtectedRoute requiredModule="employees"><EmployeesPage /></ProtectedRoute>} />
+          <Route path="employees/add-employee" element={<ProtectedRoute requiredModule="employees"><EmployeesPage /></ProtectedRoute>} />
           <Route path="employees/:id/edit-employee" element={<ProtectedRoute requiredModule="employees"><EmployeesPage /></ProtectedRoute>} />
 
           <Route path="expenses/*" element={<ProtectedRoute requiredModule="expenses"><ExpensesPage /></ProtectedRoute>} />
