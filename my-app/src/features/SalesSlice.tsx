@@ -35,27 +35,21 @@ const BASE_URL = `http://localhost:5000/api/sales`;
 
 /* ================= ASYNC THUNKS ================= */
 
-// 🔹 Fetch Sales (supports filters)
 export const fetchSales = createAsyncThunk<
-  Sale[], // what we RETURN
-  { from?: string; to?: string; product?: string } | undefined, // payload
-  { rejectValue: string } // thunkAPI reject type
->(
-  "sales/fetchAll",
-  async (filters, thunkAPI) => {
-    try {
-      const res = await axios.get(BASE_URL, { params: filters });
-      return res.data.data;
-    } catch (error: any) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Error fetching sales"
-      );
-    }
+  Sale[],
+  { from?: string; to?: string; product?: string } | undefined,
+  { rejectValue: string }
+>("sales/fetchAll", async (filters, thunkAPI) => {
+  try {
+    const res = await axios.get(BASE_URL, { params: filters });
+    return res.data.data;
+  } catch (error: any) {
+    return thunkAPI.rejectWithValue(
+      error.response?.data?.message || "Error fetching sales"
+    );
   }
-);
+});
 
-
-// 🔹 Create Sale (POS)
 export const createSale = createAsyncThunk<
   Sale,
   any,
@@ -64,7 +58,18 @@ export const createSale = createAsyncThunk<
   "sales/create",
   async (payload, thunkAPI) => {
     try {
-      const res = await axios.post(BASE_URL, payload);
+        const body = {
+      product: payload.productId,
+      quantity: payload.quantity,
+      sellingPrice: payload.sellingPrice,
+      paymentMethod: payload.paymentMethod,
+      paymentStatus: payload.paymentStatus,
+      customer: payload.customer,
+    };
+
+
+      const res = await axios.post(BASE_URL, body);
+
       return res.data.data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue(
@@ -75,6 +80,36 @@ export const createSale = createAsyncThunk<
 );
 
 
+export const updateSale = createAsyncThunk<
+  Sale,
+  { id: string; data: any },
+  { rejectValue: string }
+>("sales/update", async ({ id, data }, thunkAPI) => {
+  try {
+    const res = await axios.put(`${BASE_URL}/${id}`, data);
+    return res.data.data;
+  } catch (error: any) {
+    return thunkAPI.rejectWithValue(
+      error.response?.data?.message || "Error updating sale"
+    );
+  }
+});
+
+export const deleteSale = createAsyncThunk<
+  string,
+  string,
+  { rejectValue: string }
+>("sales/delete", async (id, thunkAPI) => {
+  try {
+    await axios.delete(`${BASE_URL}/${id}`);
+    return id;
+  } catch (error: any) {
+    return thunkAPI.rejectWithValue(
+      error.response?.data?.message || "Error deleting sale"
+    );
+  }
+});
+
 /* ================= SLICE ================= */
 
 const salesSlice = createSlice({
@@ -83,7 +118,6 @@ const salesSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-
       /* FETCH SALES */
       .addCase(fetchSales.pending, (state) => {
         state.loading = true;
@@ -97,10 +131,24 @@ const salesSlice = createSlice({
         state.error = action.payload as string;
       })
 
-      /* CREATE SALE */
+      /* CREATE */
       .addCase(createSale.fulfilled, (state, action) => {
-        // New sale appears at top
         state.sales.unshift(action.payload);
+      })
+
+      /* UPDATE */
+      .addCase(updateSale.fulfilled, (state, action) => {
+        const index = state.sales.findIndex(
+          (s) => s._id === action.payload._id
+        );
+        if (index !== -1) {
+          state.sales[index] = action.payload;
+        }
+      })
+
+      /* DELETE */
+      .addCase(deleteSale.fulfilled, (state, action) => {
+        state.sales = state.sales.filter((s) => s._id !== action.payload);
       });
   },
 });
