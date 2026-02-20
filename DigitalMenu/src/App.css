@@ -1328,3 +1328,53 @@ select {
     align-items: center;
     justify-content: center;
 }
+
+
+/* =========================
+   MENU CARD UNAVAILABLE OVERLAY
+   ========================= */
+
+.menuCardMedia {
+    position: relative;
+}
+
+
+/* grey image */
+
+.menuCardImgDisabled {
+    filter: grayscale(100%);
+    opacity: 0.6;
+}
+
+
+/* overlay background */
+
+.menuCardUnavailableOverlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* badge */
+
+.menuCardUnavailableBadge {
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 999px;
+}
+
+
+/* DISABLED BUTTON */
+
+.addCartBtnDisabled {
+    background: #e5e7eb !important;
+    color: #9ca3af !important;
+    cursor: not-allowed;
+    box-shadow: none;
+}

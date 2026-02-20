@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
-
+import { API_BASE_URL } from "../config/api";
 /* ================= TYPES ================= */
 
 export interface Customer {
@@ -40,7 +40,7 @@ const initialState: CustomerState = {
 
 /* ================= API BASE ================= */
 
-const BASE_URL = "http://localhost:5000/api/customers";
+const BASE_URL = `${API_BASE_URL}/customers`;
 
 /* ================= ASYNC THUNKS ================= */
 

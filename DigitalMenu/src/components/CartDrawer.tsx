@@ -255,8 +255,8 @@ export default function CartDrawer({ open, onClose }: Props) {
     </div>
 
     <div className="summaryRow">
-      <span>Tax (5%)</span>
-      <span>₹{Math.round(subtotal * 0.05)}</span>
+      <span>GST (5%)</span>
+      <span>+ ₹{Math.round(subtotal * 0.05)}</span>
     </div>
 
     <div className="summaryDivider"></div>

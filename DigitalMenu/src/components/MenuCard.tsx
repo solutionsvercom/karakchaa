@@ -17,14 +17,25 @@ export default function MenuCard({ item }: Props) {
 
       {/* IMAGE */}
       <div className="menuCardMedia">
-        {item.image && (
-          <img
-            src={item.image}
-            className="menuCardImg"
-            alt={item.name}
-          />
-        )}
-      </div>
+
+  <img
+  alt= {
+    item.name
+}
+    src={item.image}
+    className={`menuCardImg ${!item.available ? "menuCardImgDisabled" : ""}`}
+  />
+
+  {!item.available && (
+    <div className="menuCardUnavailableOverlay">
+      <span className="menuCardUnavailableBadge">
+        Not Available
+      </span>
+    </div>
+  )}
+
+</div>
+
 
       {/* BODY */}
       <div className="menuCardBody">
@@ -51,13 +62,14 @@ export default function MenuCard({ item }: Props) {
         {/* ADD BUTTON OR QTY */}
         {qty === 0 ? (
 
-          <button
-            className="addBtn"
-            onClick={() => add(item)}
-            disabled={disabled}
-          >
-            + Add to Cart
-          </button>
+         <button
+  className={`addCartBtn ${!item.available ? "addCartBtnDisabled" : ""}`}
+  onClick={() => add(item)}
+  disabled={!item.available}
+>
+  {item.available ? "+ Add to Cart" : "Unavailable"}
+</button>
+
 
         ) : (
 

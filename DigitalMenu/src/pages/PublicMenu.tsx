@@ -269,7 +269,7 @@ export default function PublicMenu() {
 <div className="sectionTitle">
 
     <span className="sectionTitleIcon">
-      {categoryIcons[activeCat]}
+     {categoryIcons[activeCat]}
     </span>
 
     <span>
