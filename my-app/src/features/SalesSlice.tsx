@@ -31,7 +31,7 @@ const initialState: SalesState = {
   error: null,
 };
 
-const BASE_URL = `${API_BASE_URL}/sales`;
+const BASE_URL = `http://localhost:5000/api/sales`;
 
 /* ================= ASYNC THUNKS ================= */
 
