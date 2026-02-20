@@ -2,7 +2,11 @@ import { useState } from "react";
 import { Flex, Text, Button } from "@radix-ui/themes";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Check } from "lucide-react";
+import { useDispatch } from "react-redux";
+
 import { useCart } from "./CartContext";
+import { AppDispatch } from "../../store/Store";
+import { createOrder } from "../../features/OrdersSlice";
 
 type OrderType = "dine-in" | "takeaway" | "delivery" | "online";
 type PaymentMethod = "cash" | "upi" | "gpay" | "phonepe" | "paytm" | "card";
@@ -13,8 +17,14 @@ interface CheckoutDialogProps {
   discount: number;
 }
 
-export const CheckoutDialog = ({ open, onClose, discount }: CheckoutDialogProps) => {
+export const CheckoutDialog = ({
+  open,
+  onClose,
+  discount,
+}: CheckoutDialogProps) => {
+  const dispatch = useDispatch<AppDispatch>();
   const { items, total, clearCart } = useCart();
+
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [orderType, setOrderType] = useState<OrderType>("dine-in");
@@ -23,25 +33,31 @@ export const CheckoutDialog = ({ open, onClose, discount }: CheckoutDialogProps)
 
   const discountedTotal = Math.max(total - discount, 0);
 
-  const handleCompleteOrder = () => {
-    const orderData = {
-      items,
-      customerName,
-      phone,
-      orderType,
-      paymentMethod,
-      notes,
-      subtotal: total,
-      discount,
-      total: discountedTotal,
-      timestamp: new Date().toISOString(),
-    };
+  const handleCompleteOrder = async () => {
+    if (!items.length) return;
 
-    console.log("ORDER PLACED:", orderData);
-    
-    // Clear cart and close dialog
-    clearCart();
-    onClose();
+    try {
+      // New flow: every POS checkout becomes an order first.
+      await dispatch(
+        createOrder({
+          items: items.map((item) => ({
+            product: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+          customerName: customerName || undefined,
+          phone: phone || undefined,
+          orderType,
+          notes: notes || undefined,
+        })
+      ).unwrap();
+
+      clearCart();
+      onClose();
+    } catch (error) {
+      console.error("Checkout failed:", error);
+    }
   };
 
   const orderTypeButtons: { value: OrderType; label: string }[] = [
@@ -51,13 +67,17 @@ export const CheckoutDialog = ({ open, onClose, discount }: CheckoutDialogProps)
     { value: "online", label: "Online Order" },
   ];
 
-  const paymentMethodButtons: { value: PaymentMethod; label: string; icon?: string }[] = [
-    { value: "cash", label: "Cash", icon: "💵" },
-    { value: "upi", label: "UPI", icon: "📱" },
-    { value: "phonepe", label: "PhonePe",icon: "📱" },
-    { value: "gpay", label: "GPay",icon: "📱" },
-    { value: "paytm", label: "Paytm",icon: "📱" },
-    { value: "card", label: "Card", icon: "💳" },
+  const paymentMethodButtons: {
+    value: PaymentMethod;
+    label: string;
+    icon?: string;
+  }[] = [
+    { value: "cash", label: "Cash", icon: "Cash" },
+    { value: "upi", label: "UPI", icon: "UPI" },
+    { value: "phonepe", label: "PhonePe", icon: "UPI" },
+    { value: "gpay", label: "GPay", icon: "UPI" },
+    { value: "paytm", label: "Paytm", icon: "UPI" },
+    { value: "card", label: "Card", icon: "Card" },
   ];
 
   return (
@@ -77,8 +97,8 @@ export const CheckoutDialog = ({ open, onClose, discount }: CheckoutDialogProps)
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-           background: "Canvas", 
-color: "CanvasText",
+            background: "Canvas",
+            color: "CanvasText",
             padding: 24,
             width: 540,
             maxHeight: "90vh",
@@ -87,7 +107,6 @@ color: "CanvasText",
             boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
           }}
         >
-          {/* HEADER */}
           <Flex justify="between" align="center" mb="4">
             <Text size="6" weight="bold">
               Complete Order
@@ -99,7 +118,6 @@ color: "CanvasText",
             </Dialog.Close>
           </Flex>
 
-          {/* ORDER SUMMARY */}
           <div
             style={{
               background: "var(--gray-a2)",
@@ -113,19 +131,15 @@ color: "CanvasText",
             </Text>
 
             <Flex justify="between" mb="2">
-              <Text size="2" >
-                {items.length} item(s)
-              </Text>
-              <Text size="2">₹{total}</Text>
+              <Text size="2">{items.length} item(s)</Text>
+              <Text size="2">Rs {total}</Text>
             </Flex>
 
             {discount > 0 && (
               <Flex justify="between" mb="3">
-                <Text size="2">
-                  Discount
-                </Text>
+                <Text size="2">Discount</Text>
                 <Text size="2" color="red">
-                  -₹{discount}
+                  -Rs {discount}
                 </Text>
               </Flex>
             )}
@@ -135,12 +149,11 @@ color: "CanvasText",
                 Total
               </Text>
               <Text size="5" weight="bold" color="green">
-                ₹{discountedTotal}
+                Rs {discountedTotal}
               </Text>
             </Flex>
           </div>
 
-          {/* CUSTOMER INFO */}
           <Flex gap="3" mb="3">
             <div style={{ flex: 1 }}>
               <Text size="2" weight="medium" style={{ marginBottom: 4, display: "block" }}>
@@ -157,8 +170,6 @@ color: "CanvasText",
                   padding: "0 12px",
                   border: "1px solid var(--gray-a6)",
                   borderRadius: 8,
-                 
-                  
                   fontSize: 14,
                 }}
               />
@@ -179,15 +190,12 @@ color: "CanvasText",
                   padding: "0 12px",
                   border: "1px solid var(--gray-a6)",
                   borderRadius: 8,
-                  
-                  
                   fontSize: 14,
                 }}
               />
             </div>
           </Flex>
 
-          {/* ORDER TYPE */}
           <div style={{ marginBottom: 20 }}>
             <Text size="2" weight="medium" style={{ marginBottom: 8, display: "block" }}>
               Order Type
@@ -203,11 +211,9 @@ color: "CanvasText",
                     border: "none",
                     borderRadius: 8,
                     background: orderType === btn.value ? "var(--green-9)" : "var(--gray-a3)",
-                    
                     fontWeight: 500,
                     fontSize: 14,
                     cursor: "pointer",
-                    transition: "all 0.2s",
                   }}
                 >
                   {btn.label}
@@ -216,7 +222,6 @@ color: "CanvasText",
             </Flex>
           </div>
 
-          {/* PAYMENT METHOD */}
           <div style={{ marginBottom: 20 }}>
             <Text size="2" weight="medium" style={{ marginBottom: 8, display: "block" }}>
               Payment Method
@@ -237,7 +242,6 @@ color: "CanvasText",
                     border: "none",
                     borderRadius: 8,
                     background: paymentMethod === btn.value ? "var(--green-9)" : "var(--gray-a3)",
-                    
                     fontWeight: 500,
                     fontSize: 13,
                     cursor: "pointer",
@@ -254,7 +258,6 @@ color: "CanvasText",
             </div>
           </div>
 
-          {/* NOTES */}
           <div style={{ marginBottom: 20 }}>
             <Text size="2" weight="medium" style={{ marginBottom: 4, display: "block" }}>
               Notes (Optional)
@@ -269,8 +272,6 @@ color: "CanvasText",
                 padding: 12,
                 border: "1px solid var(--gray-a6)",
                 borderRadius: 8,
-                
-                
                 fontSize: 14,
                 resize: "vertical",
                 fontFamily: "inherit",
@@ -278,13 +279,9 @@ color: "CanvasText",
             />
           </div>
 
-          {/* FOOTER BUTTONS */}
           <Flex gap="3">
             <Dialog.Close asChild>
-              <Button
-                variant="outline"
-                style={{ flex: 1, height: 44, cursor: "pointer" }}
-              >
+              <Button variant="outline" style={{ flex: 1, height: 44, cursor: "pointer" }}>
                 Cancel
               </Button>
             </Dialog.Close>

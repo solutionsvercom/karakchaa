@@ -175,7 +175,10 @@ function App() {
           <Route path="no-access" element={<NoAccessPage />} />
 
           <Route path="pos" element={<ProtectedRoute requiredModule="pos"><PosPage /></ProtectedRoute>} />
+          <Route path="pos/create-sale" element={<ProtectedRoute requiredModule="pos"><PosPage /></ProtectedRoute>} />
+
           <Route path="products/*" element={<ProtectedRoute requiredModule="products"><ProductsPage /></ProtectedRoute>} />
+          
 
           <Route path="customer" element={<ProtectedRoute requiredModule="customer"><CustomerPage /></ProtectedRoute>} />
           <Route path="customer/add-customer" element={<ProtectedRoute requiredModule="customer"><CustomerPage /></ProtectedRoute>} />

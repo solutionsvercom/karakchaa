@@ -1,66 +1,78 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { Flex, Box, Text, Select, Card } from "@radix-ui/themes";
+import { useDispatch, useSelector } from "react-redux";
+import { useLocation, useNavigate } from "react-router-dom";
+import { CheckoutDialog } from "./CheckoutDialog";
+
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import ProductCard from "../../components/dynamicComponents/ProductCard";
 import Cart from "./Cart";
 import { useCart } from "./CartContext";
+
+import { RootState, AppDispatch } from "../../store/Store";
+import { fetchProducts } from "../../features/ProductsSlice";
+
+import DigitalOrdersBoard from "./DigitalOrdersBoard";
+
 /* ---------------- TYPES ---------------- */
 
 type Category = "snacks" | "desserts" | "beverages" | "meals" | "other";
 
-type Product = {
-  id: number;
-  name: string;
-  sku: string;
-  price: number;
-  stock: number;
-  category: Category;
-};
-
-/* ---------------- MOCK DATA ---------------- */
-
-const PRODUCTS: Product[] = [
-  { id: 1, name: "Thali Meal", sku: "TH-001", price: 150, stock: 12, category: "meals" },
-  { id: 2, name: "Gulab Jamun", sku: "DS-001", price: 50, stock: 20, category: "desserts" },
-  { id: 3, name: "Rasgulla", sku: "DS-002", price: 45, stock: 8, category: "desserts" },
-  { id: 4, name: "Lemon Tea", sku: "BV-001", price: 35, stock: 30, category: "beverages" },
-  { id: 5, name: "Samosa", sku: "SN-001", price: 30, stock: 25, category: "snacks" },
-];
-
 /* ---------------- COMPONENT ---------------- */
 
 export default function Pos() {
-  const { addItem } = useCart();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isCheckoutMode = location.pathname.includes("/create-sale");
+
+  const dispatch = useDispatch<AppDispatch>();
+  const { addItem, items } = useCart();
+
+  const { products } = useSelector((state: RootState) => state.product);
+
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [activeTab, setActiveTab] = useState<"pos" | "digital">("pos");
 
-  /* ---------------- FILTER LOGIC ---------------- */
+  /* ================= FETCH PRODUCTS ================= */
+
+  useEffect(() => {
+    dispatch(fetchProducts());
+  }, [dispatch]);
+
+  /* ================= FILTER PRODUCTS ================= */
 
   const filteredProducts = useMemo(() => {
-    return PRODUCTS.filter((p) => {
-      const matchesSearch =
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.sku.toLowerCase().includes(search.toLowerCase());
+    return products
+      .filter((p: any) => p.isActive)
+      .filter((p: any) => {
+        const matchesSearch =
+          p.name.toLowerCase().includes(search.toLowerCase()) ||
+          p.sku.toLowerCase().includes(search.toLowerCase());
 
-      const matchesCategory =
-        category === "all" ? true : p.category === category;
+        const matchesCategory =
+          category === "all" ? true : p.category === category;
 
-      return matchesSearch && matchesCategory;
-    });
-  }, [search, category]);
+        return matchesSearch && matchesCategory;
+      });
+  }, [products, search, category]);
+
+  /* ================= CART QTY ================= */
+
+  const getCartQty = (id: string) => {
+    const item = items.find((i) => i.id === id);
+    return item ? item.quantity : 0;
+  };
+
+  /* ================= UI ================= */
 
   return (
-    // <Flex direction="column" gap="4" style={{ height: "100%" }}>
-      <Flex
-  direction="column"
-  gap="4"
-  style={{
-    height: "calc(100vh - 64px)", // adjust if your navbar height differs
-    minHeight: 0,
-  }}
->
-      {/* ---------------- POS / DIGITAL SWITCH ---------------- */}
+    <Flex
+      direction="column"
+      gap="4"
+      style={{ height: "calc(100vh - 64px)", minHeight: 0 }}
+    >
+      {/* ================= TAB SWITCH ================= */}
       <Box
         style={{
           background: "var(--gray-2)",
@@ -106,13 +118,10 @@ export default function Pos() {
         </Flex>
       </Box>
 
-      {/* ---------------- POS CONTENT ---------------- */}
+      {/* ================= POS TAB ================= */}
       {activeTab === "pos" && (
-        // <Flex gap="4" style={{ flex: 1 }}>
-          <Flex gap="4" style={{ flex: 1, minHeight: 0 }}>
-          {/* LEFT : PRODUCTS */}
+        <Flex gap="4" style={{ flex: 1, minHeight: 0 }}>
           <Flex direction="column" gap="4" style={{ flex: 1 }}>
-            {/* SEARCH + FILTER */}
             <Flex gap="3">
               <Box style={{ flex: 1 }}>
                 <Searchbar
@@ -135,65 +144,78 @@ export default function Pos() {
               </Select.Root>
             </Flex>
 
-            {/* PRODUCT GRID */}
             <Box
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+                gridTemplateColumns:
+                  "repeat(auto-fill, minmax(240px, 1fr))",
                 gap: 16,
                 overflowY: "auto",
                 paddingRight: 6,
               }}
             >
-              {filteredProducts.map((product) => (
-             <ProductCard
-                key={product.id}
-                name={product.name}
-                sku={product.sku}
-                price={product.price}
-                stock={product.stock}
-                category={product.category}
-                variant="pos"
-                onAdd={() =>
-                  addItem({
-                    id: String(product.id),
-                    name: product.name,
-                    price: product.price,
-                  })
-                }
-              />
-              ))}
+              {filteredProducts.map((product: any) => {
+                const cartQty = getCartQty(product._id);
+                const remainingStock = product.stockQty - cartQty;
+
+                return (
+                  <ProductCard
+                    key={product._id}
+                    name={product.name}
+                    sku={product.sku}
+                    price={product.sellingPrice}
+                    stock={remainingStock}
+                    category={product.category}
+                    variant="pos"
+                    onAdd={() => {
+                      if (remainingStock <= 0) return;
+                      addItem({
+                        id: product._id,
+                        name: product.name,
+                        price: product.sellingPrice,
+                      });
+                    }}
+                  />
+                );
+              })}
             </Box>
           </Flex>
 
-          {/* RIGHT : CURRENT ORDER */}
-         <Card
-  style={{
-    width: 320,
-    height: "100%",
-    borderRadius: 12,
-    display: "flex",
-    flexDirection: "column",
-    minHeight: 0,
-  }}
->
-  <Cart />
-</Card>
+          <Card
+            style={{
+              width: 320,
+              height: "100%",
+              borderRadius: 12,
+              display: "flex",
+              flexDirection: "column",
+              minHeight: 0,
+            }}
+          >
+            <Cart />
+          </Card>
         </Flex>
       )}
 
-      {/* ---------------- DIGITAL ORDERS ---------------- */}
+      {/* ================= DIGITAL TAB (🔥 FIXED) ================= */}
       {activeTab === "digital" && (
-        <Flex
-          align="center"
-          justify="center"
-          style={{ height: 300 }}
+        <div
+          className="w-full h-full"
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflow: "hidden",
+          }}
         >
-          <Text color="gray">
-            Digital menu orders will appear here
-          </Text>
-        </Flex>
+          <DigitalOrdersBoard />
+        </div>
       )}
+
+      {/* ================= CHECKOUT DIALOG ================= */}
+      <CheckoutDialog
+        open={isCheckoutMode}
+        onClose={() => navigate("/dashboard/pos")}
+        discount={0}
+      />
     </Flex>
   );
 }
