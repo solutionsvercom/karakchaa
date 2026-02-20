@@ -6,7 +6,7 @@ import { useDispatch } from "react-redux";
 
 import { useCart } from "./CartContext";
 import { AppDispatch } from "../../store/Store";
-import { createSale } from "../../features/SalesSlice";
+import { createOrder } from "../../features/OrdersSlice";
 
 type OrderType = "dine-in" | "takeaway" | "delivery" | "online";
 type PaymentMethod = "cash" | "upi" | "gpay" | "phonepe" | "paytm" | "card";
@@ -17,10 +17,12 @@ interface CheckoutDialogProps {
   discount: number;
 }
 
-export const CheckoutDialog = ({ open, onClose, discount }: CheckoutDialogProps) => {
+export const CheckoutDialog = ({
+  open,
+  onClose,
+  discount,
+}: CheckoutDialogProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  
-
   const { items, total, clearCart } = useCart();
 
   const [customerName, setCustomerName] = useState("");
@@ -31,41 +33,32 @@ export const CheckoutDialog = ({ open, onClose, discount }: CheckoutDialogProps)
 
   const discountedTotal = Math.max(total - discount, 0);
 
-  /* 🔥 REAL POS CHECKOUT */
-const handleCompleteOrder = async () => {
-  if (!items.length) return;
+  const handleCompleteOrder = async () => {
+    if (!items.length) return;
 
-  try {
-    for (const item of items) {
-   await dispatch(
-      createSale({
-        productId: item.id,
-        quantity: item.quantity,
+    try {
+      // New flow: every POS checkout becomes an order first.
+      await dispatch(
+        createOrder({
+          items: items.map((item) => ({
+            product: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+          customerName: customerName || undefined,
+          phone: phone || undefined,
+          orderType,
+          notes: notes || undefined,
+        })
+      ).unwrap();
 
-        // ⭐ ENUM MUST MATCH SCHEMA EXACTLY
-        paymentMethod:
-          paymentMethod === "cash"
-            ? "Cash"
-            : paymentMethod === "card"
-            ? "Card"
-            : "UPI",
-
-        paymentStatus: "Completed",
-      })
-    );  
-
-
+      clearCart();
+      onClose();
+    } catch (error) {
+      console.error("Checkout failed:", error);
     }
-
-    clearCart();
-    console.log("Dispatching sale:", items);
-
-    onClose();
-  } catch (error) {
-    console.error("Checkout failed:", error);
-  }
-};
-
+  };
 
   const orderTypeButtons: { value: OrderType; label: string }[] = [
     { value: "dine-in", label: "Dine In" },
@@ -74,13 +67,17 @@ const handleCompleteOrder = async () => {
     { value: "online", label: "Online Order" },
   ];
 
-  const paymentMethodButtons: { value: PaymentMethod; label: string; icon?: string }[] = [
-    { value: "cash", label: "Cash", icon: "💵" },
-    { value: "upi", label: "UPI", icon: "📱" },
-    { value: "phonepe", label: "PhonePe", icon: "📱" },
-    { value: "gpay", label: "GPay", icon: "📱" },
-    { value: "paytm", label: "Paytm", icon: "📱" },
-    { value: "card", label: "Card", icon: "💳" },
+  const paymentMethodButtons: {
+    value: PaymentMethod;
+    label: string;
+    icon?: string;
+  }[] = [
+    { value: "cash", label: "Cash", icon: "Cash" },
+    { value: "upi", label: "UPI", icon: "UPI" },
+    { value: "phonepe", label: "PhonePe", icon: "UPI" },
+    { value: "gpay", label: "GPay", icon: "UPI" },
+    { value: "paytm", label: "Paytm", icon: "UPI" },
+    { value: "card", label: "Card", icon: "Card" },
   ];
 
   return (
@@ -110,7 +107,6 @@ const handleCompleteOrder = async () => {
             boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
           }}
         >
-          {/* HEADER */}
           <Flex justify="between" align="center" mb="4">
             <Text size="6" weight="bold">
               Complete Order
@@ -122,7 +118,6 @@ const handleCompleteOrder = async () => {
             </Dialog.Close>
           </Flex>
 
-          {/* ORDER SUMMARY */}
           <div
             style={{
               background: "var(--gray-a2)",
@@ -137,14 +132,14 @@ const handleCompleteOrder = async () => {
 
             <Flex justify="between" mb="2">
               <Text size="2">{items.length} item(s)</Text>
-              <Text size="2">₹{total}</Text>
+              <Text size="2">Rs {total}</Text>
             </Flex>
 
             {discount > 0 && (
               <Flex justify="between" mb="3">
                 <Text size="2">Discount</Text>
                 <Text size="2" color="red">
-                  -₹{discount}
+                  -Rs {discount}
                 </Text>
               </Flex>
             )}
@@ -154,12 +149,11 @@ const handleCompleteOrder = async () => {
                 Total
               </Text>
               <Text size="5" weight="bold" color="green">
-                ₹{discountedTotal}
+                Rs {discountedTotal}
               </Text>
             </Flex>
           </div>
 
-          {/* CUSTOMER INFO */}
           <Flex gap="3" mb="3">
             <div style={{ flex: 1 }}>
               <Text size="2" weight="medium" style={{ marginBottom: 4, display: "block" }}>
@@ -202,7 +196,6 @@ const handleCompleteOrder = async () => {
             </div>
           </Flex>
 
-          {/* ORDER TYPE */}
           <div style={{ marginBottom: 20 }}>
             <Text size="2" weight="medium" style={{ marginBottom: 8, display: "block" }}>
               Order Type
@@ -229,7 +222,6 @@ const handleCompleteOrder = async () => {
             </Flex>
           </div>
 
-          {/* PAYMENT METHOD */}
           <div style={{ marginBottom: 20 }}>
             <Text size="2" weight="medium" style={{ marginBottom: 8, display: "block" }}>
               Payment Method
@@ -266,7 +258,6 @@ const handleCompleteOrder = async () => {
             </div>
           </div>
 
-          {/* NOTES */}
           <div style={{ marginBottom: 20 }}>
             <Text size="2" weight="medium" style={{ marginBottom: 4, display: "block" }}>
               Notes (Optional)
@@ -288,7 +279,6 @@ const handleCompleteOrder = async () => {
             />
           </div>
 
-          {/* FOOTER */}
           <Flex gap="3">
             <Dialog.Close asChild>
               <Button variant="outline" style={{ flex: 1, height: 44, cursor: "pointer" }}>

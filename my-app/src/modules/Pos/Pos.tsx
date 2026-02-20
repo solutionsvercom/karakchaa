@@ -12,6 +12,8 @@ import { useCart } from "./CartContext";
 import { RootState, AppDispatch } from "../../store/Store";
 import { fetchProducts } from "../../features/ProductsSlice";
 
+import DigitalOrdersBoard from "./DigitalOrdersBoard";
+
 /* ---------------- TYPES ---------------- */
 
 type Category = "snacks" | "desserts" | "beverages" | "meals" | "other";
@@ -23,7 +25,6 @@ export default function Pos() {
   const navigate = useNavigate();
   const isCheckoutMode = location.pathname.includes("/create-sale");
 
-
   const dispatch = useDispatch<AppDispatch>();
   const { addItem, items } = useCart();
 
@@ -33,11 +34,14 @@ export default function Pos() {
   const [category, setCategory] = useState("all");
   const [activeTab, setActiveTab] = useState<"pos" | "digital">("pos");
 
+  /* ================= FETCH PRODUCTS ================= */
+
   useEffect(() => {
     dispatch(fetchProducts());
   }, [dispatch]);
 
-  /* 🔥 STOCK AWARE FILTER */
+  /* ================= FILTER PRODUCTS ================= */
+
   const filteredProducts = useMemo(() => {
     return products
       .filter((p: any) => p.isActive)
@@ -53,14 +57,22 @@ export default function Pos() {
       });
   }, [products, search, category]);
 
-  /* 🔥 GET CURRENT CART QTY FOR PRODUCT */
+  /* ================= CART QTY ================= */
+
   const getCartQty = (id: string) => {
-    const item = items.find(i => i.id === id);
+    const item = items.find((i) => i.id === id);
     return item ? item.quantity : 0;
   };
 
+  /* ================= UI ================= */
+
   return (
-    <Flex direction="column" gap="4" style={{ height: "calc(100vh - 64px)", minHeight: 0 }}>
+    <Flex
+      direction="column"
+      gap="4"
+      style={{ height: "calc(100vh - 64px)", minHeight: 0 }}
+    >
+      {/* ================= TAB SWITCH ================= */}
       <Box
         style={{
           background: "var(--gray-2)",
@@ -79,7 +91,8 @@ export default function Pos() {
               cursor: "pointer",
               textAlign: "center",
               fontWeight: 500,
-              background: activeTab === "pos" ? "var(--accent-9)" : "transparent",
+              background:
+                activeTab === "pos" ? "var(--accent-9)" : "transparent",
               color: activeTab === "pos" ? "white" : "var(--gray-12)",
             }}
           >
@@ -95,7 +108,8 @@ export default function Pos() {
               cursor: "pointer",
               textAlign: "center",
               fontWeight: 500,
-              background: activeTab === "digital" ? "var(--accent-9)" : "transparent",
+              background:
+                activeTab === "digital" ? "var(--accent-9)" : "transparent",
               color: activeTab === "digital" ? "white" : "var(--gray-12)",
             }}
           >
@@ -104,6 +118,7 @@ export default function Pos() {
         </Flex>
       </Box>
 
+      {/* ================= POS TAB ================= */}
       {activeTab === "pos" && (
         <Flex gap="4" style={{ flex: 1, minHeight: 0 }}>
           <Flex direction="column" gap="4" style={{ flex: 1 }}>
@@ -132,7 +147,8 @@ export default function Pos() {
             <Box
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+                gridTemplateColumns:
+                  "repeat(auto-fill, minmax(240px, 1fr))",
                 gap: 16,
                 overflowY: "auto",
                 paddingRight: 6,
@@ -180,18 +196,26 @@ export default function Pos() {
         </Flex>
       )}
 
+      {/* ================= DIGITAL TAB (🔥 FIXED) ================= */}
       {activeTab === "digital" && (
-        <Flex align="center" justify="center" style={{ height: 300 }}>
-          <Text color="gray">Digital menu orders will appear here</Text>
-        </Flex>
+        <div
+          className="w-full h-full"
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflow: "hidden",
+          }}
+        >
+          <DigitalOrdersBoard />
+        </div>
       )}
+
+      {/* ================= CHECKOUT DIALOG ================= */}
       <CheckoutDialog
         open={isCheckoutMode}
         onClose={() => navigate("/dashboard/pos")}
         discount={0}
       />
-
     </Flex>
   );
 }
-
