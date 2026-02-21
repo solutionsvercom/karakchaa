@@ -15,6 +15,7 @@ class ProductController {
                 minStock: req.body.minStock,
                 isActive: req.body.isActive,
                 imageUrl: req.body.imageUrl,
+                isVeg: req.body.isVeg !== undefined ? req.body.isVeg : true,
             };
 
             const product = await productService.createProduct(payload);
@@ -54,7 +55,10 @@ class ProductController {
 
     async updateProduct(req, res, next) {
         try {
-            const payload = {...req.body };
+            const payload = {
+                ...req.body,
+                isVeg: req.body.isVeg !== undefined ? req.body.isVeg : true,
+            };
 
             const product = await productService.updateProduct(
                 req.params.id,
@@ -102,6 +106,7 @@ class ProductController {
             next(err);
         }
     }
+
     async deleteProduct(req, res, next) {
         try {
             const product = await productService.deleteProduct(req.params.id);
@@ -116,6 +121,5 @@ class ProductController {
         }
     }
 }
-
 
 module.exports = new ProductController();

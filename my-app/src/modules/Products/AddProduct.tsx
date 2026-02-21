@@ -23,7 +23,8 @@ type ProductField =
   | "minStock"
   | "unit"
   | "description"
-  | "active";
+  | "active"
+  | "isVeg"; // ✅ NEW
 
 interface AddProductsProps {
   mode: "create" | "edit";
@@ -33,15 +34,14 @@ interface AddProductsProps {
 const AddProducts = ({ mode, initialValues }: AddProductsProps) => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+
   useEffect(() => {
-  dispatch(clearError());
-
-  return () => {
     dispatch(clearError());
-  };
-}, [dispatch]);
+    return () => {
+      dispatch(clearError());
+    };
+  }, [dispatch]);
 
-  /* ⭐ READ ERROR FROM REDUX SLICE */
   const { error } = useSelector((state: RootState) => state.product);
 
   const fields: FormField<ProductField>[] = [
@@ -66,6 +66,11 @@ const AddProducts = ({ mode, initialValues }: AddProductsProps) => {
         { label: "Snacks", value: "snacks" },
         { label: "Meals", value: "meals" },
         { label: "Desserts", value: "desserts" },
+        { label: "Drinks", value: "drinks" },
+        { label: "Starters", value: "starters" },
+        { label: "Breads", value: "breads" },
+        { label: "Pizza", value: "pizza" },
+        { label: "Sandwich", value: "sandwich" },
         { label: "Other", value: "other" },
       ],
     },
@@ -97,20 +102,22 @@ const AddProducts = ({ mode, initialValues }: AddProductsProps) => {
       rows: 2,
       placeholder: "Enter product description...",
     },
+   { name: "isVeg", label: "🟩 Veg Product", type: "switch", span: 2 },
     { name: "active", label: "Active Product", type: "switch", span: 2 },
+   
   ];
 
-  /* ⭐ MAP BACKEND FIELD → FORM FIELD */
+  /* MAP BACKEND FIELD → FORM FIELD */
   const mappedInitialValues = initialValues
     ? {
         ...initialValues,
         active: initialValues.isActive,
+        isVeg: initialValues.isVeg !== undefined ? initialValues.isVeg : true, // ✅ NEW
       }
     : undefined;
 
   return (
     <>
-      {/* ⭐ ERROR UI WITHOUT TOUCHING DynamicForm */}
       {error && (
         <div
           style={{
@@ -154,7 +161,8 @@ const AddProducts = ({ mode, initialValues }: AddProductsProps) => {
               minStock: Number(data.minStock),
               unit: data.unit,
               description: data.description,
-              isActive: data.active ?? true,
+              isActive: data.active !== undefined ? data.active : true,
+              isVeg: data.isVeg !== undefined ? data.isVeg : true, // ✅ NEW
             };
 
             if (mode === "create") {

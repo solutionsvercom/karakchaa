@@ -14,17 +14,18 @@ app.use("/api/sales", require("./src/routes/Sale"));
 
 /* ================= ROUTES IMPORT ================= */
 const authRoutes = require('./src/routes/AuthRoutes');
+const roleRoutes = require("./src/routes/RoleRoutes");
 const customerRoutes = require('./src/routes/CustomerRoutes');
 const stockRoutes = require('./src/routes/StockmanagementRoutes');
 const employeeRoutes = require('./src/routes/EmployeesRoutes');
-const expenseRoutes = require("./src/routes/ExpenseRoutes.js"); 
+const expenseRoutes = require("./src/routes/ExpenseRoutes.js");
 const supplierRoutes = require("./src/routes/SupplierRoutes.js");
 const orderRoutes = require("./src/routes/OrderRoutes");
 
 // const productRoutes = require('./src/routes/ProductRoutes');
 // const salesRoutes = require('./src/routes/SalesRoutes');
-const roleRoutes = require("./src/routes/RoleRoutes");
-
+const digitalMenuRoutes = require("./src/routes/DigitalMenuRoutes");
+const digitalOrderRoutes = require("./src/routes/DigitalOrderRoutes");
 
 
 /* ================= ROUTES USE ================= */
@@ -37,7 +38,10 @@ app.use("/api/products", require("./src/routes/Product"));
 app.use("/api/sales", require("./src/routes/Sale"));
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/suppliers", supplierRoutes);
+app.use("/api/digital-menu", digitalMenuRoutes);
+app.use("/api/digital-menu", digitalOrderRoutes);
 app.use("/api/orders", orderRoutes);
+
 
 
 

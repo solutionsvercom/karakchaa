@@ -5,6 +5,7 @@ import OrderCompletedPage from "./pages/OrderCompleted";
 
 import { CartProvider } from "./context/CartContext";
 import "./App.css";
+import './PublicMenu.enhance.css';
 
 export default function App() {
   return (

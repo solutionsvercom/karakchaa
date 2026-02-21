@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useContext, useMemo } from "react";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import {
+  addToCart,
+  decreaseQuantity,
+  removeFromCart,
+  clearCart,
+} from "../features/CartSlice";
 import type { MenuItem } from "../types/menu";
 import type { CartItem } from "../types/cart";
 
@@ -18,49 +25,82 @@ type CartContextType = {
 const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<Record<string, CartItem>>({});
+  const dispatch = useAppDispatch();
+  const reduxItems = useAppSelector((state) => state.cart.items);
+
+  // Convert Redux array format to Context object format
+  const items: Record<string, CartItem> = useMemo(() => {
+    const result: Record<string, CartItem> = {};
+    
+    reduxItems.forEach((reduxItem) => {
+      result[reduxItem.productId] = {
+        item: {
+          id: reduxItem.productId,
+          name: reduxItem.name,
+          price: reduxItem.price,
+          category: reduxItem.category || "",
+          image: reduxItem.image || "",
+          description: "",
+          veg: reduxItem.veg ?? true,
+          available: true,
+        },
+        qty: reduxItem.quantity,
+      };
+    });
+    
+    return result;
+  }, [reduxItems]);
 
   const getQty = (id: string) => items[id]?.qty ?? 0;
 
   const add = (item: MenuItem) => {
-    setItems((prev) => {
-      const existing = prev[item.id];
-      const qty = existing ? existing.qty + 1 : 1;
-      return { ...prev, [item.id]: { item, qty } };
-    });
+    dispatch(
+      addToCart({
+        productId: item.id,
+        name: item.name,
+        price: item.price,
+        image: item.image,
+        category: item.category,
+        veg: item.veg,
+      })
+    );
   };
 
   const inc = (id: string) => {
-    setItems((prev) => {
-      const existing = prev[id];
-      if (!existing) return prev;
-      return { ...prev, [id]: { ...existing, qty: existing.qty + 1 } };
-    });
+    // Redux addToCart already handles incrementing
+    const existing = reduxItems.find((item) => item.productId === id);
+    if (existing) {
+      dispatch(
+        addToCart({
+          productId: existing.productId,
+          name: existing.name,
+          price: existing.price,
+          image: existing.image,
+          category: existing.category,
+          veg: existing.veg,
+        })
+      );
+    }
   };
 
   const dec = (id: string) => {
-    setItems((prev) => {
-      const existing = prev[id];
-      if (!existing) return prev;
-      const nextQty = existing.qty - 1;
-      if (nextQty <= 0) {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
-      }
-      return { ...prev, [id]: { ...existing, qty: nextQty } };
-    });
+    const existing = items[id];
+    if (!existing) return;
+
+    if (existing.qty === 1) {
+      dispatch(removeFromCart(id));
+    } else {
+      dispatch(decreaseQuantity(id));
+    }
   };
 
   const remove = (id: string) => {
-    setItems((prev) => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
+    dispatch(removeFromCart(id));
   };
 
-  const clear = () => setItems({});
+  const clear = () => {
+    dispatch(clearCart());
+  };
 
   const { totalQty, subtotal } = useMemo(() => {
     const values = Object.values(items);

@@ -13,6 +13,7 @@ async function createOrder(data) {
         phone,
         tableNumber,
         orderType,
+        notes, // ← ADD THIS
     } = data;
 
     const orderNumber = await generateOrderNumber();
@@ -22,14 +23,23 @@ async function createOrder(data) {
         0
     );
 
+    // Map items to correct format
+    const formattedItems = items.map(item => ({
+        product: item.productId || item.product, // Handle both formats
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+    }));
+
     const order = await Order.create({
         orderNumber,
-        items,
-        customerName,
+        items: formattedItems,
+        customerName: customerName || "Walk-in",
         phone,
         tableNumber,
-        orderType,
+        orderType: orderType || "online", // Default to 'online' for digital menu
         totalAmount,
+        notes, // ← ADD THIS
     });
 
     return order;
@@ -45,9 +55,7 @@ async function getOrders() {
 /* UPDATE STATUS */
 async function updateOrderStatus(id, status) {
     return await Order.findByIdAndUpdate(
-        id,
-        { status },
-        { new: true }
+        id, { status }, { new: true }
     );
 }
 

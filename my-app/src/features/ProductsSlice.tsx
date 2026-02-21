@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+
 /* ================= TYPES ================= */
 
 export interface Product {
@@ -13,6 +14,7 @@ export interface Product {
   stockQty: number;
   minStock: number;
   isActive: boolean;
+  isVeg: boolean; // ✅ NEW
 }
 
 interface ProductState {
@@ -63,23 +65,20 @@ export const fetchLowStock = createAsyncThunk(
   }
 );
 
-  export const createProduct = createAsyncThunk(
-    "product/create",
-    async (payload:any, thunkAPI) => {
-      try {
-        const res = await axios.post(
-          "http://localhost:5000/api/products",
-          payload
-        );
-        return res.data.data;
-      } catch (error:any) {
-        return thunkAPI.rejectWithValue(
-          error.response?.data?.error || "Product already exists"
-        );
-      }
+// 🔹 Create product
+export const createProduct = createAsyncThunk(
+  "product/create",
+  async (payload: any, thunkAPI) => {
+    try {
+      const res = await axios.post(BASE_URL, payload);
+      return res.data.data;
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.error || "Product already exists"
+      );
     }
-  );
-
+  }
+);
 
 // 🔹 Update product
 export const updateProduct = createAsyncThunk(
@@ -99,6 +98,40 @@ export const updateProduct = createAsyncThunk(
   }
 );
 
+// 🔹 Toggle product status
+export const toggleProductStatus = createAsyncThunk<
+  Product,
+  { id: string; isActive: boolean },
+  { rejectValue: string }
+>(
+  "product/toggleStatus",
+  async ({ id, isActive }, thunkAPI) => {
+    try {
+      const res = await axios.patch(`${BASE_URL}/${id}/status`, { isActive });
+      return res.data.data;
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Error updating status"
+      );
+    }
+  }
+);
+
+// 🔹 Delete product
+export const deleteProduct = createAsyncThunk(
+  "product/delete",
+  async (id: string, thunkAPI) => {
+    try {
+      await axios.delete(`${BASE_URL}/${id}`);
+      return id;
+    } catch (error: any) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Delete failed"
+      );
+    }
+  }
+);
+
 /* ================= SLICE ================= */
 
 const productSlice = createSlice({
@@ -106,7 +139,7 @@ const productSlice = createSlice({
   initialState,
   reducers: {
     clearError: (state) => {
-    state.error = null;
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -131,24 +164,17 @@ const productSlice = createSlice({
       })
 
       /* CREATE */
-      .addCase(createProduct.pending,(state)=>{
+      .addCase(createProduct.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-
-      .addCase(createProduct.fulfilled,(state,action)=>{
+      .addCase(createProduct.fulfilled, (state, action) => {
         state.loading = false;
         state.products.unshift(action.payload);
       })
-
-      .addCase(createProduct.rejected,(state,action)=>{
+      .addCase(createProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      })
-      /* DELETE */
-      .addCase(deleteProduct.fulfilled, (state, action) => {
-      state.products = state.products.filter(
-        (p: any) => p._id !== action.payload);
       })
 
       /* UPDATE */
@@ -159,55 +185,26 @@ const productSlice = createSlice({
         if (index !== -1) {
           state.products[index] = action.payload;
         }
-        })
-          .addCase(toggleProductStatus.fulfilled, (state, action) => {
-      const index = state.products.findIndex(
-        (p) => p._id === action.payload._id
-      );
-      if (index !== -1) {
-        state.products[index] = action.payload;
-      }
-    });
+      })
 
-      
+      /* TOGGLE STATUS */
+      .addCase(toggleProductStatus.fulfilled, (state, action) => {
+        const index = state.products.findIndex(
+          (p) => p._id === action.payload._id
+        );
+        if (index !== -1) {
+          state.products[index] = action.payload;
+        }
+      })
+
+      /* DELETE */
+      .addCase(deleteProduct.fulfilled, (state, action) => {
+        state.products = state.products.filter(
+          (p: any) => p._id !== action.payload
+        );
+      });
   },
 });
-export const toggleProductStatus = createAsyncThunk<
-  Product,
-  { id: string; isActive: boolean },
-  { rejectValue: string }
->(
-  "product/toggleStatus",
-  async ({ id, isActive }, thunkAPI) => {
-    try {
-      const res = await axios.patch(`${BASE_URL}/${id}/status`, {
-        isActive,
-      });
-      return res.data.data;
-    } catch (error:any) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Error updating status"
-      );
-    }
-  }
-);
-export const deleteProduct = createAsyncThunk(
-  "product/delete",
-  async (id: string, thunkAPI) => {
-    try {
-      await axios.delete(
-        `http://localhost:5000/api/products/${id}`
-      );
-      return id;
-    } catch (error: any) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Delete failed"
-      );
-    }
-  }
-);
-
-
 
 export default productSlice.reducer;
 export const { clearError } = productSlice.actions;

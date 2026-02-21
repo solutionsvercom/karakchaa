@@ -1,5 +1,5 @@
 import { Button, Dialog, Flex } from "@radix-ui/themes";
-import { DropdownMenu }from "@radix-ui/themes";
+import { DropdownMenu } from "@radix-ui/themes";
 import { ChevronDown } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -15,7 +15,7 @@ import { toggleProductStatus } from "../../features/ProductsSlice";
 
 /* ---------------- TYPES ---------------- */
 
-type Category = "snacks" | "desserts" | "beverages" | "meals" | "other";
+type Category = "snacks" | "desserts" | "beverages" | "meals" | "drinks" | "starters" | "breads" | "pizza" | "sandwich" | "other";
 
 /* ---------------- COMPONENT ---------------- */
 
@@ -81,27 +81,27 @@ export default function ProductsModule() {
         <Button onClick={() => navigate("/dashboard/products/add-product")}>
           + Add Product
         </Button>
-
-        {/* ================= ADD / EDIT DIALOG ================= */}
-        <Dialog.Root
-          open={isDialogOpen}
-          onOpenChange={(open) => {
-            if (!open) navigate("/dashboard/products");
-          }}
-        >
-          <Dialog.Content maxWidth="380px" aria-describedby={undefined}>
-            <Dialog.Title style={{ display: "none" }}>
-              {isAddMode ? "Add Product" : "Edit Product"}
-            </Dialog.Title>
-            {isDialogOpen && (
-              <AddProducts
-                mode={isAddMode ? "create" : "edit"}
-                initialValues={editingProduct}
-              />
-            )}
-          </Dialog.Content>
-        </Dialog.Root>
       </Flex>
+
+      {/* ================= ADD / EDIT DIALOG ================= */}
+      <Dialog.Root
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) navigate("/dashboard/products");
+        }}
+      >
+        <Dialog.Content maxWidth="380px" aria-describedby={undefined}>
+          <Dialog.Title style={{ display: "none" }}>
+            {isAddMode ? "Add Product" : "Edit Product"}
+          </Dialog.Title>
+          {isDialogOpen && (
+            <AddProducts
+              mode={isAddMode ? "create" : "edit"}
+              initialValues={editingProduct}
+            />
+          )}
+        </Dialog.Content>
+      </Dialog.Root>
 
       {/* ================= SEARCH + FILTER ================= */}
       <Flex justify="between" align="center" gap="3">
@@ -133,6 +133,11 @@ export default function ProductsModule() {
               { label: "Desserts", value: "desserts" },
               { label: "Beverages", value: "beverages" },
               { label: "Meals", value: "meals" },
+              { label: "Drinks", value: "drinks" },
+              { label: "Starters", value: "starters" },
+              { label: "Breads", value: "breads" },
+              { label: "Pizza", value: "pizza" },
+              { label: "Sandwich", value: "sandwich" },
               { label: "Other", value: "other" },
             ].map((item) => (
               <DropdownMenu.Item

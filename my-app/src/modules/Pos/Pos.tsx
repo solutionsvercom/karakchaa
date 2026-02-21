@@ -15,7 +15,9 @@ import { fetchProducts } from "../../features/ProductsSlice";
 
 import DigitalOrdersBoard from "./DigitalOrdersBoard";
 
-type Category = "snacks" | "desserts" | "beverages" | "meals" | "other";
+/* ---------------- TYPES ---------------- */
+
+type Category = "snacks" | "desserts" | "beverages" | "meals" | "drinks" | "starters" | "breads" | "pizza" | "sandwich" | "other";
 
 export default function Pos() {
   const location = useLocation();
@@ -130,6 +132,11 @@ export default function Pos() {
                     <Select.Item value="snacks">Snacks</Select.Item>
                     <Select.Item value="desserts">Desserts</Select.Item>
                     <Select.Item value="beverages">Beverages</Select.Item>
+                    <Select.Item value="drinks">Drinks</Select.Item>
+                    <Select.Item value="starters">Starters</Select.Item>
+                    <Select.Item value="breads">Breads</Select.Item>
+                    <Select.Item value="pizza">Pizza</Select.Item>
+                    <Select.Item value="sandwich">Sandwich</Select.Item>
                     <Select.Item value="other">Other</Select.Item>
                   </Select.Content>
                 </Select.Root>
@@ -282,26 +289,33 @@ export default function Pos() {
             </div>
 
             {/* Drawer close button */}
-            <button
-              onClick={() => setIsCartOpen(false)}
-              style={{
-                position: "absolute",
-                top: 12,
-                right: 16,
-                background: "var(--gray-3)",
-                border: "none",
-                borderRadius: 999,
-                width: 32,
-                height: 32,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                color: "var(--gray-11)",
-              }}
-            >
-              <X size={16} />
-            </button>
+           
+Button fix · TSX
+Copy
+
+// Fix for the accessibility error - add aria-label to the button
+
+<button
+  aria-label="Close cart drawer"
+  onClick={() => setIsCartOpen(false)}
+  style={{
+    position: "absolute",
+    top: 12,
+    right: 16,
+    background: "var(--gray-3)",
+    border: "none",
+    borderRadius: 999,
+    width: 32,
+    height: 32,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    color: "var(--gray-11)",
+  }}
+>
+  <X size={16} />
+</button>
 
             {/* Cart content */}
             <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>

@@ -57,7 +57,10 @@ const productSchema = new mongoose.Schema({
     imageUrl: {
         type: String,
     },
-
+    isVeg: {
+        type: Boolean,
+        default: true,
+    },
     isActive: {
         type: Boolean,
         default: true,

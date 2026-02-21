@@ -13,7 +13,7 @@ import { Pencil, Trash2, Plus } from "lucide-react";
 
 /* ---------------- TYPES ---------------- */
 
-type Category = "snacks" | "desserts" | "beverages" | "meals" | "other";
+type Category = "snacks" | "desserts" | "beverages" | "meals" | "drinks" | "starters" | "breads" | "pizza" | "sandwich" | "other";
 
 export type ProductCardProps = {
   name: string;
@@ -47,6 +47,11 @@ const categoryColorMap: Record<
   beverages: "blue",
   meals: "green",
   other: "gray",
+  drinks: "blue",
+  starters: "amber",
+  breads: "amber",
+  pizza: "pink",
+  sandwich: "gray",
 };
 
 /* -------- HELPERS -------- */

@@ -1,0 +1,168 @@
+/* ============================================================
+   KARAKCHAA — HEADER + FOOTER REDESIGN ONLY
+   Import AFTER your existing PublicMenu.css
+   Only touches: stickyTop header + bottomCartBar footer
+   Everything else unchanged.
+   ============================================================ */
+
+
+/* ============================================================
+   HEADER — glassmorphism dark gradient
+   ============================================================ */
+
+.stickyTop {
+    background: linear-gradient(135deg, #403c7d 0%, #634699 50%, #544eaa 100%) !important;
+    border-bottom: 1px solid rgba(167, 139, 250, 0.2) !important;
+    box-shadow: 0 4px 24px rgba(109, 40, 217, 0.25) !important;
+    padding: 3px 14px !important;
+}
+
+
+/* animated shimmer line at bottom of header */
+
+.stickyTop::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, #7c3aed 30%, #a78bfa 50%, #7c3aed 70%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmerLine 3s linear infinite;
+}
+
+@keyframes shimmerLine {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+
+/* brand name — white on dark */
+
+.brandName {
+    color: #fff !important;
+    font-style: italic !important;
+    font-size: 20px !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.02em;
+    text-shadow: 0 0 20px rgba(167, 139, 250, 0.5);
+}
+
+
+/* brand sub — soft purple */
+
+.brandSub {
+    color: #e8e5ef !important;
+    /* font-style: italic !important; */
+    font-size: 10px !important;
+    letter-spacing: 0.15em !important;
+    text-transform: uppercase;
+    font-weight: 500 !important;
+}
+
+
+/* search on dark header */
+
+.searchWrap {
+    background: rgba(219, 209, 209, 0.08) !important;
+    border: 1px solid rgba(167, 139, 250, 0.25) !important;
+    border-radius: 14px !important;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 11px !important;
+    padding: 8px 10px !important;
+}
+
+.searchWrap:focus-within {
+    border-color: #a78bfa !important;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2) !important;
+}
+
+.searchWrap svg {
+    color: #a78bfa !important;
+}
+
+.searchInput {
+    background: transparent !important;
+    color: #fff !important;
+    font-size: 14px !important;
+}
+
+.searchInput::placeholder {
+    color: rgba(238, 236, 242, 0.772) !important;
+}
+
+
+/* tabs on dark header */
+
+.tabBtn {
+    background: rgba(213, 201, 201, 0.08) !important;
+    color: #d5d0e7 !important;
+    border: 1px solid rgba(167, 139, 250, 0.15) !important;
+    transition: all 0.18s ease !important;
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+}
+
+.tabBtnActive {
+    background: linear-gradient(135deg, #6a29db, #5b21b6) !important;
+    border-color: transparent !important;
+    color: #fff !important;
+    box-shadow: 0 4px 14px rgba(109, 40, 217, 0.45) !important;
+}
+
+.tabIcon {
+    color: #a791e9 !important;
+}
+
+.tabBtnActive .tabIcon {
+    color: #fff !important;
+}
+
+
+/* cart icon button on dark header */
+
+.cartIconBtn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(167, 139, 250, 0.3) !important;
+    color: #fff !important;
+    transition: all 0.18s ease !important;
+}
+
+.cartIconBtn:hover {
+    background: rgba(124, 58, 237, 0.35) !important;
+    border-color: #a78bfa !important;
+    transform: scale(1.06);
+}
+
+
+/* veg toggle on dark header */
+
+.vegToggle {
+    background: rgba(240, 234, 234, 0.08) !important;
+    border: 1px solid rgba(167, 139, 250, 0.25) !important;
+}
+
+.vegLabel {
+    color: #e1deec !important;
+}
+
+
+/* ============================================================
+   FOOTER HINT — stylish
+   ============================================================ */
+
+.footerHint {
+    background: linear-gradient(135deg, rgba(109, 40, 217, 0.06), rgba(124, 58, 237, 0.04));
+    border: 1px solid rgba(109, 40, 217, 0.08);
+    border-radius: 12px;
+    padding: 12px 20px !important;
+    color: #7c3aed !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em;
+    font-size: 12px !important;
+}
