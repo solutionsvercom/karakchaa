@@ -1,6 +1,4 @@
 import React from 'react';
-import { Table as RadixTable } from '@radix-ui/themes';
-
 
 interface Column<T = any> {
   key: string;
@@ -51,14 +49,10 @@ function Table<T extends Record<string, any> = Record<string, any>>({
         data.indexOf(row)
       );
     }
-
     if (column.accessor) {
-      if (typeof column.accessor === 'function') {
-        return column.accessor(row);
-      }
+      if (typeof column.accessor === 'function') return column.accessor(row);
       return row[column.accessor];
     }
-
     return null;
   };
 
@@ -72,92 +66,115 @@ function Table<T extends Record<string, any> = Record<string, any>>({
 
   if (loading) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <p>Loading...</p>
+      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--gray-10)' }}>
+        Loading...
       </div>
     );
   }
 
   if (!data || data.length === 0) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <p>{emptyMessage}</p>
+      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--gray-10)' }}>
+        {emptyMessage}
       </div>
     );
   }
 
   return (
-    <div style={{ overflowX: 'auto', width: '100%' }}>
-      <RadixTable.Root className={className}>
-        <RadixTable.Header>
-          <RadixTable.Row>
+    <div
+      className={className}
+      style={{
+        width: '100%',
+        overflowX: 'auto',
+        WebkitOverflowScrolling: 'touch' as any,
+        borderRadius: 12,
+        border: '1px solid var(--gray-6)',
+        background: 'var(--gray-1)',
+      }}
+    >
+      <table
+        style={{
+          width: '100%',
+          minWidth: 480,
+          borderCollapse: 'collapse',
+          fontSize: 14,
+        }}
+      >
+        {/* ── HEADER ── */}
+        <thead>
+          <tr style={{ borderBottom: '1px solid var(--gray-6)', background: 'var(--gray-2)' }}>
             {columns.map((column) => (
-              <RadixTable.ColumnHeaderCell
+              <th
                 key={column.key}
-                style={{
-                  width: column.width,
-                  textAlign: column.align || 'left',
-                  cursor: column.sortable ? 'pointer' : 'default',
-                }}
                 onClick={() => column.sortable && handleSort(column.key)}
+                style={{
+                  padding: '12px 16px',
+                  textAlign: column.align || 'left',
+                  fontWeight: 600,
+                  fontSize: 13,
+                  color: 'var(--gray-11)',
+                  whiteSpace: 'nowrap',
+                  cursor: column.sortable ? 'pointer' : 'default',
+                  width: column.width,
+                  userSelect: 'none',
+                }}
               >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                  }}
-                >
-                  {column.header}
-                  {column.sortable && sortColumn === column.key && (
-                    <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                  )}
-                </div>
-              </RadixTable.ColumnHeaderCell>
+                {column.header}
+                {column.sortable && sortColumn === column.key && (
+                  <span style={{ marginLeft: 4 }}>
+                    {sortDirection === 'asc' ? '↑' : '↓'}
+                  </span>
+                )}
+              </th>
             ))}
-          </RadixTable.Row>
-        </RadixTable.Header>
-        <RadixTable.Body>
+          </tr>
+        </thead>
+
+        {/* ── BODY ── */}
+        <tbody>
           {data.map((row, rowIndex) => (
-            <RadixTable.Row
+            <tr
               key={rowIndex}
               onClick={() => onRowClick?.(row, rowIndex)}
               style={{
-                cursor: onRowClick ? 'pointer' : 'default',
+                borderBottom: '1px solid var(--gray-4)',
                 backgroundColor:
-                  striped && rowIndex % 2 === 0
-                    ? 'rgba(0, 0, 0, 0.02)'
+                  striped && rowIndex % 2 !== 0
+                    ? 'var(--gray-2)'
                     : 'transparent',
+                cursor: onRowClick ? 'pointer' : 'default',
+                transition: 'background 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                if (hoverable) {
-                  e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
-                }
+                if (hoverable)
+                  e.currentTarget.style.backgroundColor = 'var(--accent-a3)';
               }}
               onMouseLeave={(e) => {
-                if (hoverable) {
+                if (hoverable)
                   e.currentTarget.style.backgroundColor =
-                    striped && rowIndex % 2 === 0
-                      ? 'rgba(0, 0, 0, 0.02)'
-                      : 'transparent';
-                }
+                    striped && rowIndex % 2 !== 0 ? 'var(--gray-2)' : 'transparent';
               }}
             >
               {columns.map((column) => (
-                <RadixTable.Cell
+                <td
                   key={column.key}
-                  style={{ 
+                  style={{
+                    padding: '12px 16px',
                     textAlign: column.align || 'left',
+                    color: 'var(--gray-12)',
                     width: column.width,
+                    maxWidth: column.width || 200,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
                   }}
                 >
                   {getCellValue(row, column)}
-                </RadixTable.Cell>
+                </td>
               ))}
-            </RadixTable.Row>
+            </tr>
           ))}
-        </RadixTable.Body>
-      </RadixTable.Root>
+        </tbody>
+      </table>
     </div>
   );
 }
