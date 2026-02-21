@@ -27,7 +27,7 @@ export type ProductCardProps = {
   variant?: "default" | "pos";
   onAdd?: () => void;
 
-  /** ⭐ NEW TOGGLE SUPPORT */
+  /** TOGGLE SUPPORT */
   isActive?: boolean;
   onToggleActive?: (value: boolean) => void;
 
@@ -65,7 +65,7 @@ export default function ProductCard({
   image,
   variant = "default",
   onAdd,
-  isActive = true, // ⭐ DEFAULT TRUE
+  isActive = true,
   onToggleActive,
   onEdit,
   onDelete,
@@ -85,7 +85,8 @@ export default function ProductCard({
         borderRadius: 12,
         overflow: "hidden",
         position: "relative",
-        width: 260,
+        // ✅ FIXED: removed hardcoded width: 260, now fills grid cell
+        width: "100%",
         background: "white",
         boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
         transition: "all 0.25s ease",
@@ -117,7 +118,6 @@ export default function ProductCard({
               </DropdownMenu.Item>
             )}
 
-            {/* ⭐ TOGGLE ACTIVE */}
             {onToggleActive && (
               <DropdownMenu.Item
                 onSelect={() => onToggleActive(!isActive)}
@@ -138,11 +138,13 @@ export default function ProductCard({
       {/* IMAGE */}
       <Box
         style={{
-          height: 170,
+          // ✅ FIXED: shorter image on mobile via clamp
+          height: "clamp(110px, 20vw, 170px)",
           background: "linear-gradient(180deg, #f8fafc, #f1f5f9)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          overflow: "hidden",
         }}
       >
         {image ? (
@@ -157,8 +159,17 @@ export default function ProductCard({
       </Box>
 
       {/* CONTENT */}
-      <Flex direction="column" gap="3" p="3">
-        <Text weight="medium" size="3">
+      <Flex direction="column" gap="2" p="3">
+        {/* ✅ FIXED: truncate long names so they don't break layout */}
+        <Text
+          weight="medium"
+          size="3"
+          style={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
           {name}
         </Text>
 
@@ -167,12 +178,13 @@ export default function ProductCard({
             ₹{price}
           </Text>
 
-          {/* POS ADD BUTTON */}
+          {/* POS ADD BUTTON — always visible (not hover-gated) */}
           {isPOS && (
             <IconButton
               radius="full"
               size="3"
               onClick={() => onAdd?.()}
+              style={{ flexShrink: 0 }}
             >
               <Plus size={18} />
             </IconButton>
@@ -191,7 +203,7 @@ export default function ProductCard({
             </Badge>
 
             <Text size="2" color={lowStock ? "red" : "gray"}>
-              {lowStock ? "Low stock" : "Stock"}: {stock}
+              {lowStock ? "Low" : "Stock"}: {stock}
             </Text>
           </Flex>
         )}
