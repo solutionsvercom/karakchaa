@@ -10,6 +10,7 @@ export interface MenuProduct {
   image?: string;
   category?: string;
   isAvailable: boolean;
+  isVeg: boolean; // ✅ NEW
 }
 
 interface DigitalMenuState {
@@ -32,7 +33,6 @@ const BASE_URL = "http://localhost:5000/api/digital-menu";
 
 /* ================= ASYNC THUNKS ================= */
 
-/* FETCH ALL PRODUCTS */
 export const fetchDigitalMenuProducts = createAsyncThunk<
   MenuProduct[],
   void,
@@ -65,7 +65,6 @@ const digitalMenuSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      /* FETCH PRODUCTS */
       .addCase(fetchDigitalMenuProducts.pending, (state) => {
         state.loading = true;
         state.error = null;

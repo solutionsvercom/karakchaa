@@ -38,6 +38,9 @@ app.use("/api/products", require("./src/routes/Product"));
 app.use("/api/sales", require("./src/routes/Sale"));
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/suppliers", supplierRoutes);
+app.use("/api/digital-menu", digitalMenuRoutes);
+app.use("/api/digital-orders", digitalOrderRoutes);
+app.use("/api/orders", orderRoutes);
 
 
 

@@ -2,8 +2,8 @@ const Product = require("../models/Product");
 
 exports.getAllDigitalMenuProducts = async() => {
 
-    const products = await Product.find({})
-        .select("_id name sellingPrice category imageUrl stockQty isActive")
+    const products = await Product.find({ isActive: true })
+        .select("_id name sellingPrice category imageUrl stockQty isActive isVeg")
         .sort({ category: 1, name: 1 });
 
     const formattedProducts = products.map(product => ({
@@ -14,6 +14,7 @@ exports.getAllDigitalMenuProducts = async() => {
         image: product.imageUrl,
         stockQty: product.stockQty,
         isAvailable: product.stockQty > 0,
+        isVeg: product.isVeg !== undefined ? product.isVeg : true, // ✅ FIXED
     }));
 
     return formattedProducts;
@@ -30,23 +31,15 @@ exports.getDigitalMenuProductById = async(productId) => {
     if (!product)
         throw new Error("Product not found");
 
-
     return {
-
         _id: product._id,
-
         name: product.name,
-
         price: product.sellingPrice,
-
         category: product.category,
-
         image: product.imageUrl,
-
         stockQty: product.stockQty,
-
         isAvailable: product.stockQty > 0,
-
+        isVeg: product.isVeg !== undefined ? product.isVeg : true, // ✅ FIXED
     };
 
 };

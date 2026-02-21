@@ -15,7 +15,7 @@ import { toggleProductStatus } from "../../features/ProductsSlice";
 
 /* ---------------- TYPES ---------------- */
 
-type Category = "snacks" | "desserts" | "beverages" | "meals" | "other";
+type Category = "snacks" | "desserts" | "beverages" | "meals" | "drinks" | "starters" | "breads" | "pizza" | "sandwich" | "other";
 
 /* ---------------- COMPONENT ---------------- */
 
@@ -130,6 +130,11 @@ const [deleteId, setDeleteId] = useState<string | null>(null);
             { label: "Desserts", value: "desserts" },
             { label: "Beverages", value: "beverages" },
             { label: "Meals", value: "meals" },
+            {label: " Drinks", value: "drinks" },
+            {label: "Starters", value: "starters" },
+            {label: "Breads", value: "breads" },
+            {label: "Pizza", value: "pizza" },
+            {label: "Sandwich", value: "sandwich" },
             { label: "Other", value: "other" },
           ].map((item) => (
             <DropdownMenu.Item

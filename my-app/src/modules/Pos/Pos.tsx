@@ -16,7 +16,7 @@ import DigitalOrdersBoard from "./DigitalOrdersBoard";
 
 /* ---------------- TYPES ---------------- */
 
-type Category = "snacks" | "desserts" | "beverages" | "meals" | "other";
+type Category = "snacks" | "desserts" | "beverages" | "meals" | "drinks" | "starters" | "breads" | "pizza" | "sandwich" | "other";
 
 /* ---------------- COMPONENT ---------------- */
 
@@ -139,6 +139,11 @@ export default function Pos() {
                   <Select.Item value="snacks">Snacks</Select.Item>
                   <Select.Item value="desserts">Desserts</Select.Item>
                   <Select.Item value="beverages">Beverages</Select.Item>
+                  <Select.Item value="drinks">Drinks</Select.Item>
+                  <Select.Item value="starters">Starters</Select.Item>
+                  <Select.Item value="breads">Breads</Select.Item>
+                  <Select.Item value="pizza">Pizza</Select.Item>
+                  <Select.Item value="sandwich">Sandwich</Select.Item>
                   <Select.Item value="other">Other</Select.Item>
                 </Select.Content>
               </Select.Root>

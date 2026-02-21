@@ -22,7 +22,7 @@ type CategoryTabsProps = {
 
 const ICONS: Record<string, ReactNode> = {
   All: <Sparkles size={20} />,
-  Drinks: <Coffee size={20} />,
+  Drinks: <Wine size={20} />,
   Beverages: <Wine size={20} />,
   Snacks: <Cookie size={20} />,
   Meals: <ChefHat size={20} />,

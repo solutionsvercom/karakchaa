@@ -245,8 +245,9 @@ body {
     height: 52px;
     border-radius: 14px;
     border: 1px solid rgba(0, 0, 0, 0.08);
-    background: linear-gradient(135deg, #7c3aed, #6d28d9);
-    box-shadow: 0 6px 18px rgba(109, 40, 217, 0.35);
+    background: linear-gradient(135deg, #403c7d 0%, #634699 50%, #544eaa 100%) !important;
+    border-bottom: 1px solid rgba(167, 139, 250, 0.2) !important;
+    box-shadow: 0 4px 24px rgba(109, 40, 217, 0.25) !important;
     padding: 0 14px;
     display: flex;
     align-items: center;
@@ -348,7 +349,9 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
-    background: var(--purple);
+    background: linear-gradient(135deg, #403c7d 0%, #634699 50%, #544eaa 100%) !important;
+    border-bottom: 1px solid rgba(167, 139, 250, 0.2) !important;
+    box-shadow: 0 4px 24px rgba(109, 40, 217, 0.25) !important;
     color: #fff;
     border: none;
     border-radius: 12px;
@@ -398,7 +401,9 @@ body {
 /* Plus button */
 
 .qtyBtnPlus {
-    background: #6d28d9;
+    background: linear-gradient(135deg, #403c7d 0%, #634699 50%, #544eaa 100%) !important;
+    border-bottom: 1px solid rgba(167, 139, 250, 0.2) !important;
+    box-shadow: 0 4px 24px rgba(109, 40, 217, 0.25) !important;
     color: #fff;
 }
 
@@ -410,7 +415,9 @@ body {
 }
 
 .qtyBtnPlus:hover {
-    background: #7c3aed;
+    background: linear-gradient(135deg, #403c7d 0%, #634699 50%, #544eaa 100%) !important;
+    border-bottom: 1px solid rgba(167, 139, 250, 0.2) !important;
+    box-shadow: 0 4px 24px rgba(109, 40, 217, 0.25) !important;
 }
 
 
@@ -446,7 +453,9 @@ body {
 }
 
 .qtyPillBtnPrimary {
-    background: #6d28d9;
+    background: linear-gradient(135deg, #403c7d 0%, #634699 50%, #544eaa 100%) !important;
+    border-bottom: 1px solid rgba(167, 139, 250, 0.2) !important;
+    box-shadow: 0 4px 24px rgba(109, 40, 217, 0.25) !important;
     color: #fff;
 }
 
@@ -600,7 +609,7 @@ body {
 /* Active state */
 
 .vegToggle input:checked+.vegSlider {
-    background: linear-gradient(135deg, #6d28d9, #7c3aed);
+    background: linear-gradient(135deg, #28d95d, #117e3e);
 }
 
 .vegToggle input:checked+.vegSlider::after {
@@ -674,7 +683,7 @@ body {
 /* ADD BUTTON */
 
 .addBtn {
-    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    background: linear-gradient(135deg, #403c7d 0%, #634699 50%, #544eaa 100%) !important;
     color: white;
     border: none;
     padding: 8px 14px;
@@ -682,10 +691,6 @@ body {
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-}
-
-.addBtn:hover {
-    transform: scale(0.98);
 }
 
 
@@ -714,7 +719,9 @@ body {
 }
 
 .qtyPlus {
-    background: var(--purple);
+    background: linear-gradient(135deg, #403c7d 0%, #634699 50%, #544eaa 100%) !important;
+    border-bottom: 1px solid rgba(167, 139, 250, 0.2) !important;
+    box-shadow: 0 4px 24px rgba(109, 40, 217, 0.25) !important;
     color: white;
 }
 
@@ -1001,7 +1008,7 @@ body {
     width: 100%;
     padding: 14px;
     border: none;
-    background: #6c3cf0;
+    background: linear-gradient(135deg, #403c7d 0%, #634699 50%, #544eaa 100%) !important;
     color: white;
     border-radius: 12px;
 }

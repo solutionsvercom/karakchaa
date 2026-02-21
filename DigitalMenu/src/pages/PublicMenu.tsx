@@ -32,7 +32,7 @@ CATEGORY ICONS (UNCHANGED)
 =====================================
 */
 const categoryIcons: Record<string, JSX.Element> = {
-  Drinks: <Coffee size={20} />,
+  Drinks: <Wine size={20} />,
   Beverages: <Wine size={20} />,
   Snacks: <Cookie size={20} />,
   Meals: <ChefHat size={20} />,
@@ -100,7 +100,7 @@ const MENU: MenuItemType[] = useMemo(() => {
 
     description: "",
 
-    veg: true,
+    veg: product.isVeg ?? true, // ✅ NOW COMES FROM BACKEND
 
     available: product.isAvailable ?? true,
 
@@ -108,7 +108,9 @@ const MENU: MenuItemType[] = useMemo(() => {
 
 }, [backendProducts]);
 
-
+const searchItems = useMemo(() => {
+  return MENU.map(item => item.name);
+}, [MENU]);
   /*
   =====================================
   EXISTING STATE (UNCHANGED)
@@ -119,6 +121,7 @@ const MENU: MenuItemType[] = useMemo(() => {
   const [activeCat, setActiveCat] = useState("All");
   const [vegOnly, setVegOnly] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
   useEffect(() => {
     if (cartOpen)
@@ -131,6 +134,19 @@ const MENU: MenuItemType[] = useMemo(() => {
     };
   }, [cartOpen]);
 
+useEffect(() => {
+
+  if (searchItems.length === 0) return;
+
+  const interval = setInterval(() => {
+    setPlaceholderIndex(prev =>
+      (prev + 1) % searchItems.length
+    );
+  }, 2000);
+
+  return () => clearInterval(interval);
+
+}, [searchItems]);
 
   const { totalQty, subtotal } = useCart();
 
@@ -274,7 +290,11 @@ const MENU: MenuItemType[] = useMemo(() => {
 
           <input
             className="searchInput"
-            placeholder="Search menu..."
+           placeholder={
+  query
+    ? "Search menu..."
+    : `Search ${searchItems[placeholderIndex] || "menu"}...`
+}
             value={query}
             onChange={(e) =>
               setQuery(e.target.value)
