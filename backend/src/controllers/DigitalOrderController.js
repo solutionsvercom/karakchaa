@@ -78,3 +78,24 @@ exports.getAllDigitalOrders = async(req, res) => {
     }
 
 };
+exports.updateDigitalOrderStatus = async(req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { status } = req.body;
+
+        const order = await DigitalOrderService.updateDigitalOrderStatusService(
+            orderId,
+            status
+        );
+
+        res.json({
+            success: true,
+            order,
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};

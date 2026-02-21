@@ -48,8 +48,14 @@ export const createDigitalOrder = createAsyncThunk<
   { rejectValue: string }
 >("digitalOrder/create", async (data, thunkAPI) => {
   try {
-    const response = await axios.post(`${BASE_URL}/orders`, data);
-    return response.data.order;
+    // Ensure orderType is set to 'online'
+    const payload = {
+      ...data,
+      orderType: "online", // ← Force this to 'online'
+    };
+    
+    const response = await axios.post(`${BASE_URL}/orders`, payload);
+    return response.data.data; // Note: Changed from response.data.order
   } catch (error: any) {
     return thunkAPI.rejectWithValue(
       error.response?.data?.message || "Error creating order"

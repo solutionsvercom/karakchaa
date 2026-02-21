@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { useAppDispatch } from "../store/hooks";
+import { createDigitalOrder } from "../features/DigitalOrderSlice"; 
 import { useCart } from "../context/CartContext";
 import {
   X,
@@ -25,7 +26,7 @@ type OrderType = "dinein" | "takeaway";
 export default function CartDrawer({ open, onClose }: Props) {
   const { items, subtotal, totalQty, inc, dec, remove, clear } = useCart();
   const navigate = useNavigate();
-
+const dispatch = useAppDispatch();
   const list = Object.values(items);
 
   const [orderType, setOrderType] = useState<OrderType>("dinein");
@@ -51,11 +52,31 @@ export default function CartDrawer({ open, onClose }: Props) {
 
   const currencySubtotal = useMemo(() => `₹${subtotal}`, [subtotal]);
 
-  const handlePlaceOrder = () => {
-    if (!list.length) return;
+  const handlePlaceOrder = async () => {
+  if (!list.length) return;
 
-    // generate a simple order number like ORD-890723
-    const orderNumber = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+  try {
+    console.log("🔵 Starting order creation...");
+
+    const orderPayload = {
+      items: list.map(({ item, qty }: any) => ({
+        productId: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: qty,
+      })),
+      customerName: name || "Guest",
+      phone: phone || "",
+      tableNumber: table || "",
+      orderType: "online", // ← Always 'online' for digital menu
+      notes: notes || "", // ← Include notes
+    };
+
+    console.log("📤 Sending payload:", orderPayload);
+
+    const result = await dispatch(createDigitalOrder(orderPayload)).unwrap();
+    
+    console.log("✅ Order created:", result);
 
     const orderItems = list.map(({ item, qty }: any) => ({
       id: item.id,
@@ -64,25 +85,31 @@ export default function CartDrawer({ open, onClose }: Props) {
       qty,
     }));
 
-    // optional: clear cart and close drawer before navigating
     clear();
     onClose();
 
     navigate("/order-status", {
       state: {
-        orderNumber,
+        orderNumber: result._id,
         items: orderItems,
         subtotal,
         tax,
         total,
-        orderType,
+        orderType: "online",
         name,
         phone,
         table,
         notes,
+        backendOrderId: result._id,
       },
     });
-  };
+    
+  } catch (error: any) {
+    console.error("❌ Full error:", error);
+    const errorMessage = error.message || "Failed to place order. Please try again.";
+    alert(`Order failed: ${errorMessage}\n\nCheck console for details.`);
+  }
+};
 
   return (
     <>

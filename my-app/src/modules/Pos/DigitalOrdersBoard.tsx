@@ -6,8 +6,14 @@ import { createSale } from "../../features/SalesSlice";
 
 export default function DigitalOrdersBoard() {
   const dispatch = useDispatch<AppDispatch>();
-  const { orders, loading } = useSelector((state: RootState) => state.orders);
+  const { orders: allOrders, loading } = useSelector((state: RootState) => state.orders);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
+  // Filter to show only digital menu orders (orderType: 'online')
+  const orders = useMemo(
+    () => allOrders.filter((order) => order.orderType === "online"),
+    [allOrders]
+  );
 
   useEffect(() => {
     dispatch(fetchOrders());
@@ -16,6 +22,8 @@ export default function DigitalOrdersBoard() {
     }, 10000);
     return () => clearInterval(interval);
   }, [dispatch]);
+
+  // ... rest of the component stays the same
 
   useEffect(() => {
     if (!orders.length) {
@@ -36,9 +44,9 @@ export default function DigitalOrdersBoard() {
     ["completed", "cancelled"].includes(String(selectedOrder.status).toLowerCase());
 
   const changeStatus = (status: "Ready" | "Cancelled" | "Completed") => {
-    if (!selectedOrderId) return;
-    dispatch(updateOrderStatus({ id: selectedOrderId, status }));
-  };
+  if (!selectedOrderId) return;
+  dispatch(updateOrderStatus({ id: selectedOrderId, status }));
+};
 
   const handleCompleteOrder = async () => {
     if (!selectedOrder) return;

@@ -11,35 +11,34 @@ const orderItemSchema = new mongoose.Schema({
     quantity: Number,
 });
 
-const orderSchema = new mongoose.Schema(
-    {
-        orderNumber: {
-            type: String,
-            required: true,
-            unique: true,
-        },
-
-        items: [orderItemSchema],
-
-        customerName: String,
-        phone: String,
-        tableNumber: String,
-
-        orderType: {
-            type: String,
-            enum: ["dine-in", "takeaway", "delivery", "online"],
-            default: "dine-in",
-        },
-
-        status: {
-            type: String,
-            enum: ["Pending", "Accepted", "Preparing", "Ready", "Completed", "Cancelled"],
-            default: "Pending",
-        },
-
-        totalAmount: Number,
+const orderSchema = new mongoose.Schema({
+    orderNumber: {
+        type: String,
+        required: true,
+        unique: true,
     },
-    { timestamps: true }
-);
+
+    items: [orderItemSchema],
+
+    customerName: String,
+    phone: String,
+    tableNumber: String,
+
+    orderType: {
+        type: String,
+        enum: ["dine-in", "takeaway", "delivery", "online"],
+        default: "dine-in",
+    },
+
+    status: {
+        type: String,
+        enum: ["Pending", "Accepted", "Preparing", "Ready", "Completed", "Cancelled"],
+        default: "Pending",
+    },
+
+    totalAmount: Number,
+
+    notes: String, // ← ADD THIS LINE
+}, { timestamps: true });
 
 module.exports = mongoose.model("Order", orderSchema);

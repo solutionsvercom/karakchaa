@@ -67,3 +67,25 @@ exports.getAllDigitalOrdersService = async() => {
     return orders;
 
 };
+exports.updateDigitalOrderStatusService = async(orderId, newStatus) => {
+    const validStatuses = [
+        "pending",
+        "confirmed",
+        "preparing",
+        "ready",
+        "served",
+        "cancelled",
+    ];
+
+    if (!validStatuses.includes(newStatus)) {
+        throw new Error("Invalid status");
+    }
+
+    const order = await DigitalOrder.findByIdAndUpdate(
+        orderId, { status: newStatus }, { new: true }
+    );
+
+    if (!order) throw new Error("Order not found");
+
+    return order;
+};

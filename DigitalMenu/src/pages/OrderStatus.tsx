@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Clock3, CheckCircle2, Loader2, Home, Lightbulb } from "lucide-react";
+import { useAppDispatch } from "../store/hooks";
+import { fetchOrderStatus } from "../features/DigitalOrderSlice";
 import "../App.css";
 
 type CartItem = {
@@ -16,39 +18,66 @@ type OrderState = {
   subtotal: number;
   tax: number;
   total: number;
+  backendOrderId?: string;
 };
 
 export default function OrderStatusPage() {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as OrderState | null;
 
-  const [stepIndex, setStepIndex] = useState(0); 
+  const [stepIndex, setStepIndex] = useState(0);
 
-  // handle missing state + auto-progress + go to completed page
+  // Map backend status to step index
+const statusToStepIndex = (status: string): number => {
+  const statusMap: { [key: string]: number } = {
+    pending: 0,
+    accepted: 1,
+    preparing: 2,
+    ready: 3,
+    completed: 3,
+    cancelled: 0,
+  };
+  return statusMap[status.toLowerCase()] || 0;
+};
+
+  // Poll backend for real order status
+  useEffect(() => {
+    if (!state?.backendOrderId) return;
+
+    const pollStatus = async () => {
+      try {
+        const result = await dispatch(
+          fetchOrderStatus(state.backendOrderId!)
+        ).unwrap();
+
+        const newStepIndex = statusToStepIndex(result.status);
+        setStepIndex(newStepIndex);
+
+        // Navigate to completed when ready
+        if (result.status === "ready" || result.status === "served") {
+          setTimeout(() => {
+            navigate("/order-completed", { state });
+          }, 2000);
+        }
+      } catch (error) {
+        console.error("Failed to fetch order status:", error);
+      }
+    };
+
+    // Poll every 3 seconds
+    pollStatus(); // Initial fetch
+    const interval = setInterval(pollStatus, 3000);
+
+    return () => clearInterval(interval);
+  }, [state?.backendOrderId, dispatch, navigate, state]);
+
+  // Redirect if no state
   useEffect(() => {
     if (!state) {
       navigate("/");
-      return;
     }
-
-    const totalSteps = 4;      
-    const perStepMs = 2000;    
-
-    let current = 0;
-
-    const timer = setInterval(() => {
-      current += 1;
-
-      if (current < totalSteps) {
-        setStepIndex(current);
-      } else {
-        clearInterval(timer);
-        navigate("/order-completed", { state });
-      }
-    }, perStepMs);
-
-    return () => clearInterval(timer);
   }, [state, navigate]);
 
   if (!state) return null;
@@ -67,10 +96,10 @@ export default function OrderStatusPage() {
           <h2 className="card-title">Order Status</h2>
 
           <div className="status-timeline">
-            <div className={`status-step ${stepIndex === 0 ? "active" : ""}`}>
+            <div className={`status-step ${stepIndex >= 0 ? "active" : ""}`}>
               <div
                 className={`status-icon-wrapper ${
-                  stepIndex === 0 ? "active" : ""
+                  stepIndex === 0 ? "active" : stepIndex > 0 ? "completed" : ""
                 }`}
               >
                 <Clock3 className="status-icon" />
@@ -85,10 +114,10 @@ export default function OrderStatusPage() {
 
             <div className="status-connector" />
 
-            <div className={`status-step ${stepIndex === 1 ? "active" : ""}`}>
+            <div className={`status-step ${stepIndex >= 1 ? "active" : ""}`}>
               <div
                 className={`status-icon-wrapper ${
-                  stepIndex === 1 ? "active" : ""
+                  stepIndex === 1 ? "active" : stepIndex > 1 ? "completed" : ""
                 }`}
               >
                 <CheckCircle2 className="status-icon" />
@@ -106,10 +135,10 @@ export default function OrderStatusPage() {
 
             <div className="status-connector" />
 
-            <div className={`status-step ${stepIndex === 2 ? "active" : ""}`}>
+            <div className={`status-step ${stepIndex >= 2 ? "active" : ""}`}>
               <div
                 className={`status-icon-wrapper ${
-                  stepIndex === 2 ? "active" : ""
+                  stepIndex === 2 ? "active" : stepIndex > 2 ? "completed" : ""
                 }`}
               >
                 <Loader2 className="status-icon" />
@@ -127,7 +156,7 @@ export default function OrderStatusPage() {
 
             <div className="status-connector" />
 
-            <div className={`status-step ${stepIndex === 3 ? "active" : ""}`}>
+            <div className={`status-step ${stepIndex >= 3 ? "active" : ""}`}>
               <div
                 className={`status-icon-wrapper ${
                   stepIndex === 3 ? "active" : ""
