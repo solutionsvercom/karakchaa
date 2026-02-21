@@ -67,17 +67,13 @@ export const CheckoutDialog = ({
     { value: "online", label: "Online Order" },
   ];
 
-  const paymentMethodButtons: {
-    value: PaymentMethod;
-    label: string;
-    icon?: string;
-  }[] = [
-    { value: "cash", label: "Cash", icon: "Cash" },
-    { value: "upi", label: "UPI", icon: "UPI" },
-    { value: "phonepe", label: "PhonePe", icon: "UPI" },
-    { value: "gpay", label: "GPay", icon: "UPI" },
-    { value: "paytm", label: "Paytm", icon: "UPI" },
-    { value: "card", label: "Card", icon: "Card" },
+  const paymentMethodButtons: { value: PaymentMethod; label: string }[] = [
+    { value: "cash", label: "💵 Cash" },
+    { value: "upi", label: "📲 UPI" },
+    { value: "phonepe", label: "📱 PhonePe" },
+    { value: "gpay", label: "🟢 GPay" },
+    { value: "paytm", label: "🔵 Paytm" },
+    { value: "card", label: "💳 Card" },
   ];
 
   return (
@@ -99,18 +95,26 @@ export const CheckoutDialog = ({
             transform: "translate(-50%, -50%)",
             background: "Canvas",
             color: "CanvasText",
-            padding: 24,
-            width: 540,
-            maxHeight: "90vh",
+            padding: "clamp(16px, 4vw, 24px)",
+            width: "min(540px, calc(100vw - 32px))",
+            maxHeight: "90dvh",
             overflowY: "auto",
             zIndex: 1001,
             boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+            borderRadius: 16,
           }}
         >
           <Flex justify="between" align="center" mb="4">
-            <Text size="6" weight="bold">
-              Complete Order
-            </Text>
+            <Dialog.Title asChild>
+              <Text size="6" weight="bold">
+                Complete Order
+              </Text>
+            </Dialog.Title>
+            <Dialog.Description asChild>
+              <span style={{ display: "none" }}>
+                Review order items, choose order type and payment method, then confirm.
+              </span>
+            </Dialog.Description>
             <Dialog.Close asChild>
               <Button variant="ghost" style={{ cursor: "pointer" }}>
                 <X size={20} />
@@ -154,7 +158,7 @@ export const CheckoutDialog = ({
             </Flex>
           </div>
 
-          <Flex gap="3" mb="3">
+          <Flex gap="3" mb="3" wrap="wrap">
             <div style={{ flex: 1 }}>
               <Text size="2" weight="medium" style={{ marginBottom: 4, display: "block" }}>
                 Customer Name (Optional)
@@ -181,7 +185,10 @@ export const CheckoutDialog = ({
               </Text>
               <input
                 type="tel"
-                placeholder="Enter phone"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={10}
+                placeholder="Enter 10-digit phone"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 style={{
@@ -206,13 +213,15 @@ export const CheckoutDialog = ({
                   key={btn.value}
                   onClick={() => setOrderType(btn.value)}
                   style={{
-                    flex: "1 1 auto",
-                    padding: "10px 16px",
+                    flex: "1 1 calc(50% - 4px)",
+                    minWidth: 80,
+                    padding: "10px 8px",
                     border: "none",
                     borderRadius: 8,
                     background: orderType === btn.value ? "var(--green-9)" : "var(--gray-a3)",
+                    color: orderType === btn.value ? "white" : "inherit",
                     fontWeight: 500,
-                    fontSize: 14,
+                    fontSize: 13,
                     cursor: "pointer",
                   }}
                 >
@@ -229,7 +238,7 @@ export const CheckoutDialog = ({
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
+                gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))",
                 gap: 8,
               }}
             >
@@ -242,6 +251,7 @@ export const CheckoutDialog = ({
                     border: "none",
                     borderRadius: 8,
                     background: paymentMethod === btn.value ? "var(--green-9)" : "var(--gray-a3)",
+                    color: paymentMethod === btn.value ? "white" : "inherit",
                     fontWeight: 500,
                     fontSize: 13,
                     cursor: "pointer",
@@ -251,7 +261,6 @@ export const CheckoutDialog = ({
                     gap: 4,
                   }}
                 >
-                  {btn.icon && <span>{btn.icon}</span>}
                   {btn.label}
                 </button>
               ))}
