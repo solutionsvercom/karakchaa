@@ -1,4 +1,8 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import PublicMenu from "./pages/PublicMenu";
+import OrderStatusPage from "./pages/OrderStatus";
+import OrderCompletedPage from "./pages/OrderCompleted"; 
+
 import { CartProvider } from "./context/CartContext";
 import "./App.css";
 import './PublicMenu.enhance.css';
@@ -6,10 +10,15 @@ import './PublicMenu.enhance.css';
 export default function App() {
   return (
     <CartProvider>
-  <div className="appViewport">
-    <PublicMenu />
-  </div>
-</CartProvider>
-
+      <BrowserRouter>
+        <div className="appViewport">
+          <Routes>
+            <Route path="/" element={<PublicMenu />} />
+            <Route path="/order-status" element={<OrderStatusPage />} />
+            <Route path="/order-completed" element={<OrderCompletedPage />} />
+          </Routes>
+        </div>
+      </BrowserRouter>
+    </CartProvider>
   );
 }
