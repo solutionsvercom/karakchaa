@@ -19,6 +19,7 @@ const stockRoutes = require('./src/routes/StockmanagementRoutes');
 const employeeRoutes = require('./src/routes/EmployeesRoutes');
 const expenseRoutes = require("./src/routes/ExpenseRoutes.js"); 
 const supplierRoutes = require("./src/routes/SupplierRoutes.js");
+const orderRoutes = require("./src/routes/OrderRoutes");
 
 // const productRoutes = require('./src/routes/ProductRoutes');
 // const salesRoutes = require('./src/routes/SalesRoutes');
@@ -36,7 +37,7 @@ app.use("/api/products", require("./src/routes/Product"));
 app.use("/api/sales", require("./src/routes/Sale"));
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/suppliers", supplierRoutes);
-
+app.use("/api/orders", orderRoutes);
 
 
 

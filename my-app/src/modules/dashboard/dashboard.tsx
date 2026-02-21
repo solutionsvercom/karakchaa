@@ -2,41 +2,78 @@ import React, { useEffect } from "react";
 import { Flex } from "@radix-ui/themes";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../store/Store";
+
 import { fetchStockItems, fetchStockStats } from "../../features/StockmanagementSlice";
+import { fetchSales, Sale } from "../../features/SalesSlice";
+
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
-import { 
-  RevenueTrendChart, 
+import {
+  RevenueTrendChart,
   TopProductsChart,
   buildLast7DaysTrend,
   buildTopProducts,
-  filterLastNDays 
+  filterLastNDays,
 } from "../../components/dynamicComponents/Charts";
-import { mockSalesData, calculateTotals } from "../Sales/Sales";
+
 import { LowStockAlert } from "../../components/dynamicComponents/Charts/LowStockAlert";
 import { RecentSales } from "../../components/dynamicComponents/Charts/RecentSales";
+
+/* ================= HELPERS ================= */
+
+const calculateTotals = (data: any[]) => {
+  const totalRevenue = data.reduce((sum, sale) => sum + sale.amount, 0);
+  const totalOrders = data.length;
+  const averageOrder =
+    totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+
+  return { totalRevenue, totalOrders, averageOrder };
+};
+
+/* ================= COMPONENT ================= */
 
 export default function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
 
-  // Get data from Redux
   const { customers } = useSelector((state: RootState) => state.customer);
   const { items: stockItems, stats: stockStats } = useSelector(
     (state: RootState) => state.stock
   );
 
-  // Fetch stock data on mount
+  const { sales } = useSelector((state: RootState) => state.sales);
+
+  /* ================= FETCH DATA ================= */
+
   useEffect(() => {
     dispatch(fetchStockItems());
     dispatch(fetchStockStats());
+    dispatch(fetchSales()); // ⭐ NEW REAL SALES DATA
   }, [dispatch]);
 
-  // Sales calculations (still using mock data until you have SalesSlice)
-  const last7DaysData = filterLastNDays(mockSalesData, 7);
-  const revenueTrendData = buildLast7DaysTrend(mockSalesData);
+  /* ================= MAP SALES FOR CHARTS ================= */
+
+  const dashboardSales = sales.map((s: Sale, index: number) => ({
+    id: index,
+    invoice: s.invoiceNumber,
+    customer: s.product?.name || "Walk-in",
+    items: s.product?.name || "-",
+    type: s.paymentMethod,
+    amount: s.totalAmount,
+    payment: s.paymentStatus,
+    dateTime: s.createdAt,
+  }));
+
+  /* ================= CALCULATIONS ================= */
+
+  const last7DaysData = filterLastNDays(dashboardSales, 7);
+  const revenueTrendData = buildLast7DaysTrend(dashboardSales);
   const topProductsData = buildTopProducts(last7DaysData, 3);
+
   const weeklySummary = calculateTotals(last7DaysData);
-  const todayData = filterLastNDays(mockSalesData, 0);
+
+  const todayData = filterLastNDays(dashboardSales, 0);
   const todaySummary = calculateTotals(todayData);
+
+  /* ================= UI ================= */
 
   return (
     <Flex direction="column" gap="5" width="100%">
@@ -49,6 +86,7 @@ export default function Dashboard() {
           softColor="#E5F9EE"
           icon="₹"
         />
+
         <SummaryCard
           title="Weekly Revenue"
           value={`₹${weeklySummary.totalRevenue.toLocaleString()}`}
@@ -56,6 +94,7 @@ export default function Dashboard() {
           softColor="#F0E9FF"
           icon="📊"
         />
+
         <SummaryCard
           title="Total Products"
           value={String(stockStats?.totalProducts || 0)}
@@ -63,6 +102,7 @@ export default function Dashboard() {
           softColor="#FFF3E0"
           icon="📦"
         />
+
         <SummaryCard
           title="Total Customers"
           value={String(customers.length)}
@@ -74,7 +114,7 @@ export default function Dashboard() {
 
       {/* ===== CHARTS ROW 1 ===== */}
       <Flex gap="4" width="100%">
-        <RevenueTrendChart 
+        <RevenueTrendChart
           data={revenueTrendData}
           title="Sales Trend (Last 7 Days)"
           height={300}
@@ -84,17 +124,14 @@ export default function Dashboard() {
 
       {/* ===== CHARTS ROW 2 ===== */}
       <Flex gap="4" width="100%">
-        <TopProductsChart 
+        <TopProductsChart
           data={topProductsData}
           title="Top Selling Products"
           height={300}
           maxProducts={3}
           barSize={50}
         />
-        <RecentSales 
-          sales={mockSalesData}
-          limit={5}
-        />
+        <RecentSales sales={dashboardSales} limit={5} />
       </Flex>
     </Flex>
   );

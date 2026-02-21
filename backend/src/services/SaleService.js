@@ -17,7 +17,6 @@ async function createSale(data) {
     const {
         product,
         quantity,
-        sellingPrice,
         customer,
         paymentMethod,
         paymentStatus,
@@ -39,17 +38,20 @@ async function createSale(data) {
         throw err;
     }
 
-    // 3️⃣ Deduct stock
+    // ⭐ 3️⃣ TAKE SELLING PRICE FROM PRODUCT (NOT FRONTEND)
+    const sellingPrice = productDoc.sellingPrice;
+
+    // 4️⃣ Deduct stock
     productDoc.stockQty -= quantity;
     await productDoc.save();
 
-    // 4️⃣ Calculate total
+    // 5️⃣ Calculate total
     const totalAmount = quantity * sellingPrice;
 
-    // 5️⃣ Generate invoice
+    // 6️⃣ Generate invoice
     const invoiceNumber = await generateInvoiceNumber();
 
-    // 6️⃣ Create sale
+    // 7️⃣ Create sale
     const sale = await Sale.create({
         invoiceNumber,
         product,
@@ -64,6 +66,7 @@ async function createSale(data) {
 
     return sale;
 }
+
 
 /**
  * Get all sales with filters
