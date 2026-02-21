@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { useCart } from "../context/CartContext";
 import {
@@ -24,6 +24,7 @@ type OrderType = "dinein" | "takeaway";
 
 export default function CartDrawer({ open, onClose }: Props) {
   const { items, subtotal, totalQty, inc, dec, remove, clear } = useCart();
+  const navigate = useNavigate();
 
   const list = Object.values(items);
 
@@ -32,18 +33,56 @@ export default function CartDrawer({ open, onClose }: Props) {
   const [phone, setPhone] = useState("");
   const [table, setTable] = useState("");
   const [notes, setNotes] = useState("");
+
   useEffect(() => {
-  if (open) {
-    document.body.classList.add("cart-open");
-  } else {
-    document.body.classList.remove("cart-open");
-  }
+    if (open) {
+      document.body.classList.add("cart-open");
+    } else {
+      document.body.classList.remove("cart-open");
+    }
 
-  return () => document.body.classList.remove("cart-open");
-}, [open]);
+    return () => document.body.classList.remove("cart-open");
+  }, [open]);
 
+  const taxRate = 0.05;
+
+  const tax = useMemo(() => Math.round(subtotal * taxRate), [subtotal]);
+  const total = useMemo(() => Math.round(subtotal + tax), [subtotal, tax]);
 
   const currencySubtotal = useMemo(() => `₹${subtotal}`, [subtotal]);
+
+  const handlePlaceOrder = () => {
+    if (!list.length) return;
+
+    // generate a simple order number like ORD-890723
+    const orderNumber = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    const orderItems = list.map(({ item, qty }: any) => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      qty,
+    }));
+
+    // optional: clear cart and close drawer before navigating
+    clear();
+    onClose();
+
+    navigate("/order-status", {
+      state: {
+        orderNumber,
+        items: orderItems,
+        subtotal,
+        tax,
+        total,
+        orderType,
+        name,
+        phone,
+        table,
+        notes,
+      },
+    });
+  };
 
   return (
     <>
@@ -72,7 +111,6 @@ export default function CartDrawer({ open, onClose }: Props) {
 
         {/* BODY */}
         <div className="cartBodyPro">
-
           {/* ITEMS */}
           <div className="cartSection">
             {list.length === 0 ? (
@@ -82,10 +120,8 @@ export default function CartDrawer({ open, onClose }: Props) {
               </div>
             ) : (
               <div className="orderList">
-
-                {list.map(({ item, qty }) => (
+                {list.map(({ item, qty }: any) => (
                   <div className="orderRow" key={item.id}>
-
                     {/* IMAGE */}
                     <div className="orderThumb">
                       {item.image ? (
@@ -102,46 +138,38 @@ export default function CartDrawer({ open, onClose }: Props) {
                     </div>
 
                     {/* QTY */}
-                   <div className="orderRight">
+                    <div className="orderRight">
+                      <div className="qtyPillCart">
+                        <button
+                          className="qtyPillBtn"
+                          onClick={() => dec(item.id)}
+                          title="Decrease quantity"
+                        >
+                          <Minus size={16} />
+                        </button>
 
-  <div className="qtyPillCart">
+                        <div className="qtyPillValue">{qty}</div>
 
-    <button
-      className="qtyPillBtn"
-      onClick={() => dec(item.id)}
-      title="Decrease quantity"
-    >
-      <Minus size={16} />
-    </button>
+                        <button
+                          className="qtyPillBtn qtyPillBtnPrimary"
+                          onClick={() => inc(item.id)}
+                          title="Increase quantity"
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
 
-    <div className="qtyPillValue">
-      {qty}
-    </div>
-
-    <button
-      className="qtyPillBtn qtyPillBtnPrimary"
-      onClick={() => inc(item.id)}
-      title="Increase quantity"
-    >
-      <Plus size={16} />
-    </button>
-
-  </div>
-
-  {/* MOVE TRASH AFTER + */}
-  <button
-    className="trashBtn"
-    onClick={() => remove(item.id)}
-    title="Remove item"
-  >
-    <Trash2 size={16} />
-  </button>
-
-</div>
-
+                      {/* TRASH BUTTON */}
+                      <button
+                        className="trashBtn"
+                        onClick={() => remove(item.id)}
+                        title="Remove item"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 ))}
-
               </div>
             )}
           </div>
@@ -151,7 +179,6 @@ export default function CartDrawer({ open, onClose }: Props) {
             <div className="cartSectionTitle">Order Type</div>
 
             <div className="orderTypeGrid">
-
               <button
                 className={`orderTypeCard ${
                   orderType === "dinein" ? "orderTypeCardActive" : ""
@@ -171,7 +198,6 @@ export default function CartDrawer({ open, onClose }: Props) {
                 <Package size={22} />
                 <div>Takeaway</div>
               </button>
-
             </div>
           </div>
 
@@ -180,7 +206,6 @@ export default function CartDrawer({ open, onClose }: Props) {
             <div className="cartSectionTitle">Your Details</div>
 
             <div className="formStack">
-
               <div className="inputWrap">
                 <User className="inputIcon" size={18} />
                 <input
@@ -210,7 +235,6 @@ export default function CartDrawer({ open, onClose }: Props) {
                   onChange={(e) => setTable(e.target.value)}
                 />
               </div>
-
             </div>
           </div>
 
@@ -228,59 +252,48 @@ export default function CartDrawer({ open, onClose }: Props) {
 
           {/* CLEAR */}
           {list.length > 0 && (
- <div className="cartSection clearCartWrap">
-  <button className="secondaryBtnPro clearCartBtn" onClick={clear}>
-    <Trash2 size={16} />
-    Clear Cart
-  </button>
-</div>
-
-
+            <div className="cartSection clearCartWrap">
+              <button className="secondaryBtnPro clearCartBtn" onClick={clear}>
+                <Trash2 size={16} />
+                Clear Cart
+              </button>
+            </div>
           )}
-
         </div>
-{/* Footer */}
-<div className="cartFooterPro">
 
-  {/* Order Summary Card */}
-  <div className="orderSummaryCard">
+        {/* FOOTER */}
+        <div className="cartFooterPro">
+          {/* Order Summary Card */}
+          <div className="orderSummaryCard">
+            <div className="summaryTitle">Order Summary</div>
 
-    <div className="summaryTitle">
-      Order Summary
-    </div>
+            <div className="summaryRow">
+              <span>Subtotal</span>
+              <span>{currencySubtotal}</span>
+            </div>
 
-    <div className="summaryRow">
-      <span>Subtotal</span>
-      <span>₹{subtotal}</span>
-    </div>
+            <div className="summaryRow">
+              <span>GST (5%)</span>
+              <span>+ ₹{tax}</span>
+            </div>
 
-    <div className="summaryRow">
-      <span>GST (5%)</span>
-      <span>+ ₹{Math.round(subtotal * 0.05)}</span>
-    </div>
+            <div className="summaryDivider"></div>
 
-    <div className="summaryDivider"></div>
+            <div className="summaryRow totalRow">
+              <span>Total</span>
+              <span>₹{total}</span>
+            </div>
+          </div>
 
-    <div className="summaryRow totalRow">
-      <span>Total</span>
-      <span>
-        ₹{Math.round(subtotal + subtotal * 0.05)}
-      </span>
-    </div>
-
-  </div>
-
-  {/* Checkout Button */}
-  <button
-    className="checkoutBtnPro"
-    disabled={list.length === 0}
-  >
-    Place Order — ₹{Math.round(subtotal + subtotal * 0.05)}
-  </button>
-
-</div>
-
-
+          {/* Checkout Button */}
+          <button
+            className="checkoutBtnPro"
+            disabled={list.length === 0}
+            onClick={handlePlaceOrder}
+          >
+            Place Order — ₹{total}
+          </button>
+        </div>
       </aside>
     </>
   );
