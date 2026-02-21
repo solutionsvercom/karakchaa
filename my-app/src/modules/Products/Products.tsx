@@ -63,7 +63,8 @@ export default function ProductsModule() {
 
     return matchesSearch && matchesCategory;
   });
-const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   return (
     <Flex direction="column" gap="4">
@@ -81,14 +82,17 @@ const [deleteId, setDeleteId] = useState<string | null>(null);
           + Add Product
         </Button>
 
-        {/* ================= DIALOG ================= */}
+        {/* ================= ADD / EDIT DIALOG ================= */}
         <Dialog.Root
           open={isDialogOpen}
           onOpenChange={(open) => {
             if (!open) navigate("/dashboard/products");
           }}
         >
-          <Dialog.Content maxWidth="380px">
+          <Dialog.Content maxWidth="380px" aria-describedby={undefined}>
+            <Dialog.Title style={{ display: "none" }}>
+              {isAddMode ? "Add Product" : "Edit Product"}
+            </Dialog.Title>
             {isDialogOpen && (
               <AddProducts
                 mode={isAddMode ? "create" : "edit"}
@@ -99,50 +103,49 @@ const [deleteId, setDeleteId] = useState<string | null>(null);
         </Dialog.Root>
       </Flex>
 
-      {/* ================= SEARCH ================= */}
       {/* ================= SEARCH + FILTER ================= */}
-<Flex justify="between" align="center" gap="3">
+      <Flex justify="between" align="center" gap="3">
   
-  {/* SEARCH BAR */}
-  <Flex style={{ flex: 1 }}>
-    <Searchbar
-      searchValue={search}
-      onSearchChange={setSearch}
-      placeholder="Search products..."
-    />
-  </Flex>
+        {/* SEARCH BAR */}
+        <Flex style={{ flex: 1 }}>
+          <Searchbar
+            searchValue={search}
+            onSearchChange={setSearch}
+            placeholder="Search products..."
+          />
+        </Flex>
 
-      {/* ⭐ CATEGORY DROPDOWN (LIKE EXPENSE MODULE) */}
-      <DropdownMenu.Root>
-        <DropdownMenu.Trigger>
-          <Button variant="soft">
-            {category === "all"
-              ? "All Categories"
-              : category.charAt(0).toUpperCase() + category.slice(1)}
-            <ChevronDown size={16} />
-          </Button>
-        </DropdownMenu.Trigger>
+        {/* CATEGORY DROPDOWN */}
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            <Button variant="soft">
+              {category === "all"
+                ? "All Categories"
+                : category.charAt(0).toUpperCase() + category.slice(1)}
+              <ChevronDown size={16} />
+            </Button>
+          </DropdownMenu.Trigger>
 
-        <DropdownMenu.Content>
-          {[
-            { label: "All Categories", value: "all" },
-            { label: "Snacks", value: "snacks" },
-            { label: "Desserts", value: "desserts" },
-            { label: "Beverages", value: "beverages" },
-            { label: "Meals", value: "meals" },
-            { label: "Other", value: "other" },
-          ].map((item) => (
-            <DropdownMenu.Item
-              key={item.value}
-              onSelect={() => setCategory(item.value as any)}
-            >
-              {item.label}
-            </DropdownMenu.Item>
-          ))}
-        </DropdownMenu.Content>
-      </DropdownMenu.Root>
+          <DropdownMenu.Content>
+            {[
+              { label: "All Categories", value: "all" },
+              { label: "Snacks", value: "snacks" },
+              { label: "Desserts", value: "desserts" },
+              { label: "Beverages", value: "beverages" },
+              { label: "Meals", value: "meals" },
+              { label: "Other", value: "other" },
+            ].map((item) => (
+              <DropdownMenu.Item
+                key={item.value}
+                onSelect={() => setCategory(item.value as any)}
+              >
+                {item.label}
+              </DropdownMenu.Item>
+            ))}
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
 
-    </Flex>
+      </Flex>
 
 
       {/* ================= PRODUCT GRID ================= */}
@@ -155,7 +158,7 @@ const [deleteId, setDeleteId] = useState<string | null>(null);
         }}
       >
         {filteredProducts.map((product: any) => (
-         <ProductCard
+          <ProductCard
             key={product._id}
             name={product.name}
             sku={product.sku}
@@ -163,8 +166,8 @@ const [deleteId, setDeleteId] = useState<string | null>(null);
             stock={product.stockQty}
             category={product.category}
             image={product.image}
-            isActive={product.isActive} // ⭐ NEW PROP
-           onToggleActive={async (value:boolean) => {
+            isActive={product.isActive}
+            onToggleActive={async (value: boolean) => {
               await dispatch(
                 toggleProductStatus({
                   id: product._id,
@@ -175,17 +178,17 @@ const [deleteId, setDeleteId] = useState<string | null>(null);
             onEdit={() =>
               navigate(`/dashboard/products/${product._id}/edit-product`)
             }
-           onDelete={() => {
+            onDelete={() => {
               setDeleteId(product._id);
             }}
           />
         ))}
       </Flex>
-      {/* ================= DELETE CONFIRM DIALOG ================= */}
-      <Dialog.Root open={!!deleteId}>
-        <Dialog.Content maxWidth="380px">
 
-          <h3 style={{ marginTop: 0 }}>Delete Product?</h3>
+      {/* ================= DELETE CONFIRM DIALOG ================= */}
+      <Dialog.Root open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
+        <Dialog.Content maxWidth="380px" aria-describedby={undefined}>
+          <Dialog.Title>Delete Product?</Dialog.Title>
 
           <p style={{ fontSize: 14, color: "#6b7280" }}>
             This action cannot be undone. Are you sure you want to delete this product?

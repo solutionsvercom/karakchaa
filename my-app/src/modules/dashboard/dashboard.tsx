@@ -25,7 +25,6 @@ const calculateTotals = (data: any[]) => {
   const totalOrders = data.length;
   const averageOrder =
     totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
-
   return { totalRevenue, totalOrders, averageOrder };
 };
 
@@ -38,7 +37,6 @@ export default function Dashboard() {
   const { items: stockItems, stats: stockStats } = useSelector(
     (state: RootState) => state.stock
   );
-
   const { sales } = useSelector((state: RootState) => state.sales);
 
   /* ================= FETCH DATA ================= */
@@ -46,7 +44,7 @@ export default function Dashboard() {
   useEffect(() => {
     dispatch(fetchStockItems());
     dispatch(fetchStockStats());
-    dispatch(fetchSales()); // ⭐ NEW REAL SALES DATA
+    dispatch(fetchSales());
   }, [dispatch]);
 
   /* ================= MAP SALES FOR CHARTS ================= */
@@ -69,70 +67,142 @@ export default function Dashboard() {
   const topProductsData = buildTopProducts(last7DaysData, 3);
 
   const weeklySummary = calculateTotals(last7DaysData);
-
   const todayData = filterLastNDays(dashboardSales, 0);
   const todaySummary = calculateTotals(todayData);
 
   /* ================= UI ================= */
 
   return (
-    <Flex direction="column" gap="5" width="100%">
-      {/* ===== SUMMARY CARDS ===== */}
-      <div className="kb-summary-row">
-        <SummaryCard
-          title="Today's Revenue"
-          value={`₹${todaySummary.totalRevenue.toLocaleString()}`}
-          accentColor="#00C853"
-          softColor="#E5F9EE"
-          icon="₹"
-        />
+    <>
+      <style>{`
+        /* ===== DASHBOARD RESPONSIVE LAYOUT ===== */
 
-        <SummaryCard
-          title="Weekly Revenue"
-          value={`₹${weeklySummary.totalRevenue.toLocaleString()}`}
-          accentColor="#7C4DFF"
-          softColor="#F0E9FF"
-          icon="📊"
-        />
+        .dash-summary-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
+          margin-bottom: 4px;
+        }
 
-        <SummaryCard
-          title="Total Products"
-          value={String(stockStats?.totalProducts || 0)}
-          accentColor="#FF9100"
-          softColor="#FFF3E0"
-          icon="📦"
-        />
+        .dash-charts-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+          width: 100%;
+        }
 
-        <SummaryCard
-          title="Total Customers"
-          value={String(customers.length)}
-          accentColor="#2962FF"
-          softColor="#E3F2FD"
-          icon="👥"
-        />
-      </div>
+        /* ===== TABLET: 768px – 1023px ===== */
+        @media (max-width: 1023px) {
+          .dash-summary-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+          }
+          .dash-charts-row {
+            grid-template-columns: 1fr;
+            gap: 14px;
+          }
+        }
 
-      {/* ===== CHARTS ROW 1 ===== */}
-      <Flex gap="4" width="100%">
-        <RevenueTrendChart
-          data={revenueTrendData}
-          title="Sales Trend (Last 7 Days)"
-          height={300}
-        />
-        <LowStockAlert products={stockItems} />
+        /* ===== MOBILE: < 768px ===== */
+        @media (max-width: 767px) {
+          .dash-summary-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 0;
+          }
+          .dash-charts-row {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+          /* Reduce padding/font on summary cards */
+          .kb-summary-card {
+            padding: 12px 14px !important;
+            border-radius: 14px !important;
+          }
+          .kb-summary-card-value {
+            font-size: 18px !important;
+            margin-top: 4px !important;
+          }
+          .kb-summary-card-icon-wrapper {
+            width: 44px !important;
+            height: 44px !important;
+          }
+          .kb-summary-card-icon-circle {
+            width: 30px !important;
+            height: 30px !important;
+          }
+        }
+
+        /* ===== SMALL MOBILE: < 400px ===== */
+        @media (max-width: 400px) {
+          .dash-summary-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+          }
+          .kb-summary-card-title {
+            font-size: 11px !important;
+          }
+          .kb-summary-card-value {
+            font-size: 16px !important;
+          }
+        }
+      `}</style>
+
+      <Flex direction="column" gap="4" width="100%">
+        {/* ===== SUMMARY CARDS ===== */}
+        <div className="dash-summary-grid">
+          <SummaryCard
+            title="Today's Revenue"
+            value={`₹${todaySummary.totalRevenue.toLocaleString()}`}
+            accentColor="#00C853"
+            softColor="#E5F9EE"
+            icon="₹"
+          />
+          <SummaryCard
+            title="Weekly Revenue"
+            value={`₹${weeklySummary.totalRevenue.toLocaleString()}`}
+            accentColor="#7C4DFF"
+            softColor="#F0E9FF"
+            icon="📊"
+          />
+          <SummaryCard
+            title="Total Products"
+            value={String(stockStats?.totalProducts || 0)}
+            accentColor="#FF9100"
+            softColor="#FFF3E0"
+            icon="📦"
+          />
+          <SummaryCard
+            title="Total Customers"
+            value={String(customers.length)}
+            accentColor="#2962FF"
+            softColor="#E3F2FD"
+            icon="👥"
+          />
+        </div>
+
+        {/* ===== CHARTS ROW 1 ===== */}
+        <div className="dash-charts-row">
+          <RevenueTrendChart
+            data={revenueTrendData}
+            title="Sales Trend (Last 7 Days)"
+            height={300}
+          />
+          <LowStockAlert products={stockItems} />
+        </div>
+
+        {/* ===== CHARTS ROW 2 ===== */}
+        <div className="dash-charts-row">
+          <TopProductsChart
+            data={topProductsData}
+            title="Top Selling Products"
+            height={300}
+            maxProducts={3}
+            barSize={50}
+          />
+          <RecentSales sales={dashboardSales} limit={5} />
+        </div>
       </Flex>
-
-      {/* ===== CHARTS ROW 2 ===== */}
-      <Flex gap="4" width="100%">
-        <TopProductsChart
-          data={topProductsData}
-          title="Top Selling Products"
-          height={300}
-          maxProducts={3}
-          barSize={50}
-        />
-        <RecentSales sales={dashboardSales} limit={5} />
-      </Flex>
-    </Flex>
+    </>
   );
 }

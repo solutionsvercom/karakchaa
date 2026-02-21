@@ -2,15 +2,24 @@ import { Button, Flex, Text, IconButton, TextField } from "@radix-ui/themes";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCart } from "./CartContext";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ⭐ NEW
+import { useNavigate } from "react-router-dom";
 
-const Cart = () => {
+interface CartProps {
+  /** Called after checkout button tap (e.g. close the mobile drawer) */
+  onCheckout?: () => void;
+}
+
+const Cart = ({ onCheckout }: CartProps) => {
   const { items, total, increment, decrement, removeItem, clearCart } = useCart();
   const [discount, setDiscount] = useState(0);
-
-  const navigate = useNavigate(); // ⭐ NEW
+  const navigate = useNavigate();
 
   const discountedTotal = Math.max(total - discount, 0);
+
+  const handleCheckout = () => {
+    onCheckout?.();
+    navigate("/dashboard/pos/create-sale");
+  };
 
   return (
     <Flex direction="column" style={{ height: "100%" }} p="4" gap="3">
@@ -78,7 +87,6 @@ const Cart = () => {
                   ₹{item.price} each
                 </Text>
               </div>
-
               <IconButton
                 size="1"
                 color="red"
@@ -94,14 +102,11 @@ const Cart = () => {
                 <IconButton size="1" variant="soft" onClick={() => decrement(item.id)}>
                   <Minus size={14} />
                 </IconButton>
-
                 <Text>{item.quantity}</Text>
-
                 <IconButton size="1" variant="soft" onClick={() => increment(item.id)}>
                   <Plus size={14} />
                 </IconButton>
               </Flex>
-
               <Text weight="bold">₹{item.price * item.quantity}</Text>
             </Flex>
           </Flex>
@@ -137,11 +142,7 @@ const Cart = () => {
             </Flex>
           </Flex>
 
-          {/* ⭐ URL-DRIVEN CHECKOUT BUTTON */}
-          <Button
-            size="4"
-            onClick={() => navigate("/dashboard/pos/create-sale")}
-          >
+          <Button size="4" onClick={handleCheckout}>
             Checkout · ₹{discountedTotal}
           </Button>
         </Flex>
