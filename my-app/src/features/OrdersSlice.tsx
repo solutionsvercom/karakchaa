@@ -19,6 +19,7 @@ export interface Order {
   totalAmount: number;
   createdAt: string;
   notes?: string;
+  saleCreated?: boolean;
 }
 
 interface CreateOrderPayload {
