@@ -38,7 +38,14 @@ const orderSchema = new mongoose.Schema({
 
     totalAmount: Number,
 
-    notes: String, // ← ADD THIS LINE
+    notes: String,
+
+    /* ⭐ ATOMIC SALE LOCK (Prevents duplicate invoices) */
+    saleCreated: {
+        type: Boolean,
+        default: false,
+    },
+
 }, { timestamps: true });
 
 module.exports = mongoose.model("Order", orderSchema);
