@@ -59,11 +59,28 @@ async function getOrders() {
 
 /* UPDATE STATUS */
 async function updateOrderStatus(id, status) {
+    const allowedStatuses = [
+        "Pending",
+        "Accepted",
+        "Preparing",
+        "Ready",
+        "Completed",
+        "Cancelled",
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+        throw new Error("Invalid order status");
+    }
+
     const order = await Order.findByIdAndUpdate(
         id,
         { status },
         { new: true }
     ).populate("items.product");
+
+    if (!order) {
+        throw new Error("Order not found");
+    }
 
     /* ================= DIGITAL MENU FLOW ================= */
     if (order.orderType === "online" && status === "Completed") {

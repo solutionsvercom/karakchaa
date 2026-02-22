@@ -1,9 +1,9 @@
-import React, { useMemo, useState, useEffect } from "react";
-import { Flex, Box, Text, Select, Card } from "@radix-ui/themes";
+import React, { useMemo, useState, useEffect, useRef } from "react";
+import { Flex, Box, Select, Card } from "@radix-ui/themes";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CheckoutDialog } from "./CheckoutDialog";
-import { ShoppingCart, X } from "lucide-react";
+import { ShoppingCart, X, Bell } from "lucide-react";
 
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import ProductCard from "../../components/dynamicComponents/ProductCard";
@@ -12,12 +12,11 @@ import { useCart } from "./CartContext";
 
 import { RootState, AppDispatch } from "../../store/Store";
 import { fetchProducts } from "../../features/ProductsSlice";
+import { fetchOrders } from "../../features/OrdersSlice";
 
 import DigitalOrdersBoard from "./DigitalOrdersBoard";
 
-/* ---------------- TYPES ---------------- */
-
-type Category = "snacks" | "desserts" | "beverages" | "meals" | "drinks" | "starters" | "breads" | "pizza" | "sandwich" | "other";
+type TabType = "pos" | "digital";
 
 export default function Pos() {
   const location = useLocation();
@@ -28,15 +27,81 @@ export default function Pos() {
   const { addItem, items, total } = useCart();
 
   const { products } = useSelector((state: RootState) => state.product);
+  const { orders } = useSelector((state: RootState) => state.orders);
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
-  const [activeTab, setActiveTab] = useState<"pos" | "digital">("pos");
+  const [activeTab, setActiveTab] = useState<TabType>("pos");
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [digitalNewCount, setDigitalNewCount] = useState(0);
+  const [newOrderToast, setNewOrderToast] = useState("");
+
+  const knownOnlineOrderIdsRef = useRef<Set<string>>(new Set());
+  const initializedOrdersRef = useRef(false);
+  const toastTimeoutRef = useRef<number | null>(null);
+
+  const onlineOrders = useMemo(
+    () => orders.filter((order) => order.orderType === "online"),
+    [orders]
+  );
 
   useEffect(() => {
     dispatch(fetchProducts());
   }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(fetchOrders());
+    const interval = setInterval(() => {
+      dispatch(fetchOrders());
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [dispatch]);
+
+  useEffect(() => {
+    const latestIds = new Set(onlineOrders.map((order) => order._id));
+
+    if (!initializedOrdersRef.current) {
+      knownOnlineOrderIdsRef.current = latestIds;
+      initializedOrdersRef.current = true;
+      return;
+    }
+
+    let newOrders = 0;
+    latestIds.forEach((id) => {
+      if (!knownOnlineOrderIdsRef.current.has(id)) {
+        newOrders += 1;
+      }
+    });
+
+    if (newOrders > 0) {
+      if (activeTab !== "digital") {
+        setDigitalNewCount((prev) => prev + newOrders);
+      }
+
+      setNewOrderToast(
+        `${newOrders} new digital order${newOrders > 1 ? "s" : ""} received`
+      );
+
+      if (toastTimeoutRef.current) {
+        window.clearTimeout(toastTimeoutRef.current);
+      }
+
+      toastTimeoutRef.current = window.setTimeout(() => {
+        setNewOrderToast("");
+      }, 3500);
+    }
+
+    knownOnlineOrderIdsRef.current = latestIds;
+  }, [onlineOrders, activeTab]);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) {
+        window.clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const filteredProducts = useMemo(() => {
     return products
@@ -58,8 +123,15 @@ export default function Pos() {
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
 
-  // Close cart when backdrop is clicked
   const handleBackdropClick = () => setIsCartOpen(false);
+
+  const switchToTab = (tab: TabType) => {
+    setActiveTab(tab);
+    if (tab === "digital") {
+      setDigitalNewCount(0);
+      setNewOrderToast("");
+    }
+  };
 
   return (
     <Flex
@@ -67,18 +139,42 @@ export default function Pos() {
       gap="4"
       style={{ height: "calc(100vh - 64px)", minHeight: 0, position: "relative" }}
     >
-      {/* ================= TAB SWITCH ================= */}
+      {newOrderToast && (
+        <div
+          style={{
+            position: "fixed",
+            top: 86,
+            right: 22,
+            zIndex: 800,
+            background: "#14532D",
+            color: "white",
+            border: "1px solid #22C55E",
+            borderRadius: 10,
+            padding: "10px 12px",
+            fontSize: 13,
+            fontWeight: 600,
+            boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <Bell size={16} />
+          {newOrderToast}
+        </div>
+      )}
+
       <Box
         style={{
           background: "var(--gray-2)",
           padding: 6,
           borderRadius: 12,
-          maxWidth: 520,
+          maxWidth: 580,
         }}
       >
         <Flex gap="2">
           <Box
-            onClick={() => setActiveTab("pos")}
+            onClick={() => switchToTab("pos")}
             style={{
               flex: 1,
               padding: "10px 14px",
@@ -90,10 +186,10 @@ export default function Pos() {
               color: activeTab === "pos" ? "white" : "var(--gray-12)",
             }}
           >
-            🛒 Point of Sale
+            Point of Sale
           </Box>
           <Box
-            onClick={() => setActiveTab("digital")}
+            onClick={() => switchToTab("digital")}
             style={{
               flex: 1,
               padding: "10px 14px",
@@ -103,17 +199,38 @@ export default function Pos() {
               fontWeight: 500,
               background: activeTab === "digital" ? "var(--accent-9)" : "transparent",
               color: activeTab === "digital" ? "white" : "var(--gray-12)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
             }}
           >
-            🔔 Digital Menu Orders
+            <span>Digital Menu Orders</span>
+            {digitalNewCount > 0 && (
+              <span
+                style={{
+                  minWidth: 20,
+                  height: 20,
+                  borderRadius: 999,
+                  background: "#EF4444",
+                  color: "white",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: "0 6px",
+                }}
+              >
+                {digitalNewCount}
+              </span>
+            )}
           </Box>
         </Flex>
       </Box>
 
-      {/* ================= POS TAB ================= */}
       {activeTab === "pos" && (
         <>
-          {/* Desktop layout */}
           <Flex gap="4" style={{ flex: 1, minHeight: 0 }} className="pos-desktop-layout">
             <Flex direction="column" gap="4" style={{ flex: 1 }}>
               <Flex gap="3">
@@ -179,7 +296,6 @@ export default function Pos() {
               </Box>
             </Flex>
 
-            {/* Desktop Cart Sidebar */}
             <Card
               className="pos-cart-sidebar"
               style={{
@@ -195,7 +311,6 @@ export default function Pos() {
             </Card>
           </Flex>
 
-          {/* ================= MOBILE CART FAB ================= */}
           {totalItems > 0 && (
             <button
               className="pos-cart-fab"
@@ -205,7 +320,7 @@ export default function Pos() {
                 bottom: 24,
                 right: 20,
                 zIndex: 200,
-                display: "none", // shown via CSS on mobile
+                display: "none",
                 alignItems: "center",
                 gap: 10,
                 background: "var(--accent-9)",
@@ -234,13 +349,11 @@ export default function Pos() {
             </button>
           )}
 
-          {/* ================= MOBILE CART DRAWER ================= */}
-          {/* Backdrop */}
           <div
             className="pos-cart-backdrop"
             onClick={handleBackdropClick}
             style={{
-              display: "none", // shown via CSS on mobile
+              display: "none",
               position: "fixed",
               inset: 0,
               background: "rgba(0,0,0,0.5)",
@@ -251,11 +364,10 @@ export default function Pos() {
             }}
           />
 
-          {/* Drawer Panel */}
           <div
             className="pos-cart-drawer"
             style={{
-              display: "none", // shown via CSS on mobile
+              display: "none",
               position: "fixed",
               bottom: 0,
               left: 0,
@@ -270,7 +382,6 @@ export default function Pos() {
               flexDirection: "column",
             }}
           >
-            {/* Drawer handle */}
             <div
               style={{
                 display: "flex",
@@ -288,36 +399,28 @@ export default function Pos() {
               />
             </div>
 
-            {/* Drawer close button */}
-           
-Button fix · TSX
-Copy
+            <button
+              aria-label="Close cart drawer"
+              onClick={() => setIsCartOpen(false)}
+              style={{
+                position: "absolute",
+                top: 12,
+                right: 16,
+                background: "var(--gray-3)",
+                border: "none",
+                borderRadius: 999,
+                width: 32,
+                height: 32,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "var(--gray-11)",
+              }}
+            >
+              <X size={16} />
+            </button>
 
-// Fix for the accessibility error - add aria-label to the button
-
-<button
-  aria-label="Close cart drawer"
-  onClick={() => setIsCartOpen(false)}
-  style={{
-    position: "absolute",
-    top: 12,
-    right: 16,
-    background: "var(--gray-3)",
-    border: "none",
-    borderRadius: 999,
-    width: 32,
-    height: 32,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    color: "var(--gray-11)",
-  }}
->
-  <X size={16} />
-</button>
-
-            {/* Cart content */}
             <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
               <Cart onCheckout={() => setIsCartOpen(false)} />
             </div>
@@ -325,7 +428,6 @@ Copy
         </>
       )}
 
-      {/* ================= DIGITAL TAB ================= */}
       {activeTab === "digital" && (
         <div
           style={{
@@ -338,16 +440,13 @@ Copy
         </div>
       )}
 
-      {/* ================= CHECKOUT DIALOG ================= */}
       <CheckoutDialog
         open={isCheckoutMode}
         onClose={() => navigate("/dashboard/pos")}
         discount={0}
       />
 
-      {/* ================= MOBILE-SPECIFIC STYLES ================= */}
       <style>{`
-        /* ===== MOBILE: < 768px ===== */
         @media (max-width: 767px) {
           .pos-cart-sidebar {
             display: none !important;
@@ -364,14 +463,13 @@ Copy
           .pos-product-grid {
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
             gap: 12px !important;
-            padding-bottom: 100px !important; /* Space for FAB */
+            padding-bottom: 100px !important;
           }
           .pos-desktop-layout {
             flex-direction: column !important;
           }
         }
 
-        /* ===== TABLET: 768px – 1023px ===== */
         @media (min-width: 768px) and (max-width: 1023px) {
           .pos-cart-sidebar {
             width: 280px !important;
