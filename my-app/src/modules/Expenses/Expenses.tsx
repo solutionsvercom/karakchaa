@@ -169,7 +169,14 @@ export default function Expenses() {
           </Button>
         </Flex>
 
-        <Table columns={columns} data={filteredExpenses} loading={loading} hoverable striped />
+       <Table
+  columns={columns}
+  data={filteredExpenses}
+  loading={loading}
+  hoverable
+  striped
+  emptyMessage="No expenses found"
+/>
       </Flex>
 
       {/* ===== ADD / EDIT DIALOG ===== */}

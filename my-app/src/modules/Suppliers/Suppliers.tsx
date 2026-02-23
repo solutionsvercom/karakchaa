@@ -122,28 +122,39 @@ export default function Suppliers() {
         <Searchbar searchValue={searchValue} onSearchChange={setSearchValue} placeholder="Search suppliers..." />
       </div>
 
-      <Flex wrap="wrap" gap="4">
-        {filteredSuppliers.map((s) => (
-          <SupplierCard
-            key={s._id}
-            name={s.companyName}
-            contactPerson={s.contactPerson}
-            phone={s.phone}
-            email={s.email}
-            address={s.address ?? ""}
-            products={s.productsSupplied ?? ""}
-            gst={s.gst}
-            status={s.active ? "Active" : "Inactive"}
-            accentColor=""
-            softColor="rgba(124,92,255,0.15)"
-            onEdit={() => {
-              navigate(`/dashboard/suppliers/edit-supplier/${s._id}`);
-              setEditingSupplier(s);
-            }}
-            onDelete={() => setDeleteId(s._id)}
-          />
-        ))}
-      </Flex>
+     <Flex wrap="wrap" gap="4">
+  {filteredSuppliers.length === 0 ? (
+    <Flex
+      width="100%"
+      align="center"
+      justify="center"
+      style={{ padding: "60px 0", color: "#9ca3af", fontSize: 16 }}
+    >
+      No suppliers found
+    </Flex>
+  ) : (
+    filteredSuppliers.map((s) => (
+      <SupplierCard
+        key={s._id}
+        name={s.companyName}
+        contactPerson={s.contactPerson}
+        phone={s.phone}
+        email={s.email}
+        address={s.address ?? ""}
+        products={s.productsSupplied ?? ""}
+        gst={s.gst}
+        status={s.active ? "Active" : "Inactive"}
+        accentColor=""
+        softColor="rgba(124,92,255,0.15)"
+        onEdit={() => {
+          navigate(`/dashboard/suppliers/edit-supplier/${s._id}`);
+          setEditingSupplier(s);
+        }}
+        onDelete={() => setDeleteId(s._id)}
+      />
+    ))
+  )}
+</Flex>
 
       {/* ===== ADD / EDIT DIALOG ===== */}
       <Dialog.Root
