@@ -63,20 +63,13 @@ export const TopProductsChart: React.FC<TopProductsChartProps> = ({
                 color: "var(--tooltip-text)",
               }}
             />
-            <Bar
-              dataKey="count"
-              fill="var(--accent-9)"
-              barSize={barSize}
-              radius={[0, 6, 6, 0]}
-              activeBar={(props) => (
-                <Rectangle
-                  {...props}
-                  height={props.height + 12}
-                  y={props.y - 8}
-                  fill="var(--accent-9)"
-                />
-              )}
-            />
+           <Bar
+  dataKey="count"
+  fill="var(--accent-9)"
+  barSize={barSize}
+  radius={[0, 6, 6, 0]}
+  activeBar={<Rectangle fill="var(--gray-8)" radius={[0, 6, 6, 0]} />}
+/>
           </BarChart>
         </ResponsiveContainer>
       </div>

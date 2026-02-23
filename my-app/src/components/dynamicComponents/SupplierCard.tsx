@@ -1,5 +1,5 @@
 import React from "react";
-import { DropdownMenu, IconButton } from "@radix-ui/themes";
+import { Button, DropdownMenu, IconButton } from "@radix-ui/themes";
 import {
   MoreVertical,
   Phone,
@@ -8,7 +8,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-
+import { DotsVerticalIcon } from "@radix-ui/react-icons";
 /* ---------- TYPES ---------- */
 export type SupplierCardProps = {
   name: string;
@@ -63,8 +63,9 @@ export const SupplierCard: React.FC<SupplierCardProps> = ({
         {/* 3 DOT MENU */}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
-            <IconButton
-              variant="ghost"
+         <IconButton
+              variant="soft"
+              radius="full"
               size="2"
               className="kb-supplier-card-menu"
             >

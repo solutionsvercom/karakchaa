@@ -252,9 +252,13 @@ export default function ProductsModule() {
           </p>
 
           <Flex justify="end" gap="3" mt="4">
-            <Button variant="soft" onClick={() => setDeleteId(null)}>
-              Cancel
-            </Button>
+           <Button
+  variant="soft"
+  color="gray"
+  onClick={() => setDeleteId(null)}
+>
+  Cancel
+</Button>
 
             <Button
               color="red"

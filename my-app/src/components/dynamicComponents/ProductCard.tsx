@@ -4,6 +4,7 @@ import {
   Badge,
   IconButton,
   DropdownMenu,
+  Button,
 } from "@radix-ui/themes";
 import { DotsVerticalIcon, CubeIcon } from "@radix-ui/react-icons";
 import { Pencil, Trash2, Plus } from "lucide-react";
@@ -29,17 +30,20 @@ export type ProductCardProps = {
 
 /* -------- CATEGORY → COLOR MAP -------- */
 
-const categoryColorMap: Record<Category, "amber" | "pink" | "blue" | "green" | "gray"> = {
+const categoryColorMap: Record<
+  Category,
+  "amber" | "pink" | "blue" | "green" | "gray" | "orange" | "cyan" | "purple" | "red"|"yellow"
+> = {
   snacks: "amber",
   desserts: "pink",
   beverages: "blue",
   meals: "green",
   other: "gray",
-  drinks: "blue",
-  starters: "amber",
-  breads: "amber",
+  drinks:  "orange",
+  starters: "yellow",
+  breads: "purple",
   pizza: "pink",
-  sandwich: "gray",
+  sandwich: "cyan",
 };
 
 const formatLabel = (text: string) =>
@@ -89,7 +93,7 @@ export default function ProductCard({
       {!isPOS && (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
-            <IconButton
+           <IconButton
               variant="soft"
               radius="full"
               style={{
@@ -97,12 +101,14 @@ export default function ProductCard({
                 top: 10,
                 right: 10,
                 zIndex: 10,
-                background: "white",
+                
               }}
             >
               <DotsVerticalIcon />
             </IconButton>
           </DropdownMenu.Trigger>
+          
+
           <DropdownMenu.Content align="end">
             {onEdit && (
               <DropdownMenu.Item onSelect={onEdit}>

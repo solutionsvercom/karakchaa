@@ -6,11 +6,9 @@ import Searchbar from "../../components/dynamicComponents/Searchbar";
 import AddSupplier, { SupplierFormValues } from "./AddSupplier";
 import { SupplierCard } from "../../components/dynamicComponents/SupplierCard";
 
-/* ---------------- API ---------------- */
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const API_BASE = "http://localhost:5000";
 const SUPPLIERS_API = `${API_BASE}/api/suppliers`;
 
-/* ---------------- DATA TYPE (MongoDB) ---------------- */
 type SupplierUI = {
   _id: string;
   companyName: string;
@@ -28,19 +26,16 @@ export default function Suppliers() {
   const [searchValue, setSearchValue] = React.useState("");
   const [suppliers, setSuppliers] = React.useState<SupplierUI[]>([]);
   const [editingSupplier, setEditingSupplier] = React.useState<SupplierUI | null>(null);
+  const [deleteId, setDeleteId] = React.useState<string | null>(null);
 
   const navigate = useNavigate();
   const location = useLocation();
-
   const isAddSupplier = location.pathname.endsWith("/add-supplier");
 
-  /* ---------- FETCH LIST ---------- */
   const fetchSuppliers = async () => {
     try {
       const res = await fetch(SUPPLIERS_API);
       const json = await res.json();
-
-      // backend may return { items: [...] } or { data: [...] }
       const items = json?.items || json?.data || json || [];
       setSuppliers(Array.isArray(items) ? items : []);
     } catch (e) {
@@ -49,33 +44,25 @@ export default function Suppliers() {
     }
   };
 
-  React.useEffect(() => {
-    fetchSuppliers();
-  }, []);
+  React.useEffect(() => { fetchSuppliers(); }, []);
 
-  /* ---------- SEARCH ---------- */
   const filteredSuppliers = suppliers.filter((s) =>
     `${s.companyName} ${s.contactPerson} ${s.productsSupplied || ""}`
-      .toLowerCase()
-      .includes(searchValue.toLowerCase())
+      .toLowerCase().includes(searchValue.toLowerCase())
   );
 
-  /* ---------- DELETE ---------- */
-  const handleDelete = async (id: string) => {
-    const ok = window.confirm("Are you sure you want to delete this supplier?");
-    if (!ok) return;
-
+  const handleDelete = async () => {
+    if (!deleteId) return;
     try {
-      await fetch(`${SUPPLIERS_API}/${id}`, { method: "DELETE" });
-      setSuppliers((prev) => prev.filter((s) => s._id !== id));
-      if (editingSupplier?._id === id) setEditingSupplier(null);
+      await fetch(`${SUPPLIERS_API}/${deleteId}`, { method: "DELETE" });
+      setSuppliers((prev) => prev.filter((s) => s._id !== deleteId));
+      if (editingSupplier?._id === deleteId) setEditingSupplier(null);
+      setDeleteId(null);
     } catch (e) {
       console.error("Delete failed", e);
-      alert("Delete failed. Please try again.");
     }
   };
 
-  /* ---------- SAVE (ADD / EDIT) ---------- */
   const handleSave = async (form: SupplierFormValues) => {
     const payload = {
       companyName: form.companyName || "",
@@ -96,97 +83,84 @@ export default function Suppliers() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-
         const json = await res.json();
         const updated = json?.data || json;
-
-        setSuppliers((prev) =>
-          prev.map((s) => (s._id === editingSupplier._id ? updated : s))
-        );
-
+        setSuppliers((prev) => prev.map((s) => (s._id === editingSupplier._id ? updated : s)));
         setEditingSupplier(null);
         navigate("/dashboard/suppliers");
         return;
       }
 
-      // ADD
       const res = await fetch(SUPPLIERS_API, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
       const json = await res.json();
       const created = json?.data || json;
-
       setSuppliers((prev) => [created, ...prev]);
       navigate("/dashboard/suppliers");
     } catch (e) {
       console.error("Save failed", e);
-      alert("Save failed. Please try again.");
     }
   };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* ================= HEADER ================= */}
       <Flex justify="between" align="center">
         <div>
-          <Text size="5" weight="bold">
-            Suppliers
-          </Text>
+          <Text size="5" weight="bold">Suppliers</Text>
           <br />
-          <Text size="2" color="gray">
-            {filteredSuppliers.length} suppliers registered
-          </Text>
+          <Text size="2" color="gray">{filteredSuppliers.length} suppliers registered</Text>
         </div>
-
         <Button onClick={() => navigate("/dashboard/suppliers/add-supplier")}>
           <Plus size={16} /> Add Supplier
         </Button>
       </Flex>
 
-      {/* ================= SEARCH ================= */}
       <div style={{ maxWidth: 420 }}>
-        <Searchbar
-          searchValue={searchValue}
-          onSearchChange={setSearchValue}
-          placeholder="Search suppliers..."
-        />
+        <Searchbar searchValue={searchValue} onSearchChange={setSearchValue} placeholder="Search suppliers..." />
       </div>
 
-      {/* ================= SUPPLIER CARDS ================= */}
-      <Flex wrap="wrap" gap="4">
-        {filteredSuppliers.map((s) => (
-          <SupplierCard
-            key={s._id}
-            name={s.companyName}
-            contactPerson={s.contactPerson}
-            phone={s.phone}
-            email={s.email}
-            address={s.address ?? ""}
-            products={s.productsSupplied ?? ""}
-            gst={s.gst}
-            status={s.active ? "Active" : "Inactive"}
-            accentColor=""
-            softColor="rgba(124,92,255,0.15)"
-            onEdit={() => {
-              navigate(`/dashboard/suppliers/edit-supplier/${s._id}`);
-              setEditingSupplier(s);
-            }}
-            onDelete={() => handleDelete(s._id)}
-          />
-        ))}
-      </Flex>
+     <Flex wrap="wrap" gap="4">
+  {filteredSuppliers.length === 0 ? (
+    <Flex
+      width="100%"
+      align="center"
+      justify="center"
+      style={{ padding: "60px 0", color: "#9ca3af", fontSize: 16 }}
+    >
+      No suppliers found
+    </Flex>
+  ) : (
+    filteredSuppliers.map((s) => (
+      <SupplierCard
+        key={s._id}
+        name={s.companyName}
+        contactPerson={s.contactPerson}
+        phone={s.phone}
+        email={s.email}
+        address={s.address ?? ""}
+        products={s.productsSupplied ?? ""}
+        gst={s.gst}
+        status={s.active ? "Active" : "Inactive"}
+        accentColor=""
+        softColor="rgba(124,92,255,0.15)"
+        onEdit={() => {
+          navigate(`/dashboard/suppliers/edit-supplier/${s._id}`);
+          setEditingSupplier(s);
+        }}
+        onDelete={() => setDeleteId(s._id)}
+      />
+    ))
+  )}
+</Flex>
 
-      {/* ================= ADD / EDIT SUPPLIER DIALOG ================= */}
+      {/* ===== ADD / EDIT DIALOG ===== */}
       <Dialog.Root
         open={isAddSupplier || !!editingSupplier}
         onOpenChange={(open) => {
-          if (!open) {
-            setEditingSupplier(null);
-            navigate("/dashboard/suppliers");
-          }
+          if (!open) { setEditingSupplier(null); navigate("/dashboard/suppliers"); }
         }}
       >
         <Dialog.Content maxWidth="420px">
@@ -208,11 +182,28 @@ export default function Suppliers() {
                 : { active: true }
             }
             onSave={handleSave}
-            onClose={() => {
-              setEditingSupplier(null);
-              navigate("/dashboard/suppliers");
-            }}
+            onClose={() => { setEditingSupplier(null); navigate("/dashboard/suppliers"); }}
           />
+        </Dialog.Content>
+      </Dialog.Root>
+
+      {/* ===== DELETE CONFIRM DIALOG ===== */}
+      <Dialog.Root open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
+        <Dialog.Content maxWidth="380px" aria-describedby={undefined}>
+          <Dialog.Title>Delete Supplier?</Dialog.Title>
+          <p style={{ fontSize: 14, color: "#6b7280" }}>
+            This action cannot be undone. Are you sure you want to delete this supplier?
+          </p>
+          <Flex justify="end" gap="3" mt="4">
+             <Button
+  variant="soft"
+  color="gray"
+  onClick={() => setDeleteId(null)}
+>
+  Cancel
+</Button>
+            <Button color="red" onClick={handleDelete}>Delete</Button>
+          </Flex>
         </Dialog.Content>
       </Dialog.Root>
     </div>

@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { useDataFilter } from "../../hooks/useDataFilter";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../../store/Store";
-import { Sale } from "../../features/SalesSlice";
+import { Sale, fetchSales } from "../../features/SalesSlice";
 import {
   RevenueTrendChart,
   TopProductsChart,
@@ -16,12 +16,13 @@ import { fetchExpenseTotals, fetchExpenses } from "../../features/ExpensesSlice"
 
 /* ================= HELPER ================= */
 
+const knownCategories = ["inventory", "supplies", "salary", "utilities", "rent", "maintenance"];
+
 const calculateTotals = (data: any[]) => {
   const totalRevenue = data.reduce((sum, sale) => sum + sale.amount, 0);
   const totalOrders = data.length;
   const averageOrder =
     totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
-
   return { totalRevenue, totalOrders, averageOrder };
 };
 
@@ -30,15 +31,11 @@ const calculateTotals = (data: any[]) => {
 export default function Reports() {
   const dispatch = useDispatch<AppDispatch>();
 
-  /* ⭐ REAL SALES FROM REDUX */
   const { sales } = useSelector((state: RootState) => state.sales);
-
-  /* ⭐ EXPENSES FROM REDUX */
-  const { totals, expenses } = useSelector(
-    (state: RootState) => state.expenses
-  );
+  const { totals, expenses } = useSelector((state: RootState) => state.expenses);
 
   useEffect(() => {
+    dispatch(fetchSales());
     dispatch(fetchExpenseTotals());
     dispatch(fetchExpenses());
   }, [dispatch]);
@@ -59,28 +56,43 @@ export default function Reports() {
     [sales]
   );
 
-  const { category, setCategory, filteredData } =
-    useDataFilter(dashboardSales);
+  const { category, setCategory, filteredData } = useDataFilter(dashboardSales);
 
   const salesSummary = calculateTotals(filteredData);
 
   const totalExpenses = totals?.totalExpenses ?? 0;
-
   const netProfit = salesSummary.totalRevenue - totalExpenses;
 
-  /* ⭐ CATEGORY BREAKDOWN */
-  const categoryTotals = (expenses || []).reduce((acc: any, expense: any) => {
-    const key = expense.category;
-    acc[key] = (acc[key] || 0) + Number(expense.amount || 0);
-    return acc;
-  }, {});
+  /* ⭐ CATEGORY BREAKDOWN — unknown categories go to "others" */
+  const categoryTotals = useMemo(() => {
+    const map: Record<string, number> = {};
 
-  const revenueTrendData = buildRevenueTrendSmart(
-    filteredData,
-    category
+    (expenses || []).forEach((expense: any) => {
+      const key = expense.category;
+      map[key] = (map[key] || 0) + Number(expense.amount || 0);
+    });
+
+    // Sum misc + any unlisted category into "others"
+    let others = map["misc"] || 0;
+    Object.entries(map).forEach(([key, val]) => {
+      if (!knownCategories.includes(key) && key !== "misc") {
+        others += val;
+      }
+    });
+
+    map["others"] = others;
+    return map as Record<string, number>;
+  }, [expenses]);
+
+  const revenueTrendData = useMemo(
+    () => buildRevenueTrendSmart(filteredData, category),
+    [filteredData, category]
   );
 
-  const topProductsData = buildTopProducts(filteredData);
+  const topProductsData = useMemo(
+    () => buildTopProducts(filteredData),
+    [filteredData]
+  );
 
   return (
     <Flex direction="column" gap="5" width="100%">
@@ -110,10 +122,7 @@ export default function Reports() {
               "Last 6 Months",
               "Last 1 Year",
             ].map((item) => (
-              <DropdownMenu.Item
-                key={item}
-                onClick={() => setCategory(item)}
-              >
+              <DropdownMenu.Item key={item} onClick={() => setCategory(item)}>
                 {item}
               </DropdownMenu.Item>
             ))}
@@ -130,7 +139,6 @@ export default function Reports() {
           softColor="#F0E9FF"
           icon="₹"
         />
-
         <SummaryCard
           title="Total Orders"
           value={String(salesSummary.totalOrders)}
@@ -138,7 +146,6 @@ export default function Reports() {
           softColor="#E5F9EE"
           icon="🛒"
         />
-
         <SummaryCard
           title="Total Expenses"
           value={`₹${totalExpenses.toLocaleString()}`}
@@ -146,18 +153,11 @@ export default function Reports() {
           softColor="#FFF3E0"
           icon="💵"
         />
-
         <SummaryCard
           title="Net Profit"
           value={
-            <span
-              style={{
-                color: netProfit >= 0 ? "#16A34A" : "#DC2626",
-                fontWeight: 600,
-              }}
-            >
-              {netProfit < 0 ? "-" : "+"}
-              ₹{Math.abs(netProfit).toLocaleString()}
+            <span style={{ color: netProfit >= 0 ? "#16A34A" : "#DC2626", fontWeight: 600 }}>
+              {netProfit < 0 ? "-" : "+"}₹{Math.abs(netProfit).toLocaleString()}
             </span>
           }
           accentColor="#2962FF"
@@ -168,7 +168,7 @@ export default function Reports() {
 
       {/* ===== CHARTS ===== */}
       <Flex gap="4" width="100%">
-        <RevenueTrendChart data={revenueTrendData} />
+        <RevenueTrendChart data={revenueTrendData} title={`Sales Trend (${category})`} />
         <TopProductsChart data={topProductsData} />
       </Flex>
 
@@ -178,13 +178,55 @@ export default function Reports() {
       </Text>
 
       <div className="kb-summary-row">
-        <SummaryCard title="Inventory" value={`₹${categoryTotals.inventory ?? 0}`} accentColor="#ECEFF1" softColor="#F5F5F5" icon="💰" />
-        <SummaryCard title="Supplies" value={`₹${categoryTotals.supplies ?? 0}`} accentColor="#ECEFF1" softColor="#F5F5F5" icon="💰" />
-        <SummaryCard title="Salary" value={`₹${categoryTotals.salary ?? 0}`} accentColor="#ECEFF1" softColor="#F5F5F5" icon="💰" />
-        <SummaryCard title="Utilities" value={`₹${categoryTotals.utilities ?? 0}`} accentColor="#ECEFF1" softColor="#F5F5F5" icon="💰" />
-        <SummaryCard title="Rent" value={`₹${categoryTotals.rent ?? 0}`} accentColor="#ECEFF1" softColor="#F5F5F5" icon="💰" />
-        <SummaryCard title="Maintenance" value={`₹${categoryTotals.maintenance ?? 0}`} accentColor="#ECEFF1" softColor="#F5F5F5" icon="💰" />
-        <SummaryCard title="Others" value={`₹${categoryTotals.misc ?? 0}`} accentColor="#ECEFF1" softColor="#F5F5F5" icon="💰" />
+        <SummaryCard
+          title="Inventory"
+          value={`₹${(categoryTotals["inventory"] ?? 0).toLocaleString()}`}
+          accentColor="#ECEFF1"
+          softColor="#F5F5F5"
+          icon="💰"
+        />
+        <SummaryCard
+          title="Supplies"
+          value={`₹${(categoryTotals["supplies"] ?? 0).toLocaleString()}`}
+          accentColor="#ECEFF1"
+          softColor="#F5F5F5"
+          icon="💰"
+        />
+        <SummaryCard
+          title="Salary"
+          value={`₹${(categoryTotals["salary"] ?? 0).toLocaleString()}`}
+          accentColor="#ECEFF1"
+          softColor="#F5F5F5"
+          icon="💰"
+        />
+        <SummaryCard
+          title="Utilities"
+          value={`₹${(categoryTotals["utilities"] ?? 0).toLocaleString()}`}
+          accentColor="#ECEFF1"
+          softColor="#F5F5F5"
+          icon="💰"
+        />
+        <SummaryCard
+          title="Rent"
+          value={`₹${(categoryTotals["rent"] ?? 0).toLocaleString()}`}
+          accentColor="#ECEFF1"
+          softColor="#F5F5F5"
+          icon="💰"
+        />
+        <SummaryCard
+          title="Maintenance"
+          value={`₹${(categoryTotals["maintenance"] ?? 0).toLocaleString()}`}
+          accentColor="#ECEFF1"
+          softColor="#F5F5F5"
+          icon="💰"
+        />
+        <SummaryCard
+          title="Others"
+          value={`₹${(categoryTotals["others"] ?? 0).toLocaleString()}`}
+          accentColor="#ECEFF1"
+          softColor="#F5F5F5"
+          icon="💰"
+        />
       </div>
     </Flex>
   );

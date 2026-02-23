@@ -5,6 +5,8 @@ import { RootState, AppDispatch } from "../../store/Store";
 
 import { fetchStockItems, fetchStockStats } from "../../features/StockmanagementSlice";
 import { fetchSales, Sale } from "../../features/SalesSlice";
+import { fetchCustomers } from "../../features/CustomersSlice";
+import { fetchProducts } from "../../features/ProductsSlice";
 
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
 import {
@@ -34,6 +36,7 @@ export default function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
 
   const { customers } = useSelector((state: RootState) => state.customer);
+  const { products } = useSelector((state: RootState) => state.product);
   const { items: stockItems, stats: stockStats } = useSelector(
     (state: RootState) => state.stock
   );
@@ -45,6 +48,8 @@ export default function Dashboard() {
     dispatch(fetchStockItems());
     dispatch(fetchStockStats());
     dispatch(fetchSales());
+    dispatch(fetchCustomers());
+    dispatch(fetchProducts());
   }, [dispatch]);
 
   /* ================= MAP SALES FOR CHARTS ================= */
@@ -70,13 +75,23 @@ export default function Dashboard() {
   const todayData = filterLastNDays(dashboardSales, 0);
   const todaySummary = calculateTotals(todayData);
 
+  const activeProductsCount = products.filter((p) => p.isActive).length;
+
+  const now = new Date();
+  const todayCustomers = customers.filter((c) => {
+    const d = new Date(c.createdAt);
+    return (
+      d.getDate() === now.getDate() &&
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear()
+    );
+  }).length;
+
   /* ================= UI ================= */
 
   return (
     <>
       <style>{`
-        /* ===== DASHBOARD RESPONSIVE LAYOUT ===== */
-
         .dash-summary-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
@@ -91,7 +106,6 @@ export default function Dashboard() {
           width: 100%;
         }
 
-        /* ===== TABLET: 768px – 1023px ===== */
         @media (max-width: 1023px) {
           .dash-summary-grid {
             grid-template-columns: repeat(2, 1fr);
@@ -103,7 +117,6 @@ export default function Dashboard() {
           }
         }
 
-        /* ===== MOBILE: < 768px ===== */
         @media (max-width: 767px) {
           .dash-summary-grid {
             grid-template-columns: repeat(2, 1fr);
@@ -114,7 +127,6 @@ export default function Dashboard() {
             grid-template-columns: 1fr;
             gap: 12px;
           }
-          /* Reduce padding/font on summary cards */
           .kb-summary-card {
             padding: 12px 14px !important;
             border-radius: 14px !important;
@@ -133,7 +145,6 @@ export default function Dashboard() {
           }
         }
 
-        /* ===== SMALL MOBILE: < 400px ===== */
         @media (max-width: 400px) {
           .dash-summary-grid {
             grid-template-columns: 1fr 1fr;
@@ -166,15 +177,15 @@ export default function Dashboard() {
             icon="📊"
           />
           <SummaryCard
-            title="Total Products"
-            value={String(stockStats?.totalProducts || 0)}
+            title="Active Products"
+            value={String(activeProductsCount)}
             accentColor="#FF9100"
             softColor="#FFF3E0"
             icon="📦"
           />
           <SummaryCard
-            title="Total Customers"
-            value={String(customers.length)}
+            title="Today's Customers"
+            value={String(todayCustomers)}
             accentColor="#2962FF"
             softColor="#E3F2FD"
             icon="👥"
