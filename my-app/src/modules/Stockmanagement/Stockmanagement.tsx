@@ -8,7 +8,7 @@ import {
 } from "../../features/StockmanagementSlice";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import Table, { Column } from "../../components/dynamicComponents/Table";
-import { Button, Flex, Badge, DropdownMenu, Dialog } from "@radix-ui/themes";
+import { Button, Flex, Badge,IconButton, DropdownMenu, Dialog } from "@radix-ui/themes";
 import { ChevronDown, History, Plus, Minus } from "lucide-react";
 import AddStock from "./AddStock";
 import StockHistory from "./StockHistory";
@@ -127,24 +127,28 @@ export default function Stockmanagement() {
       width: "16%",
       render: (_v, row) => (
         <Flex gap="2">
-          <Button
+          <IconButton
             size="1"
-            variant="ghost"
+             variant="soft"
+              radius="full"
+            style={{ background: "var(--accent-4)",}}
             onClick={() =>
               navigate(`/dashboard/stockmanagement/${row.id}/add-stock`)
             }
           >
             <Plus size={16} />
-          </Button>
-          <Button
+          </IconButton>
+          <IconButton
             size="1"
-            variant="ghost"
+            variant="soft"
+              radius="full"
+            style={{ background: "var(--accent-4)",}}
             onClick={() =>
               navigate(`/dashboard/stockmanagement/${row.id}/remove-stock`)
             }
           >
             <Minus size={16} />
-          </Button>
+          </IconButton>
         </Flex>
       ),
     },
