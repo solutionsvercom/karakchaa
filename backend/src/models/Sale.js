@@ -36,8 +36,9 @@ const saleSchema = new mongoose.Schema({
 
     paymentMethod: {
         type: String,
-        enum: ["Cash", "Card", "UPI"],
+        enum: ["Cash", "Card", "UPI", "PhonePe", "GPay", "Paytm", "Other"],
         required: true,
+        default: "Cash",
     },
 
     paymentStatus: {

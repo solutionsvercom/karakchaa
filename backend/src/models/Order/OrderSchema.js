@@ -40,7 +40,7 @@ const orderSchema = new mongoose.Schema(
     // ✅ NEW: Store payment method so it can be used when creating the Sale
     paymentMethod: {
       type: String,
-      enum: ["Cash", "Card", "UPI", "GPay", "PhonePe", "Paytm"],
+      enum: ["Cash", "Card", "UPI", "PhonePe", "GPay", "Paytm", "Other"],
       default: "Cash",
     },
 

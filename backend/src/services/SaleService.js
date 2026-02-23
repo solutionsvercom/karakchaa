@@ -210,44 +210,61 @@ async function createSaleFromOrder(order, paymentMethod = "Cash") {
   );
 
   const invoiceNumber = await generateInvoiceNumber();
-  const createdSales = [];
+
+  // ✅ STEP 1: Validate ALL items before touching any stock
+  for (const item of lockedOrder.items) {
+    const productDoc = await Product.findById(item.product);
+    if (!productDoc) throw new Error(`Product not found: ${item.name}`);
+
+    const stockItem = await Stockmanagement.findOne({ sku: productDoc.sku });
+    const available = stockItem ? stockItem.currentStock : productDoc.stockQty;
+
+    if (available < item.quantity) {
+      throw new Error(`Insufficient stock for: ${productDoc.name} (available: ${available}, needed: ${item.quantity})`);
+    }
+  }
+
+  // ✅ STEP 2: All valid — deduct stock and calculate total
+  let totalAmount = 0;
+  let firstProductId = null;
+  let totalQuantity = 0;
 
   for (const item of lockedOrder.items) {
     const productDoc = await Product.findById(item.product);
+    if (!firstProductId) firstProductId = productDoc._id;
 
-    if (!productDoc) throw new Error(`Product not found: ${item.name}`);
-
-    if (productDoc.stockQty < item.quantity) {
-      throw new Error(`Insufficient stock for: ${productDoc.name}`);
-    }
-
-    // ✅ Deduct from Product.stockQty
-    productDoc.stockQty -= item.quantity;
+    productDoc.stockQty = Math.max(0, productDoc.stockQty - item.quantity);
     await productDoc.save();
 
-    // ✅ Deduct from Stockmanagement collection (stock history page)
     await syncStockmanagement(productDoc, item.quantity, "remove", invoiceNumber);
 
-    const sale = await Sale.create({
-      invoiceNumber,
-      product: productDoc._id,
-      quantity: item.quantity,
-      sellingPrice: item.price,
-      totalAmount: item.price * item.quantity,
-      customer: customerId,
-      paymentMethod: paymentMethod || "Cash",
-      paymentStatus: "Completed",
-    });
-
-    createdSales.push(sale);
+    totalAmount += item.price * item.quantity;
+    totalQuantity += item.quantity;
   }
 
-  // ✅ Update customer total purchases and total spent
+  // ✅ ONE sale for the entire order — fixes duplicate invoiceNumber crash
+  const normalizePayment = (method) => {
+    const valid = ["Cash", "Card", "UPI", "PhonePe", "GPay", "Paytm", "Other"];
+    const match = valid.find(v => v.toLowerCase() === (method || "Cash").toLowerCase());
+    return match || "Cash";
+  };
+
+  const sale = await Sale.create({
+    invoiceNumber,
+    product: firstProductId,
+    quantity: totalQuantity,
+    sellingPrice: totalAmount,
+    totalAmount,
+    customer: customerId,
+    paymentMethod: normalizePayment(paymentMethod || lockedOrder.paymentMethod),
+    paymentStatus: "Completed",
+  });
+
   if (customerId) {
-    await updateCustomerStats(customerId, lockedOrder.totalAmount, "increment");
+    await updateCustomerStats(customerId, totalAmount, "increment");
   }
 
-  return createdSales;
+  return [sale];
 }
 
 /* ================= ⭐ REVERSE SALE ON CANCELLATION ================= */

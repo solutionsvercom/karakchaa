@@ -12,7 +12,7 @@ import { fetchCustomers } from "../../features/CustomersSlice";
 import { fetchStockItems } from "../../features/StockmanagementSlice";
 
 type OrderType = "dine-in" | "takeaway" | "delivery" | "online";
-type PaymentMethod = "Cash" | "UPI" | "GPay" | "PhonePe" | "Paytm" | "Card";
+type PaymentMethod = "Cash" | "UPI" | "PhonePe" | "GPay" | "Paytm" | "Card" | "Other";
 
 interface CheckoutDialogProps {
   open: boolean;
@@ -41,6 +41,20 @@ export const CheckoutDialog = ({
   const handleCompleteOrder = async () => {
     if (!items.length) return;
 
+    // ✅ Required field validation — show inline error, don't submit
+    if (!customerName.trim()) {
+      setError("Customer name is required.");
+      return;
+    }
+    if (!phone.trim()) {
+      setError("Phone number is required.");
+      return;
+    }
+    if (!/^\d{10}$/.test(phone.trim())) {
+      setError("Please enter a valid 10-digit phone number.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -53,21 +67,26 @@ export const CheckoutDialog = ({
             price: item.price,
             quantity: item.quantity,
           })),
-          customerName: customerName || undefined,
-          phone: phone || undefined,
+          customerName: customerName.trim(),
+          phone: phone.trim(),
           orderType,
-          paymentMethod, // ✅ pass selected payment method to backend
+          paymentMethod,
           notes: notes || undefined,
         })
       ).unwrap();
 
       clearCart();
-
-      // ✅ Refresh all related data so UI reflects the new sale, customer, stock
       dispatch(fetchSales());
       dispatch(fetchCustomers());
       dispatch(fetchStockItems());
 
+      // Reset form
+      setCustomerName("");
+      setPhone("");
+      setNotes("");
+      setOrderType("dine-in");
+      setPaymentMethod("Cash");
+      setError(null);
       onClose();
     } catch (err: any) {
       setError(err?.message || "Checkout failed. Please try again.");
@@ -90,7 +109,8 @@ export const CheckoutDialog = ({
     { value: "PhonePe", label: "📱 PhonePe" },
     { value: "GPay", label: "🟢 GPay" },
     { value: "Paytm", label: "🔵 Paytm" },
-    { value: "Card", label: "💳 Card" },
+    { value: "Card",  label: "💳 Card" },
+    { value: "Other", label: "💰 Other" },
   ];
 
   return (
@@ -220,7 +240,7 @@ export const CheckoutDialog = ({
                 weight="medium"
                 style={{ marginBottom: 4, display: "block" }}
               >
-                Customer Name (Optional)
+                Customer Name *
               </Text>
               <input
                 type="text"
@@ -231,7 +251,7 @@ export const CheckoutDialog = ({
                   width: "100%",
                   height: 36,
                   padding: "0 12px",
-                  border: "1px solid var(--gray-a6)",
+                  border: error && !customerName.trim() ? "1px solid #dc2626" : "1px solid var(--gray-a6)",
                   borderRadius: 8,
                   fontSize: 14,
                   background: "transparent",
@@ -246,7 +266,7 @@ export const CheckoutDialog = ({
                 weight="medium"
                 style={{ marginBottom: 4, display: "block" }}
               >
-                Phone (Optional)
+                Phone *
               </Text>
               <input
                 type="tel"
@@ -260,7 +280,7 @@ export const CheckoutDialog = ({
                   width: "100%",
                   height: 36,
                   padding: "0 12px",
-                  border: "1px solid var(--gray-a6)",
+                  border: error && (!phone.trim() || !/^\d{10}$/.test(phone.trim())) ? "1px solid #dc2626" : "1px solid var(--gray-a6)",
                   borderRadius: 8,
                   fontSize: 14,
                   background: "transparent",
