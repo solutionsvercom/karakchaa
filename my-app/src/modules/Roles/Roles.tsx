@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { Shield, Trash2, Pencil } from "lucide-react";
+import { Shield, Trash2, Pencil,MoreVertical } from "lucide-react";
 import axios from "axios";
 import {
   Flex,
   Text,
   DropdownMenu,
+  IconButton,
   Button,
   Dialog,
 } from "@radix-ui/themes";
@@ -143,9 +144,9 @@ export default function Roles() {
       render: (_, row) => (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
-            <Button variant="soft" radius="full" style={{ cursor: "pointer" }}>
-              <DotsVerticalIcon />
-            </Button>
+            <IconButton variant="soft" radius="full">
+                                       <MoreVertical size={16} />
+                                     </IconButton>
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Content align="end">

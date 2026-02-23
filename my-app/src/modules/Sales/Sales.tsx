@@ -12,7 +12,7 @@ import Table, { Column } from "../../components/dynamicComponents/Table";
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store/Store";
-
+import { DotsVerticalIcon } from "@radix-ui/react-icons";
 import {
   fetchSales,
   deleteSale,

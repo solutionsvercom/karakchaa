@@ -1,11 +1,12 @@
 import React, { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Trash2, Pencil, ChevronDown } from "lucide-react";
+import { Trash2, Pencil, ChevronDown,MoreVertical } from "lucide-react";
 import {
   Flex,
   Text,
   Badge,
   DropdownMenu,
+  IconButton,
   Button,
   Dialog,
 } from "@radix-ui/themes";
@@ -156,16 +157,21 @@ export default function Expenses() {
       key: "date",
       header: "Date",
       render: (_: any, row: Expense) => {
-        const date = new Date(row.date);
         return (
-          <Text size="2">
-            {date.toLocaleDateString("en-IN", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            })}
-          </Text>
-        );
+  <Text size="2">
+    {(() => {
+      try {
+        return new Date(row.date).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+      } catch {
+        return row.date;
+      }
+    })()}
+  </Text>
+);
       },
     },
     {
@@ -174,9 +180,9 @@ export default function Expenses() {
       render: (_: any, row: Expense) => (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
-            <Button variant="soft" radius="full">
-              <DotsVerticalIcon />
-            </Button>
+            <IconButton variant="soft" radius="full">
+                           <MoreVertical size={16} />
+                         </IconButton>
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Content align="end">

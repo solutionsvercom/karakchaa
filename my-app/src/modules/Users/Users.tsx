@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { Users as UsersIcon, Trash2, Pencil, Shield } from "lucide-react";
+import { Users as UsersIcon, Trash2, Pencil, Shield,MoreVertical } from "lucide-react";
 import axios from "axios";
 import {
   Flex,
   Text,
   DropdownMenu,
+    IconButton,
   Button,
   Dialog,
   Avatar,
@@ -220,9 +221,9 @@ export default function Users() {
       render: (_, row) => (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
-            <Button variant="soft" radius="full" style={{ cursor: "pointer" }}>
-              <DotsVerticalIcon />
-            </Button>
+            <IconButton variant="soft" radius="full">
+                                       <MoreVertical size={16} />
+                                     </IconButton>
           </DropdownMenu.Trigger>
           <DropdownMenu.Content align="end">
             <DropdownMenu.Item  onClick={() => navigate(`/dashboard/users/${row.id}/edit-user`)}>

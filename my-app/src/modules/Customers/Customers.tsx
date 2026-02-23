@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { Plus, Trash2,Pencil, } from "lucide-react";
+import { Plus, Trash2,Pencil,MoreVertical } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchCustomers, fetchCustomerStats } from "../../features/CustomersSlice";
 import { RootState, AppDispatch } from "../../store/Store";
@@ -12,6 +12,7 @@ import {
   Flex,
   Text,
   Avatar,
+  IconButton,
   DropdownMenu,
   Button,
   Dialog,
@@ -161,9 +162,10 @@ const customerToEdit = customers.find(
       render: (_, row) => (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
-            <Button variant="soft" radius="full">
-              <DotsVerticalIcon />
-            </Button>
+            <IconButton variant="soft" radius="full">
+                           <MoreVertical size={16} />
+                         </IconButton>
+                     
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Content align="end">

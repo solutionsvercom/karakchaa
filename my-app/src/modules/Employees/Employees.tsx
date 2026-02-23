@@ -8,7 +8,8 @@ import {
   DropdownMenu,
   Badge,
 } from "@radix-ui/themes";
-import { Plus, MoreVertical, Pencil, Trash2, X } from "lucide-react";
+import { Plus, MoreVertical, Pencil, Trash2, X, } from "lucide-react";
+import { DotsVerticalIcon } from "@radix-ui/react-icons";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../store/Store";
@@ -145,11 +146,22 @@ export default function Employees() {
         accessor: "salary",
         render: (v) => `₹${v.toLocaleString()}`,
       },
-      {
-        key: "joinDate",
-        header: "Join Date",
-        accessor: "joinDate",
-      },
+    {
+  key: "joinDate",
+  header: "Join Date",
+  accessor: "joinDate",
+  render: (v: string) => {
+    try {
+      return new Date(v).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    } catch {
+      return v;
+    }
+  },
+},
       {
         key: "active",
         header: "Status",
@@ -166,7 +178,7 @@ export default function Employees() {
         render: (_v, row) => (
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
-              <IconButton variant="soft" radius="full">
+            <IconButton variant="soft" radius="full">
                 <MoreVertical size={16} />
               </IconButton>
             </DropdownMenu.Trigger>
