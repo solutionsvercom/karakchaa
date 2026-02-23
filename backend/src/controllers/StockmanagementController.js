@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Stockmanagement = require('../models/Stockmanagement/StockmanagementSchema');
+const Product = require('../models/Product'); // ✅ Added to sync stockQty back to Product
 
 /* =========================
    CREATE PRODUCT
@@ -99,6 +100,7 @@ exports.getStockById = async(req, res) => {
 
 /* =========================
    ADD STOCK
+   ✅ Syncs updated quantity back to Product.stockQty
 ========================= */
 exports.addStock = async(req, res) => {
     try {
@@ -109,17 +111,22 @@ exports.addStock = async(req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid stock ID' });
         }
 
+        if (!quantity || Number(quantity) <= 0) {
+            return res.status(400).json({ success: false, message: 'Quantity must be greater than zero' });
+        }
+
+        // ✅ Reason validation
+        if (!reason || reason.trim() === '') {
+            return res.status(400).json({ success: false, message: 'Reason is required' });
+        }
+
         const stockItem = await Stockmanagement.findById(id);
 
         if (!stockItem) {
             return res.status(404).json({ success: false, message: 'Product not found' });
         }
 
-        if (!quantity || quantity <= 0) {
-            return res.status(400).json({ success: false, message: 'Quantity must be greater than zero' });
-        }
-
-        stockItem.currentStock += quantity;
+        stockItem.currentStock += Number(quantity);
 
         stockItem.status =
             stockItem.currentStock === 0 ?
@@ -130,13 +137,19 @@ exports.addStock = async(req, res) => {
 
         stockItem.stockHistory.push({
             action: 'add',
-            quantity,
+            quantity: Number(quantity),
             reason,
             referenceNo,
             notes
         });
 
         await stockItem.save();
+
+        // ✅ Mirror new quantity to Product collection (matched by SKU)
+        await Product.findOneAndUpdate(
+            { sku: stockItem.sku },
+            { $set: { stockQty: stockItem.currentStock } }
+        );
 
         res.json({
             success: true,
@@ -154,6 +167,7 @@ exports.addStock = async(req, res) => {
 
 /* =========================
    REMOVE STOCK
+   ✅ Syncs updated quantity back to Product.stockQty
 ========================= */
 exports.removeStock = async(req, res) => {
     try {
@@ -164,21 +178,26 @@ exports.removeStock = async(req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid stock ID' });
         }
 
+        if (!quantity || Number(quantity) <= 0) {
+            return res.status(400).json({ success: false, message: 'Quantity must be greater than zero' });
+        }
+
+        // ✅ Reason validation
+        if (!reason || reason.trim() === '') {
+            return res.status(400).json({ success: false, message: 'Reason is required' });
+        }
+
         const stockItem = await Stockmanagement.findById(id);
 
         if (!stockItem) {
             return res.status(404).json({ success: false, message: 'Product not found' });
         }
 
-        if (!quantity || quantity <= 0) {
-            return res.status(400).json({ success: false, message: 'Quantity must be greater than zero' });
-        }
-
-        if (quantity > stockItem.currentStock) {
+        if (Number(quantity) > stockItem.currentStock) {
             return res.status(400).json({ success: false, message: 'Not enough stock available' });
         }
 
-        stockItem.currentStock -= quantity;
+        stockItem.currentStock -= Number(quantity);
 
         stockItem.status =
             stockItem.currentStock === 0 ?
@@ -189,13 +208,19 @@ exports.removeStock = async(req, res) => {
 
         stockItem.stockHistory.push({
             action: 'remove',
-            quantity,
+            quantity: Number(quantity),
             reason,
             referenceNo,
             notes
         });
 
         await stockItem.save();
+
+        // ✅ Mirror new quantity to Product collection (matched by SKU)
+        await Product.findOneAndUpdate(
+            { sku: stockItem.sku },
+            { $set: { stockQty: stockItem.currentStock } }
+        );
 
         res.json({
             success: true,

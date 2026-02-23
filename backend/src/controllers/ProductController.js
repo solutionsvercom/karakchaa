@@ -120,6 +120,19 @@ class ProductController {
             next(err);
         }
     }
+
+    // ✅ NEW: One-time sync to populate Stock Management from all existing products
+    async syncStock(req, res, next) {
+        try {
+            const result = await productService.syncAllProductsToStock();
+            res.json({
+                success: true,
+                ...result,
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
 }
 
 module.exports = new ProductController();

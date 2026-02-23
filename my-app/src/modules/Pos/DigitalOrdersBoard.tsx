@@ -2,11 +2,16 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../store/Store";
 import { fetchOrders, updateOrderStatus } from "../../features/OrdersSlice";
+import { fetchSales } from "../../features/SalesSlice";
+import { fetchCustomers } from "../../features/CustomersSlice";
+import { fetchStockItems } from "../../features/StockmanagementSlice";
 import { ArrowLeft } from "lucide-react";
 
 export default function DigitalOrdersBoard() {
   const dispatch = useDispatch<AppDispatch>();
-  const { orders: allOrders, loading } = useSelector((state: RootState) => state.orders);
+  const { orders: allOrders, loading } = useSelector(
+    (state: RootState) => state.orders
+  );
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
 
@@ -19,8 +24,6 @@ export default function DigitalOrdersBoard() {
   useEffect(() => {
     dispatch(fetchOrders());
   }, [dispatch]);
-
-  // ... rest of the component stays the same
 
   useEffect(() => {
     if (!orders.length) {
@@ -42,12 +45,33 @@ export default function DigitalOrdersBoard() {
   const isCancelDisabled =
     statusLower === "cancelled" || statusLower === "completed";
 
-  const changeStatus = (
+  // ✅ Refreshes stock, sales, customers after any status change
+  const refreshRelatedData = async (newStatus: string) => {
+    dispatch(fetchStockItems());
+    dispatch(fetchSales());
+
+    // Only refresh customers when an order completes or cancels (stats change)
+    if (newStatus === "Completed" || newStatus === "Cancelled") {
+      dispatch(fetchCustomers());
+    }
+  };
+
+  const changeStatus = async (
     status: "Accepted" | "Preparing" | "Ready" | "Cancelled" | "Completed"
   ) => {
-  if (!selectedOrderId) return;
-  dispatch(updateOrderStatus({ id: selectedOrderId, status }));
-};
+    if (!selectedOrderId) return;
+
+    try {
+      await dispatch(
+        updateOrderStatus({ id: selectedOrderId, status })
+      ).unwrap();
+
+      // ✅ Refresh related data after successful status update
+      await refreshRelatedData(status);
+    } catch (err) {
+      console.error("Failed to update order status:", err);
+    }
+  };
 
   const getNextStatus = (status: string) => {
     if (status === "pending") return "Accepted";
@@ -94,31 +118,19 @@ export default function DigitalOrdersBoard() {
           min-height: 0;
         }
 
-        /* Mobile: show only one panel at a time */
         @media (max-width: 767px) {
           .dob-grid {
             grid-template-columns: 1fr;
             grid-template-rows: 1fr;
           }
-          .dob-list-panel {
-            display: block;
-          }
-          .dob-detail-panel {
-            display: block;
-          }
-          /* Hide/show panels based on mobile view state */
-          .dob-grid[data-view="list"] .dob-detail-panel {
-            display: none;
-          }
-          .dob-grid[data-view="detail"] .dob-list-panel {
-            display: none;
-          }
+          .dob-list-panel { display: block; }
+          .dob-detail-panel { display: block; }
+          .dob-grid[data-view="list"] .dob-detail-panel { display: none; }
+          .dob-grid[data-view="detail"] .dob-list-panel { display: none; }
         }
 
         @media (min-width: 768px) and (max-width: 1023px) {
-          .dob-grid {
-            grid-template-columns: 280px 1fr;
-          }
+          .dob-grid { grid-template-columns: 280px 1fr; }
         }
       `}</style>
 
@@ -142,15 +154,36 @@ export default function DigitalOrdersBoard() {
               marginBottom: 12,
             }}
           >
-            <h2 style={{ color: "var(--gray-12)", fontSize: 18, fontWeight: 700, margin: 0 }}>
+            <h2
+              style={{
+                color: "var(--gray-12)",
+                fontSize: 18,
+                fontWeight: 700,
+                margin: 0,
+              }}
+            >
               Incoming Orders ({orders.length})
             </h2>
             {loading && (
-              <span style={{ color: "var(--gray-10)", fontSize: 12 }}>Refreshing...</span>
+              <span style={{ color: "var(--gray-10)", fontSize: 12 }}>
+                Refreshing...
+              </span>
             )}
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {orders.length === 0 && (
+              <p
+                style={{
+                  color: "var(--gray-10)",
+                  textAlign: "center",
+                  marginTop: 40,
+                  fontSize: 14,
+                }}
+              >
+                No online orders yet
+              </p>
+            )}
             {orders.map((order) => (
               <div
                 key={order._id}
@@ -178,7 +211,14 @@ export default function DigitalOrdersBoard() {
                     marginBottom: 4,
                   }}
                 >
-                  <p style={{ margin: 0, color: "var(--gray-12)", fontWeight: 600, fontSize: 15 }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "var(--gray-12)",
+                      fontWeight: 600,
+                      fontSize: 15,
+                    }}
+                  >
                     {order.orderNumber}
                   </p>
                   <span
@@ -194,11 +234,24 @@ export default function DigitalOrdersBoard() {
                     {order.status}
                   </span>
                 </div>
-                <p style={{ margin: "0 0 6px 0", color: "var(--gray-10)", fontSize: 13 }}>
+                <p
+                  style={{
+                    margin: "0 0 6px 0",
+                    color: "var(--gray-10)",
+                    fontSize: 13,
+                  }}
+                >
                   {order.customerName || "Walk-in"}
                 </p>
-                <p style={{ margin: 0, color: "var(--accent-10)", fontSize: 14, fontWeight: 600 }}>
-                  Rs {order.totalAmount}
+                <p
+                  style={{
+                    margin: 0,
+                    color: "var(--accent-10)",
+                    fontSize: 14,
+                    fontWeight: 600,
+                  }}
+                >
+                  ₹{order.totalAmount}
                 </p>
               </div>
             ))}
@@ -254,12 +307,11 @@ export default function DigitalOrdersBoard() {
 
               <style>{`
                 @media (max-width: 767px) {
-                  .dob-back-btn {
-                    display: flex !important;
-                  }
+                  .dob-back-btn { display: flex !important; }
                 }
               `}</style>
 
+              {/* Order header */}
               <div
                 style={{
                   display: "flex",
@@ -268,10 +320,23 @@ export default function DigitalOrdersBoard() {
                 }}
               >
                 <div>
-                  <h3 style={{ margin: 0, color: "var(--gray-12)", fontSize: 24, fontWeight: 700 }}>
+                  <h3
+                    style={{
+                      margin: 0,
+                      color: "var(--gray-12)",
+                      fontSize: 24,
+                      fontWeight: 700,
+                    }}
+                  >
                     {selectedOrder.orderNumber}
                   </h3>
-                  <p style={{ margin: "6px 0 0 0", color: "var(--gray-10)", fontSize: 13 }}>
+                  <p
+                    style={{
+                      margin: "6px 0 0 0",
+                      color: "var(--gray-10)",
+                      fontSize: 13,
+                    }}
+                  >
                     {new Date(selectedOrder.createdAt).toLocaleString()}
                   </p>
                 </div>
@@ -289,6 +354,7 @@ export default function DigitalOrdersBoard() {
                 </span>
               </div>
 
+              {/* Customer details */}
               <div
                 style={{
                   background: "var(--gray-2)",
@@ -297,13 +363,25 @@ export default function DigitalOrdersBoard() {
                   border: "1px solid var(--gray-6)",
                 }}
               >
-                <p style={{ margin: "0 0 8px 0", color: "var(--gray-11)", fontWeight: 600 }}>
+                <p
+                  style={{
+                    margin: "0 0 8px 0",
+                    color: "var(--gray-11)",
+                    fontWeight: 600,
+                  }}
+                >
                   Customer Details
                 </p>
                 <p style={{ margin: "0 0 4px 0", color: "var(--gray-12)" }}>
                   {selectedOrder.customerName || "Walk-in"}
                 </p>
-                <p style={{ margin: "0 0 4px 0", color: "var(--gray-10)", fontSize: 14 }}>
+                <p
+                  style={{
+                    margin: "0 0 4px 0",
+                    color: "var(--gray-10)",
+                    fontSize: 14,
+                  }}
+                >
                   {selectedOrder.phone || "-"}
                 </p>
                 <p style={{ margin: 0, color: "var(--gray-10)", fontSize: 14 }}>
@@ -311,11 +389,20 @@ export default function DigitalOrdersBoard() {
                 </p>
               </div>
 
+              {/* Order items */}
               <div>
-                <p style={{ margin: "0 0 10px 0", color: "var(--gray-11)", fontWeight: 600 }}>
+                <p
+                  style={{
+                    margin: "0 0 10px 0",
+                    color: "var(--gray-11)",
+                    fontWeight: 600,
+                  }}
+                >
                   Order Items
                 </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                >
                   {selectedOrder.items.map((item, idx) => (
                     <div
                       key={`${item.product}-${idx}`}
@@ -326,14 +413,15 @@ export default function DigitalOrdersBoard() {
                       }}
                     >
                       <span>
-                        {(item as any).product?.name || item.name} x {item.quantity}
+                        {(item as any).product?.name || item.name} × {item.quantity}
                       </span>
-                      <span>Rs {item.price * item.quantity}</span>
+                      <span>₹{item.price * item.quantity}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
+              {/* Notes */}
               {selectedOrder.notes && (
                 <div
                   style={{
@@ -343,7 +431,14 @@ export default function DigitalOrdersBoard() {
                     padding: 12,
                   }}
                 >
-                  <p style={{ margin: "0 0 6px 0", color: "#FBBF24", fontWeight: 600, fontSize: 13 }}>
+                  <p
+                    style={{
+                      margin: "0 0 6px 0",
+                      color: "#FBBF24",
+                      fontWeight: 600,
+                      fontSize: 13,
+                    }}
+                  >
                     Special Instructions
                   </p>
                   <p style={{ margin: 0, color: "#FDE68A", fontSize: 13 }}>
@@ -352,6 +447,7 @@ export default function DigitalOrdersBoard() {
                 </div>
               )}
 
+              {/* Total */}
               <div
                 style={{
                   display: "flex",
@@ -361,13 +457,25 @@ export default function DigitalOrdersBoard() {
                   fontWeight: 600,
                 }}
               >
-                <span>Subtotal</span>
-                <span>Rs {selectedOrder.totalAmount}</span>
+                <span>Total</span>
+                <span>₹{selectedOrder.totalAmount}</span>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {/* Action buttons */}
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 10 }}
+              >
                 <button
-                  onClick={() => nextStatus && changeStatus(nextStatus as "Accepted" | "Preparing" | "Ready" | "Completed")}
+                  onClick={() =>
+                    nextStatus &&
+                    changeStatus(
+                      nextStatus as
+                        | "Accepted"
+                        | "Preparing"
+                        | "Ready"
+                        | "Completed"
+                    )
+                  }
                   disabled={!nextStatus || Boolean(isStatusLocked)}
                   style={{
                     background: "#2563EB",
