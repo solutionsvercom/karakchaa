@@ -23,6 +23,12 @@ export interface Sale {
     name: string;
     sku: string;
   };
+  items?: {
+    product?: string;
+    name: string;
+    price: number;
+    quantity: number;
+  }[];
 }
 
 interface SalesState {

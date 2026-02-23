@@ -200,7 +200,6 @@ async function createSaleFromOrder(order, paymentMethod = "Cash") {
   );
 
   if (!lockedOrder) {
-    // Sale already created — safe to skip
     return [];
   }
 
@@ -224,10 +223,11 @@ async function createSaleFromOrder(order, paymentMethod = "Cash") {
     }
   }
 
-  // ✅ STEP 2: All valid — deduct stock and calculate total
+  // ✅ STEP 2: Deduct stock, build items list for invoice
   let totalAmount = 0;
   let firstProductId = null;
   let totalQuantity = 0;
+  const saleItems = [];
 
   for (const item of lockedOrder.items) {
     const productDoc = await Product.findById(item.product);
@@ -238,19 +238,27 @@ async function createSaleFromOrder(order, paymentMethod = "Cash") {
 
     await syncStockmanagement(productDoc, item.quantity, "remove", invoiceNumber);
 
+    saleItems.push({
+      product: productDoc._id,
+      name:    item.name || productDoc.name,
+      price:   item.price,
+      quantity: item.quantity,
+    });
+
     totalAmount += item.price * item.quantity;
     totalQuantity += item.quantity;
   }
 
-  // ✅ ONE sale for the entire order — fixes duplicate invoiceNumber crash
   const normalizePayment = (method) => {
     const valid = ["Cash", "Card", "UPI", "PhonePe", "GPay", "Paytm", "Other"];
     const match = valid.find(v => v.toLowerCase() === (method || "Cash").toLowerCase());
     return match || "Cash";
   };
 
+  // ✅ ONE sale per order with ALL items stored — fixes invoice showing only first product
   const sale = await Sale.create({
     invoiceNumber,
+    items: saleItems,
     product: firstProductId,
     quantity: totalQuantity,
     sellingPrice: totalAmount,

@@ -7,17 +7,18 @@ import {
   DropdownMenu,
   IconButton,
 } from "@radix-ui/themes";
-import { ChevronDown, MoreVertical, Pencil, Trash2, Eye } from "lucide-react";
+import { ChevronDown, MoreVertical, Pencil, Eye } from "lucide-react";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store/Store";
-import { DotsVerticalIcon } from "@radix-ui/react-icons";
 import {
   fetchSales,
-  deleteSale,
+  updateSale,
   Sale,
 } from "../../features/SalesSlice";
+import * as Dialog from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
 
 /* ================= TYPES ================= */
 
@@ -28,6 +29,7 @@ type SaleTransaction = {
   invoice: string;
   customer: string;
   items: string;
+  saleItems: { name: string; price: number; quantity: number }[]; // ✅ all items for invoice
   type: string;
   amount: number;
   payment: PaymentStatus;
@@ -74,6 +76,10 @@ export default function Sales() {
   const [searchValue, setSearchValue] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
 
+  const [viewSale, setViewSale] = useState<SaleTransaction | null>(null);
+  const [editSale, setEditSale] = useState<{ row: SaleTransaction; sale: Sale } | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+
   useEffect(() => {
     dispatch(fetchSales());
   }, [dispatch]);
@@ -81,9 +87,13 @@ export default function Sales() {
   const mappedSales: SaleTransaction[] = sales.map((s: Sale, index) => ({
     id: index,
     invoice: s.invoiceNumber,
-    customer: s.customer?.fullName || s.customerName || "Walk-in", // ✅ real customer name
+    customer: s.customer?.fullName || s.customerName || "Walk-in",
     items: s.product?.name || "-",
-    type: s.paymentMethod,   // ✅ Cash / Card / UPI
+    // ✅ Use stored items array; fallback to single product for old records
+    saleItems: (s as any).items?.length
+      ? (s as any).items
+      : [{ name: s.product?.name || "-", price: s.sellingPrice || s.totalAmount, quantity: s.quantity || 1 }],
+    type: s.paymentMethod,
     amount: s.totalAmount,
     payment: s.paymentStatus as PaymentStatus,
     dateTime: s.createdAt,
@@ -134,13 +144,11 @@ export default function Sales() {
             </IconButton>
           </DropdownMenu.Trigger>
           <DropdownMenu.Content>
-            <DropdownMenu.Item><Pencil size={14} /> Edit</DropdownMenu.Item>
-            <DropdownMenu.Item><Eye size={14} /> View</DropdownMenu.Item>
-            <DropdownMenu.Item
-              color="red"
-              onClick={() => dispatch(deleteSale(sales[row.id]._id))}
-            >
-              <Trash2 size={14} /> Delete
+            <DropdownMenu.Item onClick={() => setViewSale(row)}>
+              <Eye size={14} /> View Invoice
+            </DropdownMenu.Item>
+            <DropdownMenu.Item onClick={() => setEditSale({ row, sale: sales[row.id] })}>
+              <Pencil size={14} /> Change Status
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
@@ -153,34 +161,26 @@ export default function Sales() {
   return (
     <>
       <style>{`
-        /* ===== SALES PAGE RESPONSIVE ===== */
-
         .sales-summary-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 16px;
           margin-bottom: 4px;
         }
-
-        /* Scrollable table wrapper on mobile */
         .sales-table-wrap {
           width: 100%;
           overflow-x: auto;
           -webkit-overflow-scrolling: touch;
           border-radius: 12px;
         }
-
-        /* Ensure table inside doesn't shrink below readable width */
         .sales-table-wrap > * {
           min-width: 520px;
         }
-
         @media (max-width: 767px) {
           .sales-summary-grid {
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
           }
-          /* Make 3rd card full width on mobile for odd number */
           .sales-summary-grid > *:last-child:nth-child(odd) {
             grid-column: 1 / -1;
           }
@@ -192,7 +192,6 @@ export default function Sales() {
             flex: 1 1 100% !important;
           }
         }
-
         @media (max-width: 400px) {
           .sales-summary-grid {
             grid-template-columns: 1fr 1fr;
@@ -247,7 +246,7 @@ export default function Sales() {
               </Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content>
-              {["All Payments", "cash", "card", "upi"].map((item) => (
+              {["All Payments", "Cash", "Card", "UPI", "PhonePe", "GPay", "Paytm", "Other"].map((item) => (
                 <DropdownMenu.Item key={item} onSelect={() => setPaymentFilter(item)}>
                   {item}
                 </DropdownMenu.Item>
@@ -256,7 +255,7 @@ export default function Sales() {
           </DropdownMenu.Root>
         </Flex>
 
-        {/* ================= TABLE (scrollable on mobile) ================= */}
+        {/* ================= TABLE ================= */}
         <div className="sales-table-wrap">
           <Table<SaleTransaction>
             data={filteredSales}
@@ -268,6 +267,155 @@ export default function Sales() {
         </div>
 
       </div>
+
+      {/* ===== VIEW INVOICE MODAL ===== */}
+      <Dialog.Root open={!!viewSale} onOpenChange={() => setViewSale(null)}>
+        <Dialog.Portal>
+          <Dialog.Overlay style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000 }} />
+          <Dialog.Content style={{
+            position: "fixed", top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "Canvas", color: "CanvasText",
+            padding: 28, width: "min(480px, calc(100vw - 32px))",
+            borderRadius: 16, zIndex: 1001,
+            boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+          }}>
+            <Dialog.Title asChild>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <span style={{ fontSize: 20, fontWeight: 700 }}>🧾 Invoice</span>
+                <Dialog.Close asChild>
+                  <Button variant="ghost" style={{ cursor: "pointer" }}><X size={20} /></Button>
+                </Dialog.Close>
+              </div>
+            </Dialog.Title>
+            <Dialog.Description asChild>
+              <span style={{ display: "none" }}>Invoice details</span>
+            </Dialog.Description>
+
+            {viewSale && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                <div style={{ background: "var(--accent-9)", color: "white", padding: "16px 20px", borderRadius: "10px 10px 0 0" }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 1 }}>{viewSale.invoice}</div>
+                  <div style={{ fontSize: 13, opacity: 0.85, marginTop: 2 }}>{formatDate(viewSale.dateTime)}</div>
+                </div>
+
+                <div style={{ border: "1px solid var(--gray-a4)", borderTop: "none", borderRadius: "0 0 10px 10px", padding: "20px" }}>
+                  <Row label="Customer" value={viewSale.customer} />
+
+                  {/* ✅ All ordered items */}
+                  <div style={{ padding: "8px 0", borderBottom: "1px solid var(--gray-a3)" }}>
+                    <span style={{ fontSize: 13, color: "var(--gray-11)" }}>Items Ordered</span>
+                    <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 4 }}>
+                      {viewSale.saleItems.map((item, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                          <span>{item.name} × {item.quantity}</span>
+                          <span style={{ fontWeight: 500 }}>₹{(item.price * item.quantity).toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Row label="Payment Type" value={viewSale.type} badge="blue" />
+                  <Row label="Status" value={viewSale.payment} badge={
+                    viewSale.payment === "completed" ? "green" :
+                    viewSale.payment === "cancelled" ? "red" : "yellow"
+                  } />
+                  <div style={{ borderTop: "2px solid var(--gray-a4)", marginTop: 12, paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontWeight: 600, fontSize: 16 }}>Total Amount</span>
+                    <span style={{ fontWeight: 800, fontSize: 22, color: "var(--green-9)" }}>₹{viewSale.amount.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* ===== EDIT STATUS MODAL ===== */}
+      <Dialog.Root open={!!editSale} onOpenChange={() => setEditSale(null)}>
+        <Dialog.Portal>
+          <Dialog.Overlay style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000 }} />
+          <Dialog.Content style={{
+            position: "fixed", top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "Canvas", color: "CanvasText",
+            padding: 28, width: "min(400px, calc(100vw - 32px))",
+            borderRadius: 16, zIndex: 1001,
+            boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+          }}>
+            <Dialog.Title asChild>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <span style={{ fontSize: 18, fontWeight: 700 }}>Change Status</span>
+                <Dialog.Close asChild>
+                  <Button variant="ghost" style={{ cursor: "pointer" }}><X size={20} /></Button>
+                </Dialog.Close>
+              </div>
+            </Dialog.Title>
+            <Dialog.Description asChild>
+              <span style={{ display: "none" }}>Change sale payment status</span>
+            </Dialog.Description>
+
+            {editSale && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <div style={{ fontSize: 14, color: "var(--gray-11)" }}>
+                  Invoice: <strong>{editSale.row.invoice}</strong> · Current:{" "}
+                  <Badge color={editSale.row.payment === "completed" ? "green" : editSale.row.payment === "cancelled" ? "red" : "yellow"} variant="soft" style={{ textTransform: "capitalize" }}>
+                    {editSale.row.payment}
+                  </Badge>
+                </div>
+
+                <div style={{ display: "flex", gap: 10 }}>
+                  {(["completed", "cancelled"] as const)
+                    .filter(s => s !== editSale.row.payment)
+                    .map(status => (
+                      <Button
+                        key={status}
+                        disabled={editLoading}
+                        style={{
+                          flex: 1, height: 42, cursor: "pointer",
+                          background: status === "completed" ? "var(--green-9)" : "var(--red-9)",
+                          color: "white",
+                        }}
+                        onClick={async () => {
+                          setEditLoading(true);
+                          try {
+                            await dispatch(updateSale({
+                              id: editSale.sale._id,
+                              data: { paymentStatus: status.charAt(0).toUpperCase() + status.slice(1) },
+                            })).unwrap();
+                            dispatch(fetchSales());
+                            setEditSale(null);
+                          } catch (e) {
+                            console.error(e);
+                          } finally {
+                            setEditLoading(false);
+                          }
+                        }}
+                      >
+                        Mark as {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </Button>
+                    ))}
+                </div>
+              </div>
+            )}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
     </>
+  );
+}
+
+/* ===== HELPER COMPONENT ===== */
+function Row({ label, value, badge }: { label: string; value: string; badge?: string }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid var(--gray-a3)" }}>
+      <span style={{ fontSize: 13, color: "var(--gray-11)" }}>{label}</span>
+      {badge ? (
+        <Badge color={badge as any} variant="soft" style={{ textTransform: "capitalize" }}>{value}</Badge>
+      ) : (
+        <span style={{ fontSize: 14, fontWeight: 500 }}>{value}</span>
+      )}
+    </div>
   );
 }

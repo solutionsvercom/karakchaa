@@ -25,6 +25,31 @@ class SaleController {
 }
 
 
+    async updateSale(req, res, next) {
+        try {
+            const { id } = req.params;
+            const { paymentStatus } = req.body;
+
+            const allowed = ["Completed", "Pending", "Cancelled"];
+            if (paymentStatus && !allowed.includes(paymentStatus)) {
+                return res.status(400).json({ success: false, message: "Invalid paymentStatus" });
+            }
+
+            const Sale = require("../models/Sale");
+            const sale = await Sale.findByIdAndUpdate(
+                id,
+                { $set: { paymentStatus } },
+                { new: true }
+            ).populate("product", "name sku").populate("customer", "fullName");
+
+            if (!sale) return res.status(404).json({ success: false, message: "Sale not found" });
+
+            res.json({ success: true, data: sale });
+        } catch (err) {
+            next(err);
+        }
+    }
+
     async getSales(req, res, next) {
         try {
             // ✅ Controlled filter payload
