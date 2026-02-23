@@ -1,7 +1,8 @@
+import { useState } from "react";
+import { Callout } from "@radix-ui/themes";
 import DynamicForm from "../../components/dynamicComponents/DynamicForm/DynamicForm";
 import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
 
-/* ---------- FIELD TYPES ---------- */
 type SupplierField =
   | "companyName"
   | "contactPerson"
@@ -13,10 +14,8 @@ type SupplierField =
   | "productsSupplied"
   | "active";
 
-/* ---------- FORM VALUE TYPE ---------- */
 export type SupplierFormValues = Partial<Record<SupplierField, any>>;
 
-/* ---------- PROPS ---------- */
 type AddSupplierProps = {
   onClose: () => void;
   initialValues?: SupplierFormValues;
@@ -24,97 +23,87 @@ type AddSupplierProps = {
   onSave: (data: SupplierFormValues) => void;
 };
 
-/* ---------- COMPONENT ---------- */
-const AddSupplier = ({
-  onClose,
-  initialValues,
-  mode = "add",
-  onSave,
-}: AddSupplierProps) => {
+const AddSupplier = ({ onClose, initialValues, mode = "add", onSave }: AddSupplierProps) => {
+  const [error, setError] = useState<string | null>(null);
+
   const fields: FormField<SupplierField>[] = [
-    {
-      name: "companyName",
-      label: "Company Name",
-      type: "text",
-      placeholder: "Company Name",
-      required: true,
-      span: 2,
-    },
-    {
-      name: "contactPerson",
-      label: "Contact Person",
-      placeholder: "Enter Contact Person",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "phone",
-      label: "Phone",
-      placeholder: "Enter Phone No",
-      type: "text",
-      required: true,
-    },
-    {
-      name: "email",
-      label: "Email",
-      placeholder: "Enter Email",
-      type: "email",
-      span: 2,
-    },
-    {
-      name: "address",
-      label: "Address",
-      placeholder: "Enter Address",
-      type: "textarea",
-      span: 2,
-      rows: 2,
-    },
-    {
-      name: "gst",
-      label: "GST Number",
-      placeholder: "Enter GST Number",
-      type: "text",
-    },
-    {
-      name: "paymentTerms",
-      label: "Payment Terms",
-      placeholder: "Enter Payment Terms",
-      type: "text",
-    },
-    {
-      name: "productsSupplied",
-      label: "Products Supplied",
-      type: "textarea",
-      placeholder: "Enter Products Supplied",
-      span: 2,
-    },
-    {
-      name: "active",
-      label: "Active Supplier",
-      type: "switch",
-      span: 2,
-    },
+    { name: "companyName", label: "Company Name", type: "text", placeholder: "Company Name", required: true, span: 2 },
+    { name: "contactPerson", label: "Contact Person", placeholder: "Enter Contact Person", type: "text", required: true },
+    { name: "phone", label: "Phone", placeholder: "Enter 10 digit phone number", type: "text", required: true },
+    { name: "email", label: "Email", placeholder: "Enter Email", type: "email", span: 2 },
+    { name: "address", label: "Address", placeholder: "Enter Address", type: "textarea", span: 2, rows: 2 },
+    { name: "gst", label: "GST Number", placeholder: "Enter GST Number", type: "text" },
+    { name: "paymentTerms", label: "Payment Terms", placeholder: "Enter Payment Terms", type: "text" },
+    { name: "productsSupplied", label: "Products Supplied", type: "textarea", placeholder: "Enter Products Supplied", span: 2 },
+    { name: "active", label: "Active Supplier", type: "switch", span: 2 },
   ];
 
   return (
-    <DynamicForm
-      title={mode === "edit" ? "Edit Supplier" : "Add Supplier"}
-      fields={fields}
-      initialValues={initialValues}
-      submitText={mode === "edit" ? "Update" : "Create"}
-      cancelText="Cancel"
-      onCancel={onClose}
-      onSubmit={(data) => {
-        const phone = String(data.phone ?? "").trim();
-        if (!/^\d{10}$/.test(phone)) {
-          alert("Phone number must be exactly 10 digits");
-          return;
-        }
+    <>
+      {error && (
+        <Callout.Root color="red" style={{ marginBottom: "16px" }}>
+          <Callout.Text>{error}</Callout.Text>
+        </Callout.Root>
+      )}
 
-        onSave({ ...data, phone });
-        onClose();
-      }}
-    />
+      <DynamicForm
+        title={mode === "edit" ? "Edit Supplier" : "Add Supplier"}
+        fields={fields}
+        initialValues={initialValues}
+        submitText={mode === "edit" ? "Update" : "Create"}
+        cancelText="Cancel"
+        onCancel={() => {
+          setError(null);
+          onClose();
+        }}
+        confirm={{
+          title: mode === "edit" ? "Are you sure you want to update?" : "Are you absolutely sure?",
+          description: mode === "edit" ? "This will update the supplier details." : "This action cannot be undone.",
+          confirmText: mode === "edit" ? "Yes, Update" : "Yes, Create",
+          cancelText: "No, go back",
+        }}
+        onSubmit={(data) => {
+          setError(null);
+
+          // Company name validation
+          if (!data.companyName?.trim()) {
+            setError("Company name is required");
+            return;
+          }
+
+          // Contact person validation
+          if (!data.contactPerson?.trim()) {
+            setError("Contact person is required");
+            return;
+          }
+
+          // Phone validation
+          const digits = String(data.phone ?? "").replace(/\D/g, "");
+          if (!digits) {
+            setError("Phone number is required");
+            return;
+          }
+          if (digits.length < 10) {
+            setError(`Phone number is too short (${digits.length}/10 digits)`);
+            return;
+          }
+          if (digits.length > 10) {
+            setError(`Phone number is too long (${digits.length}/10 digits)`);
+            return;
+          }
+
+          // Email validation (optional but must be valid if provided)
+          const email = data.email?.trim();
+          if (email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+            setError("Please enter a valid email address");
+            return;
+          }
+
+          onSave({ ...data, phone: digits });
+          onClose();
+        }}
+      />
+    </>
   );
 };
 
