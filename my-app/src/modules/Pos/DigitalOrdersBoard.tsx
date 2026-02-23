@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../store/Store";
 import { fetchOrders, updateOrderStatus } from "../../features/OrdersSlice";
-import { createSale } from "../../features/SalesSlice";
 import { ArrowLeft } from "lucide-react";
 
 export default function DigitalOrdersBoard() {
@@ -19,10 +18,6 @@ export default function DigitalOrdersBoard() {
 
   useEffect(() => {
     dispatch(fetchOrders());
-    const interval = setInterval(() => {
-      dispatch(fetchOrders());
-    }, 10000);
-    return () => clearInterval(interval);
   }, [dispatch]);
 
   // ... rest of the component stays the same
@@ -42,40 +37,38 @@ export default function DigitalOrdersBoard() {
     [orders, selectedOrderId]
   );
 
-  const isLocked =
-    selectedOrder &&
-    ["completed", "cancelled"].includes(String(selectedOrder.status).toLowerCase());
+  const statusLower = String(selectedOrder?.status || "").toLowerCase();
+  const isStatusLocked = ["completed", "cancelled"].includes(statusLower);
+  const isCancelDisabled =
+    statusLower === "cancelled" || statusLower === "completed";
 
-  const changeStatus = (status: "Ready" | "Cancelled" | "Completed") => {
+  const changeStatus = (
+    status: "Accepted" | "Preparing" | "Ready" | "Cancelled" | "Completed"
+  ) => {
   if (!selectedOrderId) return;
   dispatch(updateOrderStatus({ id: selectedOrderId, status }));
 };
 
-  const handleCompleteOrder = async () => {
-    if (!selectedOrder) return;
-    try {
-      for (const item of selectedOrder.items) {
-        const rawProduct = (item as any).product;
-        const productId =
-          typeof rawProduct === "string" ? rawProduct : rawProduct?._id;
-        if (!productId) continue;
-        await dispatch(
-          createSale({
-            productId,
-            quantity: item.quantity,
-            paymentMethod: "Cash",
-            paymentStatus: "Completed",
-          })
-        ).unwrap();
-      }
-      await dispatch(
-        updateOrderStatus({ id: selectedOrder._id, status: "Completed" })
-      ).unwrap();
-      dispatch(fetchOrders());
-    } catch (error) {
-      console.error("Failed to complete order:", error);
-    }
+  const getNextStatus = (status: string) => {
+    if (status === "pending") return "Accepted";
+    if (status === "accepted") return "Preparing";
+    if (status === "preparing") return "Ready";
+    if (status === "ready") return "Completed";
+    return null;
   };
+
+  const getNextStatusLabel = (status: string) => {
+    if (status === "pending") return "Mark as Accepted";
+    if (status === "accepted") return "Mark as Preparing";
+    if (status === "preparing") return "Mark as Ready";
+    if (status === "ready") return "Mark as Completed";
+    if (status === "completed") return "Order Completed";
+    if (status === "cancelled") return "Order Cancelled";
+    return "Update Status";
+  };
+
+  const nextStatus = getNextStatus(statusLower);
+  const nextStatusLabel = getNextStatusLabel(statusLower);
 
   const handleSelectOrder = (id: string) => {
     setSelectedOrderId(id);
@@ -374,42 +367,25 @@ export default function DigitalOrdersBoard() {
 
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <button
-                  onClick={() => changeStatus("Ready")}
-                  disabled={Boolean(isLocked)}
+                  onClick={() => nextStatus && changeStatus(nextStatus as "Accepted" | "Preparing" | "Ready" | "Completed")}
+                  disabled={!nextStatus || Boolean(isStatusLocked)}
                   style={{
-                    background: "#22C55E",
+                    background: "#2563EB",
                     border: "none",
                     color: "white",
                     borderRadius: 10,
                     fontWeight: 600,
                     padding: "11px 12px",
                     cursor: "pointer",
-                    opacity: isLocked ? 0.55 : 1,
+                    opacity: !nextStatus || isStatusLocked ? 0.55 : 1,
                     fontSize: 15,
                   }}
                 >
-                  Mark Ready
-                </button>
-                <button
-                  onClick={handleCompleteOrder}
-                  disabled={Boolean(isLocked)}
-                  style={{
-                    background: "var(--accent-9)",
-                    border: "none",
-                    color: "var(--accent-contrast)",
-                    borderRadius: 10,
-                    fontWeight: 600,
-                    padding: "11px 12px",
-                    cursor: "pointer",
-                    opacity: isLocked ? 0.55 : 1,
-                    fontSize: 15,
-                  }}
-                >
-                  Complete and Push to Sales
+                  {nextStatusLabel}
                 </button>
                 <button
                   onClick={() => changeStatus("Cancelled")}
-                  disabled={Boolean(isLocked)}
+                  disabled={isCancelDisabled}
                   style={{
                     background: "transparent",
                     border: "1px solid #EF4444",
@@ -418,7 +394,7 @@ export default function DigitalOrdersBoard() {
                     fontWeight: 600,
                     padding: "11px 12px",
                     cursor: "pointer",
-                    opacity: isLocked ? 0.55 : 1,
+                    opacity: isCancelDisabled ? 0.55 : 1,
                     fontSize: 15,
                   }}
                 >

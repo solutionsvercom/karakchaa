@@ -1,4 +1,5 @@
 const Order = require("../models/Order/OrderSchema");
+const SaleService = require("./SaleService");
 
 async function generateOrderNumber() {
     const count = await Order.countDocuments();
@@ -13,7 +14,7 @@ async function createOrder(data) {
         phone,
         tableNumber,
         orderType,
-        notes, // ← ADD THIS
+        notes,
     } = data;
 
     const orderNumber = await generateOrderNumber();
@@ -23,9 +24,8 @@ async function createOrder(data) {
         0
     );
 
-    // Map items to correct format
     const formattedItems = items.map(item => ({
-        product: item.productId || item.product, // Handle both formats
+        product: item.productId || item.product,
         name: item.name,
         price: item.price,
         quantity: item.quantity,
@@ -37,10 +37,15 @@ async function createOrder(data) {
         customerName: customerName || "Walk-in",
         phone,
         tableNumber,
-        orderType: orderType || "online", // Default to 'online' for digital menu
+        orderType: orderType || "online",
         totalAmount,
-        notes, // ← ADD THIS
+        notes,
     });
+
+    /* ================= POS INSTANT SALE ================= */
+    if (order.orderType !== "online") {
+        await SaleService.createSaleFromOrder(order);
+    }
 
     return order;
 }
@@ -54,9 +59,35 @@ async function getOrders() {
 
 /* UPDATE STATUS */
 async function updateOrderStatus(id, status) {
-    return await Order.findByIdAndUpdate(
-        id, { status }, { new: true }
-    );
+    const allowedStatuses = [
+        "Pending",
+        "Accepted",
+        "Preparing",
+        "Ready",
+        "Completed",
+        "Cancelled",
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+        throw new Error("Invalid order status");
+    }
+
+    const order = await Order.findByIdAndUpdate(
+        id,
+        { status },
+        { new: true }
+    ).populate("items.product");
+
+    if (!order) {
+        throw new Error("Order not found");
+    }
+
+    /* ================= DIGITAL MENU FLOW ================= */
+    if (order.orderType === "online" && status === "Completed") {
+        await SaleService.createSaleFromOrder(order);
+    }
+
+    return order;
 }
 
 module.exports = {
