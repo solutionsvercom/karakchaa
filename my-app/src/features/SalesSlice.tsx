@@ -12,6 +12,12 @@ export interface Sale {
   paymentMethod: string;
   paymentStatus: string;
   createdAt: string;
+  // ✅ Added: populated customer object from backend
+  customer?: {
+    _id: string;
+    fullName: string;
+  };
+  customerName?: string;
   product?: {
     _id: string;
     name: string;
@@ -58,18 +64,16 @@ export const createSale = createAsyncThunk<
   "sales/create",
   async (payload, thunkAPI) => {
     try {
-        const body = {
-      product: payload.productId,
-      quantity: payload.quantity,
-      sellingPrice: payload.sellingPrice,
-      paymentMethod: payload.paymentMethod,
-      paymentStatus: payload.paymentStatus,
-      customer: payload.customer,
-    };
-
+      const body = {
+        product: payload.productId,
+        quantity: payload.quantity,
+        sellingPrice: payload.sellingPrice,
+        paymentMethod: payload.paymentMethod,
+        paymentStatus: payload.paymentStatus,
+        customer: payload.customer,
+      };
 
       const res = await axios.post(BASE_URL, body);
-
       return res.data.data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue(
@@ -78,7 +82,6 @@ export const createSale = createAsyncThunk<
     }
   }
 );
-
 
 export const updateSale = createAsyncThunk<
   Sale,

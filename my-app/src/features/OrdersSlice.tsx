@@ -15,7 +15,14 @@ export interface Order {
   customerName?: string;
   phone?: string;
   orderType: "dine-in" | "takeaway" | "delivery" | "online";
-  status: "Pending" | "Accepted" | "Preparing" | "Ready" | "Completed" | "Cancelled";
+  paymentMethod?: string; // ✅ NEW
+  status:
+    | "Pending"
+    | "Accepted"
+    | "Preparing"
+    | "Ready"
+    | "Completed"
+    | "Cancelled";
   totalAmount: number;
   createdAt: string;
   notes?: string;
@@ -27,6 +34,7 @@ interface CreateOrderPayload {
   customerName?: string;
   phone?: string;
   orderType: "dine-in" | "takeaway" | "delivery" | "online";
+  paymentMethod?: string; // ✅ NEW
   notes?: string;
 }
 
@@ -127,7 +135,9 @@ const ordersSlice = createSlice({
       })
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.orders.findIndex((o) => o._id === action.payload._id);
+        const index = state.orders.findIndex(
+          (o) => o._id === action.payload._id
+        );
         if (index !== -1) {
           state.orders[index] = action.payload;
         }

@@ -10,6 +10,7 @@ import {
   fetchStockStats,
   clearError,
 } from "../../features/StockmanagementSlice";
+import { fetchProducts } from "../../features/ProductsSlice"; // ✅ auto-refresh products
 import DynamicForm from "../../components/dynamicComponents/DynamicForm/DynamicForm";
 import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
 import { X } from "lucide-react";
@@ -44,17 +45,20 @@ export default function AddStock({ mode, productId, product }: AddStockProps) {
   const dispatch = useDispatch<AppDispatch>();
   const [selectedReason, setSelectedReason] = useState<string>("");
 
+  // ✅ Local validation error (shown when reason is missing)
+  const [validationError, setValidationError] = useState<string | null>(null);
+
   // Get error from Redux state
   const error = useSelector((state: RootState) => state.stock.error);
 
-  // Clear error when component unmounts
+  // Clear errors when component unmounts
   useEffect(() => {
     return () => {
       dispatch(clearError());
     };
   }, [dispatch]);
 
-  //  DYNAMIC FIELDS FUNCTION
+  // DYNAMIC FIELDS FUNCTION
   const getFields = (): FormField<StockFormField>[] => {
     const baseFields: FormField<StockFormField>[] = [
       {
@@ -87,7 +91,7 @@ export default function AddStock({ mode, productId, product }: AddStockProps) {
       },
     ];
 
-    //  ADD SUPPLIER AND UNIT COST ONLY IF REASON IS "PURCHASE" AND MODE IS "ADD"
+    // ADD SUPPLIER AND UNIT COST ONLY IF REASON IS "PURCHASE" AND MODE IS "ADD"
     if (mode === "add" && selectedReason === "purchase") {
       baseFields.push(
         {
@@ -112,7 +116,7 @@ export default function AddStock({ mode, productId, product }: AddStockProps) {
       );
     }
 
-    //  ADD REFERENCE AND NOTES AT THE END
+    // ADD REFERENCE AND NOTES AT THE END
     baseFields.push(
       {
         name: "reference",
@@ -142,15 +146,22 @@ export default function AddStock({ mode, productId, product }: AddStockProps) {
           {mode === "add" ? "Add Stock Details" : "Remove Stock Details"}
         </h3>
         <Dialog.Close asChild>
-          <Button className="dialog-close-icon">
+          <Button variant="ghost">
             <X size={18} />
           </Button>
         </Dialog.Close>
       </Flex>
 
-      {/* ===== ERROR ALERT ===== */}
+      {/* ===== VALIDATION ERROR (missing reason) ===== */}
+      {validationError && (
+        <Callout.Root color="orange" style={{ marginBottom: "8px" }}>
+          <Callout.Text>{validationError}</Callout.Text>
+        </Callout.Root>
+      )}
+
+      {/* ===== REDUX ERROR (server error) ===== */}
       {error && (
-        <Callout.Root color="red" style={{ marginBottom: "16px" }}>
+        <Callout.Root color="red" style={{ marginBottom: "8px" }}>
           <Callout.Text>{error}</Callout.Text>
         </Callout.Root>
       )}
@@ -178,6 +189,7 @@ export default function AddStock({ mode, productId, product }: AddStockProps) {
         cancelText="Cancel"
         onCancel={() => {
           dispatch(clearError());
+          setValidationError(null);
           navigate("/dashboard/stockmanagement");
         }}
         confirm={{
@@ -193,6 +205,19 @@ export default function AddStock({ mode, productId, product }: AddStockProps) {
           cancelText: "Cancel",
         }}
         onSubmit={async (data) => {
+          // ✅ FRONTEND VALIDATION: block submit if reason not selected
+          if (!data.reason || data.reason === "") {
+            setValidationError("Please select a reason before submitting.");
+            return; // stop — don't call API
+          }
+
+          if (!data.quantity || Number(data.quantity) <= 0) {
+            setValidationError("Quantity must be greater than zero.");
+            return;
+          }
+
+          setValidationError(null);
+
           try {
             dispatch(clearError());
 
@@ -212,6 +237,7 @@ export default function AddStock({ mode, productId, product }: AddStockProps) {
 
             await dispatch(fetchStockItems());
             await dispatch(fetchStockStats());
+            await dispatch(fetchProducts()); // ✅ refresh Products page stock numbers
 
             navigate("/dashboard/stockmanagement");
           } catch (error) {
@@ -221,6 +247,8 @@ export default function AddStock({ mode, productId, product }: AddStockProps) {
         onFieldChange={(fieldName, value) => {
           if (fieldName === "reason") {
             setSelectedReason(value as string);
+            // ✅ Clear validation error as soon as user selects a reason
+            if (value) setValidationError(null);
           }
         }}
       />

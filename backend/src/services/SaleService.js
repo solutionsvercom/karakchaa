@@ -2,6 +2,7 @@ const Sale = require("../models/Sale");
 const Product = require("../models/Product");
 const Order = require("../models/Order/OrderSchema");
 const Customer = require("../models/Customers/CustomerSchema");
+const Stockmanagement = require("../models/Stockmanagement/StockmanagementSchema");
 
 /* ================= INVOICE ================= */
 
@@ -34,7 +35,66 @@ async function findOrCreateCustomer(fullName, phoneNumber) {
   return customer._id;
 }
 
-/* ================= CREATE SALE (LEGACY FLOW - UNCHANGED) ================= */
+/* ================= UPDATE CUSTOMER STATS ================= */
+// direction: "increment" when sale created, "decrement" when sale cancelled
+
+async function updateCustomerStats(customerId, totalAmount, direction) {
+  if (!customerId) return;
+
+  const delta = direction === "increment" ? 1 : -1;
+
+  await Customer.findByIdAndUpdate(customerId, {
+    $inc: {
+      totalPurchases: delta,
+      totalSpent: delta * totalAmount,
+    },
+  });
+}
+
+/* ================= SYNC STOCKMANAGEMENT COLLECTION ================= */
+// Finds the matching Stockmanagement record by SKU and adjusts it.
+// action: "remove" when sale created, "add" when sale cancelled
+
+async function syncStockmanagement(productDoc, quantity, action, invoiceNumber) {
+  const stockItem = await Stockmanagement.findOne({ sku: productDoc.sku });
+
+  if (!stockItem) {
+    // Stock management record doesn't exist for this product — skip silently.
+    // (Not every product needs to be in Stockmanagement)
+    return;
+  }
+
+  if (action === "remove") {
+    stockItem.currentStock = Math.max(0, stockItem.currentStock - quantity);
+  } else {
+    stockItem.currentStock += quantity;
+  }
+
+  // Recalculate status
+  if (stockItem.currentStock === 0) {
+    stockItem.status = "Out of Stock";
+  } else if (stockItem.currentStock <= stockItem.minStockLevel) {
+    stockItem.status = "Low Stock";
+  } else {
+    stockItem.status = "In Stock";
+  }
+
+  // Push to stock history for full traceability
+  stockItem.stockHistory.push({
+    action,
+    quantity,
+    reason: action === "remove" ? "sale" : "sale-cancelled",
+    referenceNo: invoiceNumber,
+    notes:
+      action === "remove"
+        ? `Auto-deducted from POS sale`
+        : `Auto-restored — order cancelled`,
+  });
+
+  await stockItem.save();
+}
+
+/* ================= CREATE SALE (LEGACY DIRECT FLOW) ================= */
 
 async function createSale(data) {
   const {
@@ -95,6 +155,8 @@ async function createSale(data) {
   const createdSales = [];
 
   for (const item of orderItems) {
+    const productDoc = await Product.findById(item.product);
+
     const sale = await Sale.create({
       invoiceNumber,
       product: item.product,
@@ -107,7 +169,17 @@ async function createSale(data) {
       soldBy,
     });
 
+    // ✅ Sync Stockmanagement
+    if (productDoc) {
+      await syncStockmanagement(productDoc, item.quantity, "remove", invoiceNumber);
+    }
+
     createdSales.push(sale);
+  }
+
+  // ✅ Update customer stats
+  if (customerId) {
+    await updateCustomerStats(customerId, totalAmount, "increment");
   }
 
   return { order, sales: createdSales };
@@ -115,7 +187,7 @@ async function createSale(data) {
 
 /* ================= ⭐ ATOMIC CREATE SALE FROM ORDER ================= */
 
-async function createSaleFromOrder(order) {
+async function createSaleFromOrder(order, paymentMethod = "Cash") {
   if (!order || !order.items?.length) {
     throw new Error("Invalid order for sale conversion");
   }
@@ -128,7 +200,7 @@ async function createSaleFromOrder(order) {
   );
 
   if (!lockedOrder) {
-    // Sale already created safely
+    // Sale already created — safe to skip
     return [];
   }
 
@@ -143,15 +215,18 @@ async function createSaleFromOrder(order) {
   for (const item of lockedOrder.items) {
     const productDoc = await Product.findById(item.product);
 
-    if (!productDoc) throw new Error("Product not found");
+    if (!productDoc) throw new Error(`Product not found: ${item.name}`);
 
     if (productDoc.stockQty < item.quantity) {
-      throw new Error("Insufficient stock");
+      throw new Error(`Insufficient stock for: ${productDoc.name}`);
     }
 
-    /* ⭐ STOCK DEDUCTION */
+    // ✅ Deduct from Product.stockQty
     productDoc.stockQty -= item.quantity;
     await productDoc.save();
+
+    // ✅ Deduct from Stockmanagement collection (stock history page)
+    await syncStockmanagement(productDoc, item.quantity, "remove", invoiceNumber);
 
     const sale = await Sale.create({
       invoiceNumber,
@@ -160,14 +235,78 @@ async function createSaleFromOrder(order) {
       sellingPrice: item.price,
       totalAmount: item.price * item.quantity,
       customer: customerId,
-      paymentMethod: "Cash",
+      paymentMethod: paymentMethod || "Cash",
       paymentStatus: "Completed",
     });
 
     createdSales.push(sale);
   }
 
+  // ✅ Update customer total purchases and total spent
+  if (customerId) {
+    await updateCustomerStats(customerId, lockedOrder.totalAmount, "increment");
+  }
+
   return createdSales;
+}
+
+/* ================= ⭐ REVERSE SALE ON CANCELLATION ================= */
+
+async function reverseSaleFromOrder(order) {
+  if (!order || !order.items?.length) return;
+
+  // Only reverse if a sale was actually created
+  if (!order.saleCreated) return;
+
+  // Find all sales linked to this order's invoice number range
+  // We match by product + customer + approximate time window
+  // Best approach: store orderId on Sale (see note below)
+  // For now we reverse stock and customer stats directly
+
+  const customerId = order.customer ||
+    (order.phone
+      ? (await Customer.findOne({ phoneNumber: order.phone }))?._id
+      : null);
+
+  for (const item of order.items) {
+    const productDoc = await Product.findById(item.product);
+
+    if (!productDoc) continue;
+
+    // ✅ Restore Product.stockQty
+    productDoc.stockQty += item.quantity;
+    await productDoc.save();
+
+    // ✅ Restore Stockmanagement collection
+    await syncStockmanagement(
+      productDoc,
+      item.quantity,
+      "add",
+      `CANCEL-${order.orderNumber}`
+    );
+  }
+
+  // ✅ Reverse customer stats
+  if (customerId) {
+    await updateCustomerStats(customerId, order.totalAmount, "decrement");
+  }
+
+  // ✅ Mark related sales as Cancelled
+  // We find sales by customer + products within a short time window
+  // Ideal fix: add orderId field to Sale schema (recommended — see comments)
+  const saleUpdatePromises = order.items.map((item) =>
+    Sale.findOneAndUpdate(
+      {
+        product: item.product,
+        customer: customerId,
+        paymentStatus: { $ne: "Cancelled" },
+      },
+      { $set: { paymentStatus: "Cancelled" } },
+      { sort: { createdAt: -1 } } // most recent first
+    )
+  );
+
+  await Promise.all(saleUpdatePromises);
 }
 
 /* ================= GET SALES ================= */
@@ -196,4 +335,5 @@ module.exports = {
   createSale,
   getAllSales,
   createSaleFromOrder,
+  reverseSaleFromOrder,
 };

@@ -81,9 +81,9 @@ export default function Sales() {
   const mappedSales: SaleTransaction[] = sales.map((s: Sale, index) => ({
     id: index,
     invoice: s.invoiceNumber,
-    customer: s.product?.name || "Walk-in",
+    customer: s.customer?.fullName || s.customerName || "Walk-in", // ✅ real customer name
     items: s.product?.name || "-",
-    type: s.paymentMethod,
+    type: s.paymentMethod,   // ✅ Cash / Card / UPI
     amount: s.totalAmount,
     payment: s.paymentStatus as PaymentStatus,
     dateTime: s.createdAt,
@@ -108,9 +108,14 @@ export default function Sales() {
     { key: "customer", header: "Customer",   accessor: "customer" },
     { key: "amount",   header: "Amount",     accessor: "amount",
       render: (value) => <strong>₹{value}</strong> },
-    { key: "payment",  header: "Payment",    accessor: "payment",
+    { key: "type",     header: "Payment Type", accessor: "type",
+      render: (value: string) => (
+        <Badge color="blue" variant="soft" style={{ textTransform: "capitalize" }}>{value}</Badge>
+      ),
+    },
+    { key: "payment",  header: "Status",    accessor: "payment",
       render: (value: PaymentStatus) => (
-        <Badge color={getPaymentColor(value)} variant="soft">{value}</Badge>
+        <Badge color={getPaymentColor(value)} variant="soft" style={{ textTransform: "capitalize" }}>{value}</Badge>
       ),
     },
     { key: "dateTime", header: "Date & Time", accessor: "dateTime",

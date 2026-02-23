@@ -1,16 +1,13 @@
 import {
-  Card,
   Flex,
   Text,
   Badge,
   IconButton,
-  Box,
   DropdownMenu,
   Button,
 } from "@radix-ui/themes";
 import { DotsVerticalIcon, CubeIcon } from "@radix-ui/react-icons";
 import { Pencil, Trash2, Plus } from "lucide-react";
-
 
 /* ---------------- TYPES ---------------- */
 
@@ -23,16 +20,10 @@ export type ProductCardProps = {
   stock: number;
   category: Category;
   image?: string;
-
-  /** POS support */
   variant?: "default" | "pos";
   onAdd?: () => void;
-
-  /** TOGGLE SUPPORT */
   isActive?: boolean;
   onToggleActive?: (value: boolean) => void;
-
-  /** Existing callbacks */
   onEdit?: () => void;
   onDelete?: () => void;
 };
@@ -55,8 +46,6 @@ const categoryColorMap: Record<
   sandwich: "cyan",
 };
 
-/* -------- HELPERS -------- */
-
 const formatLabel = (text: string) =>
   text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
 
@@ -77,25 +66,27 @@ export default function ProductCard({
   onDelete,
 }: ProductCardProps) {
   const isPOS = variant === "pos";
-
   const safeCategory: Category =
     category && categoryColorMap[category] ? category : "other";
-
   const lowStock = stock <= 5;
 
   return (
-    <Card
+    /* ✅ Plain div — no Radix Card, so no Radix styles can override our layout */
+    <div
       className="product-card"
       style={{
-        padding: 0,
         borderRadius: 12,
         overflow: "hidden",
         position: "relative",
-        // ✅ FIXED: removed hardcoded width: 260, now fills grid cell
         width: "100%",
-        background: "white",
-        boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
-        transition: "all 0.25s ease",
+        background: "var(--gray-1)",
+        boxShadow: "0 2px 8px rgba(15, 23, 42, 0.08)",
+        border: "1px solid var(--gray-4)",
+        transition: "box-shadow 0.25s ease, transform 0.25s ease",
+        /* ✅ CRITICAL: plain div defaults to display:block which stacks
+           children naturally — image on top, content below, always visible */
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       {/* MENU (HIDDEN IN POS) */}
@@ -124,15 +115,11 @@ export default function ProductCard({
                 <Pencil size={14} /> Edit
               </DropdownMenu.Item>
             )}
-
             {onToggleActive && (
-              <DropdownMenu.Item
-                onSelect={() => onToggleActive(!isActive)}
-              >
+              <DropdownMenu.Item onSelect={() => onToggleActive(!isActive)}>
                 {isActive ? "Disable Product" : "Enable Product"}
               </DropdownMenu.Item>
             )}
-
             {onDelete && (
               <DropdownMenu.Item color="red" onSelect={onDelete}>
                 <Trash2 size={14} /> Delete
@@ -143,17 +130,7 @@ export default function ProductCard({
       )}
 
       {/* IMAGE */}
-      <Box
-        style={{
-          // ✅ FIXED: shorter image on mobile via clamp
-          height: "clamp(110px, 20vw, 170px)",
-          background: "linear-gradient(180deg, #f8fafc, #f1f5f9)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          overflow: "hidden",
-        }}
-      >
+      <div className="product-card-img">
         {image ? (
           <img
             src={image}
@@ -161,31 +138,30 @@ export default function ProductCard({
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         ) : (
-          <CubeIcon width={54} height={54} color="#cbd5e1" />
+          <CubeIcon width={48} height={48} color="#cbd5e1" />
         )}
-      </Box>
+      </div>
 
       {/* CONTENT */}
-      <Flex direction="column" gap="2" p="3">
-        {/* ✅ FIXED: truncate long names so they don't break layout */}
-        <Text
-          weight="medium"
-          size="3"
+      <div className="product-card-body">
+        <span
           style={{
+            fontWeight: 500,
+            fontSize: 14,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
+            color: "var(--gray-12)",
           }}
         >
           {name}
-        </Text>
+        </span>
 
-        <Flex justify="between" align="center">
-          <Text weight="bold" size="4">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontWeight: 700, fontSize: 16, color: "var(--gray-12)" }}>
             ₹{price}
-          </Text>
+          </span>
 
-          {/* POS ADD BUTTON — always visible (not hover-gated) */}
           {isPOS && (
             <IconButton
               radius="full"
@@ -196,25 +172,19 @@ export default function ProductCard({
               <Plus size={18} />
             </IconButton>
           )}
-        </Flex>
+        </div>
 
-        {/* DEFAULT MODE DETAILS */}
         {!isPOS && (
-          <Flex justify="between" align="center">
-            <Badge
-              radius="full"
-              variant="soft"
-              color={categoryColorMap[safeCategory]}
-            >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Badge radius="full" variant="soft" color={categoryColorMap[safeCategory]}>
               {formatLabel(safeCategory)}
             </Badge>
-
-            <Text size="2" color={lowStock ? "red" : "gray"}>
+            <span style={{ fontSize: 12, color: lowStock ? "var(--red-9)" : "var(--gray-10)" }}>
               {lowStock ? "Low" : "Stock"}: {stock}
-            </Text>
-          </Flex>
+            </span>
+          </div>
         )}
-      </Flex>
-    </Card>
+      </div>
+    </div>
   );
 }

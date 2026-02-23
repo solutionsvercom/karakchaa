@@ -1,6 +1,6 @@
-import { Button, Dialog, Flex } from "@radix-ui/themes";
+import { Button, Dialog, Flex, Callout } from "@radix-ui/themes";
 import { DropdownMenu } from "@radix-ui/themes";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, RefreshCw } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -11,11 +11,21 @@ import ProductCard from "../../components/dynamicComponents/ProductCard";
 import AddProducts from "./AddProduct";
 import { deleteProduct } from "../../features/ProductsSlice";
 import { toggleProductStatus } from "../../features/ProductsSlice";
-
+import axios from "axios";
 
 /* ---------------- TYPES ---------------- */
 
-type Category = "snacks" | "desserts" | "beverages" | "meals" | "drinks" | "starters" | "breads" | "pizza" | "sandwich" | "other";
+type Category =
+  | "snacks"
+  | "desserts"
+  | "beverages"
+  | "meals"
+  | "drinks"
+  | "starters"
+  | "breads"
+  | "pizza"
+  | "sandwich"
+  | "other";
 
 /* ---------------- COMPONENT ---------------- */
 
@@ -42,6 +52,11 @@ export default function ProductsModule() {
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<"all" | Category>("all");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // ✅ Sync state
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<string | null>(null);
 
   /* ---------- EDIT PRODUCT DATA ---------- */
 
@@ -57,20 +72,34 @@ export default function ProductsModule() {
     const matchesSearch = p.name
       ?.toLowerCase()
       .includes(search.toLowerCase());
-
-    const matchesCategory =
-      category === "all" || p.category === category;
-
+    const matchesCategory = category === "all" || p.category === category;
     return matchesSearch && matchesCategory;
   });
 
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  /* ---------- ONE-TIME SYNC HANDLER ---------- */
+
+  const handleSyncStock = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/products/sync-stock"
+      );
+      setSyncResult(res.data.message || "Sync complete!");
+    } catch (err: any) {
+      setSyncResult(
+        "Sync failed: " +
+          (err.response?.data?.message || err.message || "Unknown error")
+      );
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   return (
     <Flex direction="column" gap="4">
       {/* ================= HEADER ================= */}
       <Flex justify="between" align="center">
-        
         <div>
           <h2 style={{ margin: 0 }}>Products</h2>
           <p style={{ margin: 0, fontSize: 14, color: "#6b7280" }}>
@@ -78,10 +107,32 @@ export default function ProductsModule() {
           </p>
         </div>
 
-        <Button onClick={() => navigate("/dashboard/products/add-product")}>
-          + Add Product
-        </Button>
+        <Flex gap="2" align="center">
+          {/* ✅ SYNC BUTTON — click once to push all products into Stock Management */}
+          <Button
+            variant="soft"
+            color="orange"
+            onClick={handleSyncStock}
+            disabled={syncing}
+          >
+            <RefreshCw size={15} />
+            {syncing ? "Syncing..." : "Sync to Stock"}
+          </Button>
+
+          <Button onClick={() => navigate("/dashboard/products/add-product")}>
+            + Add Product
+          </Button>
+        </Flex>
       </Flex>
+
+      {/* ✅ SYNC RESULT BANNER */}
+      {syncResult && (
+        <Callout.Root
+          color={syncResult.startsWith("Sync failed") ? "red" : "green"}
+        >
+          <Callout.Text>{syncResult}</Callout.Text>
+        </Callout.Root>
+      )}
 
       {/* ================= ADD / EDIT DIALOG ================= */}
       <Dialog.Root
@@ -105,8 +156,6 @@ export default function ProductsModule() {
 
       {/* ================= SEARCH + FILTER ================= */}
       <Flex justify="between" align="center" gap="3">
-  
-        {/* SEARCH BAR */}
         <Flex style={{ flex: 1 }}>
           <Searchbar
             searchValue={search}
@@ -115,7 +164,6 @@ export default function ProductsModule() {
           />
         </Flex>
 
-        {/* CATEGORY DROPDOWN */}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
             <Button variant="soft">
@@ -149,9 +197,7 @@ export default function ProductsModule() {
             ))}
           </DropdownMenu.Content>
         </DropdownMenu.Root>
-
       </Flex>
-
 
       {/* ================= PRODUCT GRID ================= */}
       <Flex
@@ -191,12 +237,18 @@ export default function ProductsModule() {
       </Flex>
 
       {/* ================= DELETE CONFIRM DIALOG ================= */}
-      <Dialog.Root open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
+      <Dialog.Root
+        open={!!deleteId}
+        onOpenChange={(open) => {
+          if (!open) setDeleteId(null);
+        }}
+      >
         <Dialog.Content maxWidth="380px" aria-describedby={undefined}>
           <Dialog.Title>Delete Product?</Dialog.Title>
 
           <p style={{ fontSize: 14, color: "#6b7280" }}>
-            This action cannot be undone. Are you sure you want to delete this product?
+            This action cannot be undone. This will also remove the product from
+            Stock Management.
           </p>
 
           <Flex justify="end" gap="3" mt="4">
@@ -220,10 +272,8 @@ export default function ProductsModule() {
               Delete
             </Button>
           </Flex>
-
         </Dialog.Content>
       </Dialog.Root>
-
     </Flex>
   );
 }
