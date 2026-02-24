@@ -173,7 +173,7 @@ export default function ProductsModule() {
             stock={product.stockQty}
             minStock={product.minStock}
             category={product.category}
-            image={product.image}
+           image={product.image?.url}
             isActive={product.isActive}
             onToggleActive={async (value: boolean) => {
               await dispatch(

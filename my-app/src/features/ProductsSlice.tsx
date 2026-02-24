@@ -15,6 +15,10 @@ export interface Product {
   minStock: number;
   isActive: boolean;
   isVeg: boolean; // ✅ NEW
+   image?: {              // ✅ add this
+    url: string;
+    public_id: string;
+  };
 }
 
 interface ProductState {
@@ -66,11 +70,17 @@ export const fetchLowStock = createAsyncThunk(
 );
 
 // 🔹 Create product
-export const createProduct = createAsyncThunk(
+export const createProduct = createAsyncThunk<
+  Product,
+  FormData,
+  { rejectValue: string }
+>(
   "product/create",
-  async (payload: any, thunkAPI) => {
+  async (formData, thunkAPI) => {
     try {
-      const res = await axios.post(BASE_URL, payload);
+      const res = await axios.post(BASE_URL, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       return res.data.data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue(
@@ -81,14 +91,17 @@ export const createProduct = createAsyncThunk(
 );
 
 // 🔹 Update product
-export const updateProduct = createAsyncThunk(
+export const updateProduct = createAsyncThunk<
+  Product,
+  { id: string; payload: FormData },
+  { rejectValue: string }
+>(
   "product/update",
-  async (
-    { id, payload }: { id: string; payload: Partial<Product> },
-    thunkAPI
-  ) => {
+  async ({ id, payload }, thunkAPI) => {
     try {
-      const res = await axios.put(`${BASE_URL}/${id}`, payload);
+      const res = await axios.put(`${BASE_URL}/${id}`, payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       return res.data.data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue(

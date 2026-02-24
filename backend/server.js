@@ -1,4 +1,4 @@
-require('dotenv').config();
+require("dotenv").config();
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
@@ -6,6 +6,9 @@ const connectDB = require('./config/db');
 const app = express();
 
 /* ================= MIDDLEWARE ================= */
+console.log(process.env.CLOUDINARY_CLOUD_NAME);
+
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -29,6 +32,7 @@ const digitalOrderRoutes = require("./src/routes/DigitalOrderRoutes");
 
 
 /* ================= ROUTES USE ================= */
+app.use("/api/test-upload", require("./src/routes/testUpload"));
 app.use('/api/auth', authRoutes);
 app.use("/api/roles", roleRoutes);
 app.use('/api/customers', customerRoutes);

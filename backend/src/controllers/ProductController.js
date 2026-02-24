@@ -1,9 +1,37 @@
 const productService = require("../services/ProductService");
+const cloudinary = require("../../config/cloudinary");
+const streamifier = require("streamifier"); // ✅ npm install streamifier
+
+/* ─────────────────────────────────────────────
+   HELPER: stream buffer directly to Cloudinary
+   No base64 conversion — much faster
+───────────────────────────────────────────── */
+function uploadToCloudinary(buffer) {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream({ folder: "restaurant/products" },
+            (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+            }
+        );
+        streamifier.createReadStream(buffer).pipe(uploadStream);
+    });
+}
 
 class ProductController {
 
     async createProduct(req, res, next) {
         try {
+            let imageData = null;
+
+            if (req.file) {
+                const result = await uploadToCloudinary(req.file.buffer); // ✅ fast stream
+                imageData = {
+                    url: result.secure_url,
+                    public_id: result.public_id,
+                };
+            }
+
             const payload = {
                 name: req.body.name,
                 sku: req.body.sku,
@@ -13,9 +41,10 @@ class ProductController {
                 costPrice: req.body.costPrice,
                 stockQty: req.body.stockQty,
                 minStock: req.body.minStock,
-                isActive: req.body.isActive,
-                imageUrl: req.body.imageUrl,
-                isVeg: req.body.isVeg !== undefined ? req.body.isVeg : true,
+                description: req.body.description,
+                isActive: req.body.isActive !== undefined ? req.body.isActive === "true" || req.body.isActive === true : true,
+                isVeg: req.body.isVeg !== undefined ? req.body.isVeg === "true" || req.body.isVeg === true : true,
+                image: imageData,
             };
 
             const product = await productService.createProduct(payload);
@@ -32,10 +61,7 @@ class ProductController {
     async getProducts(req, res, next) {
         try {
             const products = await productService.getAllProducts();
-            res.json({
-                success: true,
-                data: products,
-            });
+            res.json({ success: true, data: products });
         } catch (err) {
             next(err);
         }
@@ -44,10 +70,7 @@ class ProductController {
     async getProduct(req, res, next) {
         try {
             const product = await productService.getProductById(req.params.id);
-            res.json({
-                success: true,
-                data: product,
-            });
+            res.json({ success: true, data: product });
         } catch (err) {
             next(err);
         }
@@ -55,20 +78,40 @@ class ProductController {
 
     async updateProduct(req, res, next) {
         try {
+            const existingProduct = await productService.getProductById(req.params.id);
+
+            let imageData = existingProduct.image; // default: keep existing
+
+            if (req.file) {
+                // Delete old image from Cloudinary
+                if (existingProduct.image && existingProduct.image.public_id) {
+                    await cloudinary.uploader.destroy(existingProduct.image.public_id);
+                }
+                const result = await uploadToCloudinary(req.file.buffer); // ✅ fast stream
+                imageData = {
+                    url: result.secure_url,
+                    public_id: result.public_id,
+                };
+
+            } else if (req.body.removeImage === "true") {
+                // User clicked Remove — delete from Cloudinary and set null
+                if (existingProduct.image && existingProduct.image.public_id) {
+                    await cloudinary.uploader.destroy(existingProduct.image.public_id);
+                }
+                imageData = null;
+            }
+            // else: no file, no removeImage — image unchanged
+
             const payload = {
                 ...req.body,
-                isVeg: req.body.isVeg !== undefined ? req.body.isVeg : true,
+                isActive: req.body.isActive !== undefined ? req.body.isActive === "true" || req.body.isActive === true : existingProduct.isActive,
+                isVeg: req.body.isVeg !== undefined ? req.body.isVeg === "true" || req.body.isVeg === true : existingProduct.isVeg,
+                image: imageData,
             };
 
-            const product = await productService.updateProduct(
-                req.params.id,
-                payload
-            );
+            const product = await productService.updateProduct(req.params.id, payload);
 
-            res.json({
-                success: true,
-                data: product,
-            });
+            res.json({ success: true, data: product });
         } catch (err) {
             next(err);
         }
@@ -76,19 +119,11 @@ class ProductController {
 
     async toggleProductStatus(req, res, next) {
         try {
-            const payload = {
-                isActive: req.body.isActive,
-            };
-
             const product = await productService.toggleProductStatus(
                 req.params.id,
-                payload.isActive
+                req.body.isActive
             );
-
-            res.json({
-                success: true,
-                data: product,
-            });
+            res.json({ success: true, data: product });
         } catch (err) {
             next(err);
         }
@@ -97,11 +132,7 @@ class ProductController {
     async getLowStockProducts(req, res, next) {
         try {
             const products = await productService.getLowStockProducts();
-            res.json({
-                success: true,
-                count: products.length,
-                data: products,
-            });
+            res.json({ success: true, count: products.length, data: products });
         } catch (err) {
             next(err);
         }
@@ -109,19 +140,20 @@ class ProductController {
 
     async deleteProduct(req, res, next) {
         try {
-            const product = await productService.deleteProduct(req.params.id);
+            const existingProduct = await productService.getProductById(req.params.id);
 
-            res.json({
-                success: true,
-                message: "Product deleted successfully",
-                data: product,
-            });
+            if (existingProduct.image && existingProduct.image.public_id) {
+                await cloudinary.uploader.destroy(existingProduct.image.public_id);
+            }
+
+            await productService.deleteProduct(req.params.id);
+
+            res.json({ success: true, message: "Product deleted successfully" });
         } catch (err) {
             next(err);
         }
     }
 
-    // Sync Products → Stock Management
     async syncStock(req, res, next) {
         try {
             const result = await productService.syncAllProductsToStock();
@@ -131,7 +163,6 @@ class ProductController {
         }
     }
 
-    // ✅ Sync Stock Management → Products (fixes minStock + stockQty drift)
     async syncStockToProducts(req, res, next) {
         try {
             const result = await productService.syncStockToProducts();
