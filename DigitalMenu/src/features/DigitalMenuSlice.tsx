@@ -7,7 +7,7 @@ export interface MenuProduct {
   _id: string;
   name: string;
   price: number;
-  image?: string;
+image?: string;
   category?: string;
   isAvailable: boolean;
   isVeg: boolean; // ✅ NEW

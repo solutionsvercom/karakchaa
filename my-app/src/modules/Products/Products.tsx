@@ -54,10 +54,6 @@ export default function ProductsModule() {
   const [category, setCategory] = useState<"all" | Category>("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // ✅ Sync state
-  const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<string | null>(null);
-
   /* ---------- EDIT PRODUCT DATA ---------- */
 
   const editingProduct = isEditMode
@@ -76,36 +72,6 @@ export default function ProductsModule() {
     return matchesSearch && matchesCategory;
   });
 
-  /* ---------- ONE-TIME SYNC HANDLER ---------- */
-
-  const handleSyncStock = async () => {
-    setSyncing(true);
-    setSyncResult(null);
-    try {
-      const res = await axios.post("http://localhost:5000/api/products/sync-stock");
-      setSyncResult(res.data.message || "Sync complete!");
-    } catch (err: any) {
-      setSyncResult("Sync failed: " + (err.response?.data?.message || err.message || "Unknown error"));
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  // ✅ Pull real stock + minStock from Stock Management → Products (fixes Low Stock drift)
-  const handleSyncFromStock = async () => {
-    setSyncing(true);
-    setSyncResult(null);
-    try {
-      const res = await axios.post("http://localhost:5000/api/products/sync-from-stock");
-      setSyncResult(res.data.message || "Stock synced to products!");
-      dispatch(fetchProducts());
-    } catch (err: any) {
-      setSyncResult("Sync failed: " + (err.response?.data?.message || err.message || "Unknown error"));
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   return (
     <Flex direction="column" gap="4">
       {/* ================= HEADER ================= */}
@@ -118,32 +84,11 @@ export default function ProductsModule() {
         </div>
 
         <Flex gap="2" align="center">
-          {/* Push Products → Stock Management */}
-          <Button variant="soft" color="orange" onClick={handleSyncStock} disabled={syncing}>
-            <RefreshCw size={15} />
-            {syncing ? "Syncing..." : "Sync to Stock"}
-          </Button>
-
-          {/* ✅ Pull Stock Management → Products (fixes Low Stock display) */}
-          <Button variant="soft" color="blue" onClick={handleSyncFromStock} disabled={syncing}>
-            <RefreshCw size={15} />
-            {syncing ? "Syncing..." : "Fix Stock Display"}
-          </Button>
-
           <Button onClick={() => navigate("/dashboard/products/add-product")}>
             + Add Product
           </Button>
         </Flex>
       </Flex>
-
-      {/* ✅ SYNC RESULT BANNER */}
-      {syncResult && (
-        <Callout.Root
-          color={syncResult.startsWith("Sync failed") ? "red" : "green"}
-        >
-          <Callout.Text>{syncResult}</Callout.Text>
-        </Callout.Root>
-      )}
 
       {/* ================= ADD / EDIT DIALOG ================= */}
       <Dialog.Root
@@ -228,7 +173,7 @@ export default function ProductsModule() {
             stock={product.stockQty}
             minStock={product.minStock}
             category={product.category}
-            image={product.image}
+           image={product.image?.url}
             isActive={product.isActive}
             onToggleActive={async (value: boolean) => {
               await dispatch(
@@ -264,13 +209,13 @@ export default function ProductsModule() {
           </p>
 
           <Flex justify="end" gap="3" mt="4">
-           <Button
-  variant="soft"
-  color="gray"
-  onClick={() => setDeleteId(null)}
->
-  Cancel
-</Button>
+            <Button
+              variant="soft"
+              color="gray"
+              onClick={() => setDeleteId(null)}
+            >
+              Cancel
+            </Button>
 
             <Button
               color="red"

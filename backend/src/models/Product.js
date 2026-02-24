@@ -54,8 +54,13 @@ const productSchema = new mongoose.Schema({
     //   ref: "Supplier", 
     // },
 
-    imageUrl: {
-        type: String,
+    image: {
+        url: {
+            type: String,
+        },
+        public_id: {
+            type: String,
+        },
     },
     isVeg: {
         type: Boolean,
