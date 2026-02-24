@@ -78,18 +78,30 @@ async function updateProduct(id, data) {
   Object.assign(product, data);
   const updated = await product.save();
 
-  // Sync only metadata — never touch currentStock
-  await Stockmanagement.findOneAndUpdate(
+  // Sync metadata to Stockmanagement, then pull currentStock back to Product
+  const newMinStockLevel = updated.minStock ?? 0;
+  const stockItem = await Stockmanagement.findOneAndUpdate(
     { sku: updated.sku },
     {
       $set: {
         productName: updated.name,
         category: updated.category,
         unit: updated.unit,
-        minStockLevel: updated.minStock ?? 0,
+        minStockLevel: newMinStockLevel,
       },
-    }
+    },
+    { new: true }
   );
+
+  // ✅ If stockmanagement record exists, recalculate status and pull currentStock back into Product
+  if (stockItem) {
+    // Recalculate status based on the NEW minStockLevel vs existing currentStock
+    stockItem.status = computeStatus(stockItem.currentStock, stockItem.minStockLevel);
+    await stockItem.save();
+
+    updated.stockQty = stockItem.currentStock;
+    await updated.save();
+  }
 
   return updated;
 }
@@ -168,7 +180,7 @@ async function syncAllProductsToStock() {
       created++;
     } else {
       // Already exists — only update metadata, NEVER touch currentStock
-      await Stockmanagement.findOneAndUpdate(
+      const updatedStockItem = await Stockmanagement.findOneAndUpdate(
         { sku: product.sku },
         {
           $set: {
@@ -177,8 +189,15 @@ async function syncAllProductsToStock() {
             unit: product.unit,
             minStockLevel: product.minStock ?? 0,
           },
-        }
+        },
+        { new: true }
       );
+
+      // Recompute status in case minStockLevel changed relative to currentStock
+      if (updatedStockItem) {
+        updatedStockItem.status = computeStatus(updatedStockItem.currentStock, updatedStockItem.minStockLevel);
+        await updatedStockItem.save();
+      }
 
       skipped++;
     }
@@ -192,6 +211,34 @@ async function syncAllProductsToStock() {
   };
 }
 
+/* =============================================================
+   SYNC STOCK MANAGEMENT → PRODUCTS
+   Pulls currentStock + minStockLevel back into Product collection
+============================================================= */
+async function syncStockToProducts() {
+  const stockItems = await Stockmanagement.find();
+  let updated = 0;
+
+  for (const stockItem of stockItems) {
+    const result = await Product.findOneAndUpdate(
+      { sku: stockItem.sku },
+      {
+        $set: {
+          stockQty: stockItem.currentStock,
+          minStock: stockItem.minStockLevel,
+        },
+      }
+    );
+    if (result) updated++;
+  }
+
+  return {
+    total: stockItems.length,
+    updated,
+    message: `Synced ${updated} products from Stock Management.`,
+  };
+}
+
 module.exports = {
   createProduct,
   getAllProducts,
@@ -201,4 +248,5 @@ module.exports = {
   getLowStockProducts,
   deleteProduct,
   syncAllProductsToStock,
+  syncStockToProducts,
 };

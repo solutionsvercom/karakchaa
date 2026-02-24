@@ -76,7 +76,7 @@ const AddProducts = ({ mode, initialValues }: AddProductsProps) => {
     },
     { name: "sellingPrice", label: "Selling Price (₹)", type: "number" },
     { name: "costPrice", label: "Cost Price (₹)", type: "number" },
-    { name: "stockQty", label: "Stock Qty", type: "number", group: "triple" },
+    { name: "stockQty", label: "Stock Qty", type: "number", group: "triple", disabled: mode === "edit" },
     { name: "minStock", label: "Min Stock", type: "number", group: "triple" },
     {
       name: "unit",
@@ -157,7 +157,7 @@ const AddProducts = ({ mode, initialValues }: AddProductsProps) => {
               category: data.category,
               sellingPrice: Number(data.sellingPrice),
               costPrice: Number(data.costPrice),
-              stockQty: Number(data.stockQty),
+              ...(mode !== "edit" ? { stockQty: Number(data.stockQty) } : {}),
               minStock: Number(data.minStock),
               unit: data.unit,
               description: data.description,
