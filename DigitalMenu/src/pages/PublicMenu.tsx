@@ -96,7 +96,7 @@ const MENU: MenuItemType[] = useMemo(() => {
 
     category: normalizeCategory(product.category),
 
-    image: product.image ?? "",
+  image: product.image ?? "",
 
     description: "",
 

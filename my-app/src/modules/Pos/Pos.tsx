@@ -276,6 +276,7 @@ export default function Pos() {
                   return (
                     <ProductCard
                       key={product._id}
+                       image={product.image?.url} 
                       name={product.name}
                       sku={product.sku}
                       price={product.sellingPrice}

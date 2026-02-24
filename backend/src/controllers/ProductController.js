@@ -1,9 +1,25 @@
 const productService = require("../services/ProductService");
+const cloudinary = require("../../config/cloudinary");
 
 class ProductController {
 
     async createProduct(req, res, next) {
         try {
+
+            let imageData = null;
+
+            if (req.file) {
+                const result = await cloudinary.uploader.upload(
+                    `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`, {
+                        folder: "restaurant/products",
+                    }
+                );
+                imageData = {
+                    url: result.secure_url,
+                    public_id: result.public_id,
+                };
+            }
+
             const payload = {
                 name: req.body.name,
                 sku: req.body.sku,
@@ -14,7 +30,7 @@ class ProductController {
                 stockQty: req.body.stockQty,
                 minStock: req.body.minStock,
                 isActive: req.body.isActive,
-                imageUrl: req.body.imageUrl,
+                image: imageData,
                 isVeg: req.body.isVeg !== undefined ? req.body.isVeg : true,
             };
 
@@ -55,8 +71,40 @@ class ProductController {
 
     async updateProduct(req, res, next) {
         try {
+
+            const existingProduct = await productService.getProductById(req.params.id);
+
+            let imageData = existingProduct.image; // default: keep existing
+
+            if (req.file) {
+                // ✅ New image uploaded — delete old one from Cloudinary, upload new
+                if (existingProduct.image && existingProduct.image.public_id) {
+                    await cloudinary.uploader.destroy(existingProduct.image.public_id);
+                }
+
+                const result = await cloudinary.uploader.upload(
+                    `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`, {
+                        folder: "restaurant/products",
+                    }
+                );
+
+                imageData = {
+                    url: result.secure_url,
+                    public_id: result.public_id,
+                };
+
+            } else if (req.body.removeImage === "true") {
+                // ✅ User clicked Remove — delete from Cloudinary and set null
+                if (existingProduct.image && existingProduct.image.public_id) {
+                    await cloudinary.uploader.destroy(existingProduct.image.public_id);
+                }
+                imageData = null;
+            }
+            // else: no file, no removeImage signal — image unchanged
+
             const payload = {
                 ...req.body,
+                image: imageData,
                 isVeg: req.body.isVeg !== undefined ? req.body.isVeg : true,
             };
 
@@ -69,6 +117,7 @@ class ProductController {
                 success: true,
                 data: product,
             });
+
         } catch (err) {
             next(err);
         }
@@ -109,19 +158,26 @@ class ProductController {
 
     async deleteProduct(req, res, next) {
         try {
-            const product = await productService.deleteProduct(req.params.id);
+
+            const existingProduct = await productService.getProductById(req.params.id);
+
+            // Delete image from Cloudinary before deleting product
+            if (existingProduct.image && existingProduct.image.public_id) {
+                await cloudinary.uploader.destroy(existingProduct.image.public_id);
+            }
+
+            await productService.deleteProduct(req.params.id);
 
             res.json({
                 success: true,
                 message: "Product deleted successfully",
-                data: product,
             });
+
         } catch (err) {
             next(err);
         }
     }
 
-    // ✅ NEW: One-time sync to populate Stock Management from all existing products
     async syncStock(req, res, next) {
         try {
             const result = await productService.syncAllProductsToStock();
