@@ -243,7 +243,7 @@ export default function Pos() {
                 </Box>
                 <Select.Root value={category} onValueChange={setCategory}>
                   <Select.Trigger style={{ width: 180 }} />
-                  <Select.Content>
+                  <Select.Content position="popper" sideOffset={8}>
                     <Select.Item value="all">All Categories</Select.Item>
                     <Select.Item value="meals">Meals</Select.Item>
                     <Select.Item value="snacks">Snacks</Select.Item>
