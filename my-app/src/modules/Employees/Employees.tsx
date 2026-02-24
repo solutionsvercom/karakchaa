@@ -15,8 +15,13 @@ import { SummaryCard } from "../../components/dynamicComponents/Cards";
 
 const getRoleColor = (role: string): "yellow" | "green" | "orange" | "cyan" | "blue" | "gray" => {
   const map: Record<string, "yellow" | "green" | "orange" | "cyan" | "blue" | "gray"> = {
-    staff: "yellow", cashier: "green", chef: "orange",
-    delivery: "cyan", manager: "green", owner: "orange", admin: "blue",
+    staff: "yellow",
+    cashier: "green",
+    chef: "orange",
+    delivery: "cyan",
+    manager: "green",
+    owner: "orange",
+    admin: "blue",
   };
   return map[role?.toLowerCase()] ?? "gray";
 };
@@ -51,11 +56,16 @@ export default function Employees() {
     return employees.find((e) => String(e._id) === String(id));
   }, [employees, id]);
 
+  // ✅ FIXED SUMMARY (only active salary counted)
   const summary = React.useMemo(() => {
     const total = employees.length;
     const active = employees.filter((e) => e.active !== false).length;
     const inactive = employees.filter((e) => e.active === false).length;
-    const salary = employees.reduce((sum, e) => sum + (e.salary || 0), 0);
+
+    const salary = employees
+      .filter((e) => e.active !== false)
+      .reduce((sum, e) => sum + (e.salary || 0), 0);
+
     return { total, active, inactive, salary };
   }, [employees]);
 
@@ -67,45 +77,69 @@ export default function Employees() {
   const columns: Column<Employee>[] = React.useMemo(() => [
     { key: "name", header: "Employee", accessor: "name" },
     {
-      key: "role", header: "Role", accessor: "role",
-      render: (v: string) => <Badge color={getRoleColor(v)} radius="full">{v}</Badge>,
+      key: "role",
+      header: "Role",
+      accessor: "role",
+      render: (v: string) => (
+        <Badge color={getRoleColor(v)} radius="full">
+          {v}
+        </Badge>
+      ),
     },
     { key: "phone", header: "Contact", accessor: "phone" },
     {
-      key: "salary", header: "Salary", accessor: "salary",
+      key: "salary",
+      header: "Salary",
+      accessor: "salary",
       render: (v) => `₹${v.toLocaleString()}`,
     },
     {
-      key: "joinDate", header: "Join Date", accessor: "joinDate",
+      key: "joinDate",
+      header: "Join Date",
+      accessor: "joinDate",
       render: (v: string) => {
         try {
           return new Date(v).toLocaleDateString("en-IN", {
-            day: "2-digit", month: "short", year: "numeric",
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
           });
-        } catch { return v; }
+        } catch {
+          return v;
+        }
       },
     },
     {
-      key: "active", header: "Status", accessor: "active",
+      key: "active",
+      header: "Status",
+      accessor: "active",
       render: (v) => (
-        <Badge color={v ? "green" : "red"} variant="soft">{v ? "Active" : "Inactive"}</Badge>
+        <Badge color={v ? "green" : "red"} variant="soft">
+          {v ? "Active" : "Inactive"}
+        </Badge>
       ),
     },
     {
-      key: "actions", header: "Actions",
+      key: "actions",
+      header: "Actions",
       render: (_v, row) => (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
-            <IconButton variant="soft" radius="full"><MoreVertical size={16} /></IconButton>
+            <IconButton variant="soft" radius="full">
+              <MoreVertical size={16} />
+            </IconButton>
           </DropdownMenu.Trigger>
           <DropdownMenu.Content align="end">
             <DropdownMenu.Item onClick={() => handleEdit(row._id)}>
               <Pencil size={14} /> Edit
             </DropdownMenu.Item>
-            <DropdownMenu.Item color="red" onClick={() => {
-              setDeleteId(row._id || null);
-              setDeleteName(row.name || "");
-            }}>
+            <DropdownMenu.Item
+              color="red"
+              onClick={() => {
+                setDeleteId(row._id || null);
+                setDeleteName(row.name || "");
+              }}
+            >
               <Trash2 size={14} /> Delete
             </DropdownMenu.Item>
           </DropdownMenu.Content>
@@ -118,15 +152,43 @@ export default function Employees() {
     <>
       <Flex direction="column" gap="5" width="100%">
         <div className="kb-summary-row">
-          <SummaryCard title="Total Employees" value={String(summary.total)} accentColor="#7C4DFF" softColor="#F0E9FF" icon="👥" />
-          <SummaryCard title="Active" value={String(summary.active)} accentColor="#00C853" softColor="#E5F9EE" icon="✅" />
-          <SummaryCard title="Inactive" value={String(summary.inactive)} accentColor="#FF9100" softColor="#FFF3E0" icon="⏸️" />
-          <SummaryCard title="Monthly Salary" value={`₹${summary.salary.toLocaleString()}`} accentColor="#2962FF" softColor="#E3F2FD" icon="₹" />
+          <SummaryCard
+            title="Total Employees"
+            value={String(summary.total)}
+            accentColor="#7C4DFF"
+            softColor="#F0E9FF"
+            icon="👥"
+          />
+          <SummaryCard
+            title="Active"
+            value={String(summary.active)}
+            accentColor="#00C853"
+            softColor="#E5F9EE"
+            icon="✅"
+          />
+          <SummaryCard
+            title="Inactive"
+            value={String(summary.inactive)}
+            accentColor="#FF9100"
+            softColor="#FFF3E0"
+            icon="⏸️"
+          />
+          <SummaryCard
+            title="Monthly Salary"
+            value={`₹${summary.salary.toLocaleString()}`}
+            accentColor="#2962FF"
+            softColor="#E3F2FD"
+            icon="₹"
+          />
         </div>
 
         <Flex align="center" gap="3" width="100%">
           <div style={{ flex: 1 }}>
-            <Searchbar searchValue={search} onSearchChange={setSearch} placeholder="Search employees..." />
+            <Searchbar
+              searchValue={search}
+              onSearchChange={setSearch}
+              placeholder="Search employees..."
+            />
           </div>
           <Button onClick={() => navigate("/dashboard/employees/add-employee")}>
             <Plus size={16} /> Add Employee
@@ -136,19 +198,34 @@ export default function Employees() {
         {loading ? (
           <div style={{ textAlign: "center", padding: 40 }}>Loading...</div>
         ) : (
-          <Table data={employees} columns={columns} emptyMessage="No employees found" hoverable />
+          <Table
+            data={employees}
+            columns={columns}
+            emptyMessage="No employees found"
+            hoverable
+          />
         )}
       </Flex>
 
-      {/* ===== ADD / EDIT DIALOG ===== */}
-      <Dialog.Root open={isDialogOpen} onOpenChange={(open) => { if (!open) navigate("/dashboard/employees"); }}>
+      {/* ADD / EDIT DIALOG */}
+      <Dialog.Root
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) navigate("/dashboard/employees");
+        }}
+      >
         <Dialog.Content maxWidth="480px">
           <Flex justify="between" align="center" mb="4">
             <Dialog.Title mb="0">
               {isEditEmployee ? "Edit Employee" : "Add Employee"}
             </Dialog.Title>
-            <IconButton variant="ghost" color="gray" radius="full" type="button"
-              onClick={() => navigate("/dashboard/employees")}>
+            <IconButton
+              variant="ghost"
+              color="gray"
+              radius="full"
+              type="button"
+              onClick={() => navigate("/dashboard/employees")}
+            >
               <X size={18} />
             </IconButton>
           </Flex>
@@ -161,7 +238,12 @@ export default function Employees() {
               mode={isEditEmployee ? "edit" : "create"}
               initialValues={
                 employeeToEdit
-                  ? { ...employeeToEdit, joinDate: employeeToEdit.joinDate ? new Date(employeeToEdit.joinDate) : undefined }
+                  ? {
+                      ...employeeToEdit,
+                      joinDate: employeeToEdit.joinDate
+                        ? new Date(employeeToEdit.joinDate)
+                        : undefined,
+                    }
                   : undefined
               }
             />
@@ -169,27 +251,38 @@ export default function Employees() {
         </Dialog.Content>
       </Dialog.Root>
 
-      {/* ===== DELETE CONFIRM DIALOG ===== */}
-      <Dialog.Root open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
+      {/* DELETE CONFIRM DIALOG */}
+      <Dialog.Root
+        open={!!deleteId}
+        onOpenChange={(open) => {
+          if (!open) setDeleteId(null);
+        }}
+      >
         <Dialog.Content maxWidth="380px" aria-describedby={undefined}>
           <Dialog.Title>Delete Employee?</Dialog.Title>
           <p style={{ fontSize: 14, color: "#6b7280" }}>
-            Are you sure you want to delete <strong>{deleteName}</strong>? This action cannot be undone.
+            Are you sure you want to delete <strong>{deleteName}</strong>? This
+            action cannot be undone.
           </p>
           <Flex justify="end" gap="3" mt="4">
-             <Button
-  variant="soft"
-  color="gray"
-  onClick={() => setDeleteId(null)}
->
-  Cancel
-</Button>
-            <Button color="red" onClick={() => {
-              if (deleteId) {
-                dispatch(deleteEmployee(deleteId));
-                setDeleteId(null);
-              }
-            }}>Delete</Button>
+            <Button
+              variant="soft"
+              color="gray"
+              onClick={() => setDeleteId(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="red"
+              onClick={() => {
+                if (deleteId) {
+                  dispatch(deleteEmployee(deleteId));
+                  setDeleteId(null);
+                }
+              }}
+            >
+              Delete
+            </Button>
           </Flex>
         </Dialog.Content>
       </Dialog.Root>
