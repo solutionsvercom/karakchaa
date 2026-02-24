@@ -7,27 +7,148 @@ import { fetchStockItems, fetchStockStats } from "../../features/Stockmanagement
 import { fetchSales, Sale } from "../../features/SalesSlice";
 import { fetchCustomers } from "../../features/CustomersSlice";
 import { fetchProducts } from "../../features/ProductsSlice";
+import { fetchExpenses } from "../../features/ExpensesSlice";
 
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
 import {
   RevenueTrendChart,
   TopProductsChart,
-  buildLast7DaysTrend,
-  buildTopProducts,
-  filterLastNDays,
 } from "../../components/dynamicComponents/Charts";
 
 import { LowStockAlert } from "../../components/dynamicComponents/Charts/LowStockAlert";
 import { RecentSales } from "../../components/dynamicComponents/Charts/RecentSales";
 
-/* ================= HELPERS ================= */
+/* ================= TYPES ================= */
 
-const calculateTotals = (data: any[]) => {
-  const totalRevenue = data.reduce((sum, sale) => sum + sale.amount, 0);
-  const totalOrders = data.length;
-  const averageOrder =
-    totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+interface DailySalesData {
+  date: string;
+  revenue: number;
+  count: number;
+}
+
+interface ProductSalesCount {
+  name: string;
+  count: number;
+}
+
+/* ================= HELPER FUNCTIONS ================= */
+
+/**
+ * Get sales from last N days
+ */
+const getLastNDaysSales = (sales: Sale[], days: number): Sale[] => {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - days);
+  cutoffDate.setHours(0, 0, 0, 0);
+
+  return sales.filter((sale) => {
+    const saleDate = new Date(sale.createdAt);
+    return saleDate >= cutoffDate;
+  });
+};
+
+/**
+ * Get today's sales
+ */
+const getTodaysSales = (sales: Sale[]): Sale[] => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return sales.filter((sale) => {
+    const saleDate = new Date(sale.createdAt);
+    saleDate.setHours(0, 0, 0, 0);
+    return saleDate.getTime() === today.getTime();
+  });
+};
+
+/**
+ * Build revenue trend data for last 7 days
+ */
+const buildRevenueTrendData = (sales: Sale[]): DailySalesData[] => {
+  const last7Days = getLastNDaysSales(sales, 7);
+  
+  // Group sales by date
+  const salesByDate = new Map<string, { revenue: number; count: number }>();
+
+  // Initialize last 7 days
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toLocaleDateString("en-US", { weekday: "short" });
+    salesByDate.set(dateStr, { revenue: 0, count: 0 });
+  }
+
+  // Aggregate sales data
+  last7Days.forEach((sale) => {
+    const saleDate = new Date(sale.createdAt);
+    const dateStr = saleDate.toLocaleDateString("en-US", { weekday: "short" });
+    
+    const existing = salesByDate.get(dateStr);
+    if (existing) {
+      existing.revenue += sale.totalAmount;
+      existing.count += 1;
+    }
+  });
+
+  // Convert to array format for chart
+  return Array.from(salesByDate.entries()).map(([date, data]) => ({
+    date,
+    revenue: data.revenue,
+    count: data.count,
+  }));
+};
+
+/**
+ * Build top selling products data
+ */
+const buildTopProductsData = (sales: Sale[], topN: number = 3): ProductSalesCount[] => {
+  const last7Days = getLastNDaysSales(sales, 7);
+  
+  // Count sales by product
+  const productCounts = new Map<string, number>();
+
+  last7Days.forEach((sale) => {
+    // Handle both single product and items array
+    if (sale.product?.name) {
+      const currentCount = productCounts.get(sale.product.name) || 0;
+      productCounts.set(sale.product.name, currentCount + sale.quantity);
+    } else if (sale.items && Array.isArray(sale.items)) {
+      sale.items.forEach((item) => {
+        const currentCount = productCounts.get(item.name) || 0;
+        productCounts.set(item.name, currentCount + item.quantity);
+      });
+    }
+  });
+
+  // Convert to array and sort by count
+  return Array.from(productCounts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, topN);
+};
+
+/**
+ * Calculate totals from sales
+ */
+const calculateTotals = (sales: Sale[]) => {
+  const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+  const totalOrders = sales.length;
+  const averageOrder = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
   return { totalRevenue, totalOrders, averageOrder };
+};
+
+/**
+ * Get today's new customers
+ */
+const getTodaysCustomersCount = (customers: any[]): number => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return customers.filter((customer) => {
+    const customerDate = new Date(customer.createdAt);
+    customerDate.setHours(0, 0, 0, 0);
+    return customerDate.getTime() === today.getTime();
+  }).length;
 };
 
 /* ================= COMPONENT ================= */
@@ -35,11 +156,10 @@ const calculateTotals = (data: any[]) => {
 export default function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
 
+  // Redux selectors
   const { customers } = useSelector((state: RootState) => state.customer);
   const { products } = useSelector((state: RootState) => state.product);
-  const { items: stockItems, stats: stockStats } = useSelector(
-    (state: RootState) => state.stock
-  );
+  const { items: stockItems } = useSelector((state: RootState) => state.stock);
   const { sales } = useSelector((state: RootState) => state.sales);
 
   /* ================= FETCH DATA ================= */
@@ -50,42 +170,26 @@ export default function Dashboard() {
     dispatch(fetchSales());
     dispatch(fetchCustomers());
     dispatch(fetchProducts());
+    dispatch(fetchExpenses());
   }, [dispatch]);
 
-  /* ================= MAP SALES FOR CHARTS ================= */
+  /* ================= PROCESS DATA ================= */
 
-  const dashboardSales = sales.map((s: Sale, index: number) => ({
-    id: index,
-    invoice: s.invoiceNumber,
-    customer: s.product?.name || "Walk-in",
-    items: s.product?.name || "-",
-    type: s.paymentMethod,
-    amount: s.totalAmount,
-    payment: s.paymentStatus,
-    dateTime: s.createdAt,
-  }));
+  // Today's data
+  const todaysSales = getTodaysSales(sales);
+  const todaysSummary = calculateTotals(todaysSales);
+  const todaysCustomers = getTodaysCustomersCount(customers);
 
-  /* ================= CALCULATIONS ================= */
+  // Weekly data
+  const weeklySales = getLastNDaysSales(sales, 7);
+  const weeklySummary = calculateTotals(weeklySales);
 
-  const last7DaysData = filterLastNDays(dashboardSales, 7);
-  const revenueTrendData = buildLast7DaysTrend(dashboardSales);
-  const topProductsData = buildTopProducts(last7DaysData, 3);
+  // Chart data
+  const revenueTrendData = buildRevenueTrendData(sales);
+  const topProductsData = buildTopProductsData(sales, 3);
 
-  const weeklySummary = calculateTotals(last7DaysData);
-  const todayData = filterLastNDays(dashboardSales, 0);
-  const todaySummary = calculateTotals(todayData);
-
+  // Active products count
   const activeProductsCount = products.filter((p) => p.isActive).length;
-
-  const now = new Date();
-  const todayCustomers = customers.filter((c) => {
-    const d = new Date(c.createdAt);
-    return (
-      d.getDate() === now.getDate() &&
-      d.getMonth() === now.getMonth() &&
-      d.getFullYear() === now.getFullYear()
-    );
-  }).length;
 
   /* ================= UI ================= */
 
@@ -164,7 +268,7 @@ export default function Dashboard() {
         <div className="dash-summary-grid">
           <SummaryCard
             title="Today's Revenue"
-            value={`₹${todaySummary.totalRevenue.toLocaleString()}`}
+            value={`₹${todaysSummary.totalRevenue.toLocaleString()}`}
             accentColor="#00C853"
             softColor="#E5F9EE"
             icon="₹"
@@ -185,7 +289,7 @@ export default function Dashboard() {
           />
           <SummaryCard
             title="Today's Customers"
-            value={String(todayCustomers)}
+            value={String(todaysCustomers)}
             accentColor="#2962FF"
             softColor="#E3F2FD"
             icon="👥"
@@ -211,7 +315,7 @@ export default function Dashboard() {
             maxProducts={3}
             barSize={50}
           />
-          <RecentSales sales={dashboardSales} limit={5} />
+          <RecentSales sales={sales} limit={5} />
         </div>
       </Flex>
     </>
