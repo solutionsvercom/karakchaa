@@ -126,16 +126,18 @@ useEffect(() => {
                         htmlFor={f.name}
                         size="2"
                         weight="medium"
-                        style={{ marginBottom: 4, display: "block" }}
+                        style={{ marginBottom: 4, display: "block", color: f.disabled ? "var(--gray-9)" : undefined }}
                       >
                         {f.label}
                         {f.required && <Text color="red"> *</Text>}
+                        {f.disabled && <span style={{ marginLeft: 4, fontSize: 12 }}>🔒</span>}
                       </Text>
 
                       <FieldRenderer
                         field={f}
                         value={values[f.name]}
                         onChange={(v) => setValue(f.name, v)}
+                        disabled={f.disabled}
                       />
                     </div>
                   ))}
@@ -194,6 +196,7 @@ useEffect(() => {
                       field={field}
                       value={values[field.name]}
                       onChange={(v) => setValue(field.name, v)}
+                      disabled={field.disabled}
                     />
                   </>
                 )}

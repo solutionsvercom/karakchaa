@@ -121,14 +121,21 @@ class ProductController {
         }
     }
 
-    // ✅ NEW: One-time sync to populate Stock Management from all existing products
+    // Sync Products → Stock Management
     async syncStock(req, res, next) {
         try {
             const result = await productService.syncAllProductsToStock();
-            res.json({
-                success: true,
-                ...result,
-            });
+            res.json({ success: true, ...result });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    // ✅ Sync Stock Management → Products (fixes minStock + stockQty drift)
+    async syncStockToProducts(req, res, next) {
+        try {
+            const result = await productService.syncStockToProducts();
+            res.json({ success: true, ...result });
         } catch (err) {
             next(err);
         }

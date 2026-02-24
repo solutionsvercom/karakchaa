@@ -12,12 +12,14 @@ type Props<T extends string> = {
   field: FormField<T>;
   value: any;
   onChange: (value: any) => void;
+  disabled?: boolean;
 };
 
 const FieldRenderer = <T extends string>({
   field,
   value,
   onChange,
+  disabled,
 }: Props<T>) => {
   const id = field.name;
 
@@ -28,40 +30,37 @@ const FieldRenderer = <T extends string>({
         <input
           type="number"
           min={0}
+          disabled={disabled}
           value={value === 0 ? "" : value}
-          placeholder="0"
+          placeholder={disabled ? "Managed via Stock Management" : "0"}
           onKeyDown={(e) => {
-            if (e.key === "-" || e.key === "e") {
-              e.preventDefault();
-            }
+            if (disabled) { e.preventDefault(); return; }
+            if (e.key === "-" || e.key === "e") e.preventDefault();
           }}
           onChange={(e) => {
+            if (disabled) return;
             let val = e.target.value;
-            if (val === "") {
-              onChange(0);
-            } else {
+            if (val === "") { onChange(0); }
+            else {
               const num = Number(val);
-              if (num < 0) {
-                onChange(0);
-              } else {
-                onChange(num);
-              }
+              onChange(num < 0 ? 0 : num);
             }
           }}
           onBlur={() => {
-            if (value === "" || value === null || value < 0) {
-              onChange(0);
-            }
+            if (disabled) return;
+            if (value === "" || value === null || value < 0) onChange(0);
           }}
           style={{
             width: "100%",
             height: 35,
             border: "1px solid #e5e7eb",
-            background: "transparent",
+            background: disabled ? "var(--gray-a3)" : "transparent",
             borderRadius: 10,
             padding: "0 12px",
             fontSize: 14,
             outline: "none",
+            cursor: disabled ? "not-allowed" : "text",
+            color: disabled ? "var(--gray-9)" : "inherit",
           }}
         />
       );

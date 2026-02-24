@@ -145,10 +145,10 @@ exports.addStock = async(req, res) => {
 
         await stockItem.save();
 
-        // ✅ Mirror new quantity to Product collection (matched by SKU)
+        // ✅ Mirror quantity AND minStock to Product collection (matched by SKU)
         await Product.findOneAndUpdate(
             { sku: stockItem.sku },
-            { $set: { stockQty: stockItem.currentStock } }
+            { $set: { stockQty: stockItem.currentStock, minStock: stockItem.minStockLevel } }
         );
 
         res.json({
@@ -216,10 +216,10 @@ exports.removeStock = async(req, res) => {
 
         await stockItem.save();
 
-        // ✅ Mirror new quantity to Product collection (matched by SKU)
+        // ✅ Mirror quantity AND minStock to Product collection (matched by SKU)
         await Product.findOneAndUpdate(
             { sku: stockItem.sku },
-            { $set: { stockQty: stockItem.currentStock } }
+            { $set: { stockQty: stockItem.currentStock, minStock: stockItem.minStockLevel } }
         );
 
         res.json({
