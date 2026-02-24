@@ -84,11 +84,14 @@ export const createOrder = createAsyncThunk<
 
 export const updateOrderStatus = createAsyncThunk<
   Order,
-  { id: string; status: Order["status"] },
+  { id: string; status: Order["status"]; paymentMethod?: string }, // ✅ ADD paymentMethod
   { rejectValue: string }
->("orders/updateStatus", async ({ id, status }, thunkAPI) => {
+>("orders/updateStatus", async ({ id, status, paymentMethod }, thunkAPI) => {
   try {
-    const res = await axios.put(`${BASE_URL}/${id}/status`, { status });
+    const res = await axios.put(`${BASE_URL}/${id}/status`, { 
+      status,
+      ...(paymentMethod && { paymentMethod }) // ✅ PASS paymentMethod if provided
+    });
     return res.data.data;
   } catch (error: any) {
     return thunkAPI.rejectWithValue(

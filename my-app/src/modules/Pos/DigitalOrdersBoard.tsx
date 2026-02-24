@@ -6,6 +6,9 @@ import { fetchSales } from "../../features/SalesSlice";
 import { fetchCustomers } from "../../features/CustomersSlice";
 import { fetchStockItems } from "../../features/StockmanagementSlice";
 import { ArrowLeft } from "lucide-react";
+import { PaymentMethodModal } from "../../components/PaymentMethodModal";
+
+type PaymentMethod = "Cash" | "UPI" | "PhonePe" | "GPay" | "Paytm" | "Card" | "Other";
 
 export default function DigitalOrdersBoard() {
   const dispatch = useDispatch<AppDispatch>();
@@ -14,6 +17,8 @@ export default function DigitalOrdersBoard() {
   );
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   // Filter to show only digital menu orders (orderType: 'online')
   const orders = useMemo(
@@ -57,13 +62,18 @@ export default function DigitalOrdersBoard() {
   };
 
   const changeStatus = async (
-    status: "Accepted" | "Preparing" | "Ready" | "Cancelled" | "Completed"
+    status: "Accepted" | "Preparing" | "Ready" | "Cancelled" | "Completed",
+    paymentMethod?: PaymentMethod
   ) => {
     if (!selectedOrderId) return;
 
     try {
       await dispatch(
-        updateOrderStatus({ id: selectedOrderId, status })
+        updateOrderStatus({ 
+          id: selectedOrderId, 
+          status,
+          ...(paymentMethod && { paymentMethod })
+        })
       ).unwrap();
 
       // ✅ Refresh related data after successful status update
@@ -71,6 +81,23 @@ export default function DigitalOrdersBoard() {
     } catch (err) {
       console.error("Failed to update order status:", err);
     }
+  };
+
+  const handleCompleteWithPayment = async (paymentMethod: PaymentMethod) => {
+    setPaymentLoading(true);
+    try {
+      await changeStatus("Completed", paymentMethod);
+      setShowPaymentModal(false);
+    } catch (err) {
+      console.error("Failed to complete order:", err);
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handleMarkAsCompleted = () => {
+    // Show payment method modal before completing
+    setShowPaymentModal(true);
   };
 
   const getNextStatus = (status: string) => {
@@ -466,16 +493,19 @@ export default function DigitalOrdersBoard() {
                 style={{ display: "flex", flexDirection: "column", gap: 10 }}
               >
                 <button
-                  onClick={() =>
-                    nextStatus &&
-                    changeStatus(
-                      nextStatus as
-                        | "Accepted"
-                        | "Preparing"
-                        | "Ready"
-                        | "Completed"
-                    )
-                  }
+                  onClick={() => {
+                    if (nextStatus === "Completed") {
+                      handleMarkAsCompleted();
+                    } else {
+                      nextStatus &&
+                        changeStatus(
+                          nextStatus as
+                            | "Accepted"
+                            | "Preparing"
+                            | "Ready"
+                        );
+                    }
+                  }}
                   disabled={!nextStatus || Boolean(isStatusLocked)}
                   style={{
                     background: "#2563EB",
@@ -513,6 +543,14 @@ export default function DigitalOrdersBoard() {
           )}
         </div>
       </div>
+
+      {/* ===== PAYMENT METHOD MODAL ===== */}
+      <PaymentMethodModal
+        open={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onConfirm={handleCompleteWithPayment}
+        loading={paymentLoading}
+      />
     </>
   );
 }

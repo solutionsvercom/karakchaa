@@ -31,7 +31,8 @@ class OrderController {
         try {
             const order = await orderService.updateOrderStatus(
                 req.params.id,
-                req.body.status
+                req.body.status,
+                req.body.paymentMethod // ✅ NEW: pass payment method from request
             );
 
             res.json({
