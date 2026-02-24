@@ -3,10 +3,10 @@ import React from "react";
 import { Flex, Text, Button } from "@radix-ui/themes";
 import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import type { SaleTransaction } from "../../../modules/Sales/Sales"; // 👈 IMPORT TYPE
+import type { Sale } from "../../../features/SalesSlice";
 
 interface RecentSalesProps {
-  sales: SaleTransaction[]; // 👈 USE IMPORTED TYPE
+  sales: Sale[];
   limit?: number;
   showViewAll?: boolean;
 }
@@ -18,8 +18,8 @@ export const RecentSales: React.FC<RecentSalesProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const recentSales = sales
-    .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())
+  const recentSales = [...sales]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, limit);
 
   const handleViewAll = () => {
@@ -41,7 +41,29 @@ export const RecentSales: React.FC<RecentSalesProps> = ({
       pending: { bg: "var(--yellow-a2)", text: "var(--yellow-11)" },
       cancelled: { bg: "var(--red-a2)", text: "var(--red-11)" },
     };
-    return styles[payment as keyof typeof styles] || styles.pending;
+    return styles[payment.toLowerCase() as keyof typeof styles] || styles.pending;
+  };
+
+  // Helper function to get customer name - matches Sales table exactly
+  const getCustomerName = (sale: Sale) => {
+    // First check for populated customer object (from backend)
+    if (sale.customer?.fullName) return sale.customer.fullName;
+    // Then check for customerName field
+    if (sale.customerName) return sale.customerName;
+    // Default to Walk-in
+    return "Walk-in";
+  };
+
+  // Helper function to get items display - matches Sales table
+  const getItemsDisplay = (sale: Sale) => {
+    // If items array exists and has items
+    if (sale.items && Array.isArray(sale.items) && sale.items.length > 0) {
+      return sale.items.map((item: { name: string }) => item.name).join(", ");
+    }
+    // If single product
+    if (sale.product?.name) return sale.product.name;
+    // Default
+    return "-";
   };
 
   return (
@@ -104,7 +126,7 @@ export const RecentSales: React.FC<RecentSalesProps> = ({
           ) : (
             recentSales.map((sale) => (
               <Flex
-                key={sale.id}
+                key={sale._id}
                 p="3"
                 gap="3"
                 align="center"
@@ -113,16 +135,16 @@ export const RecentSales: React.FC<RecentSalesProps> = ({
                 }}
               >
                 <Text size="2" weight="medium" style={{ flex: "0 0 120px" }}>
-                  #{sale.invoice}
+                  #{sale.invoiceNumber}
                 </Text>
                 <Text size="2" style={{ flex: "1 1 150px" }}>
-                  {sale.customer}
+                  {getCustomerName(sale)}
                 </Text>
                 <Text size="2" color="gray" style={{ flex: "1 1 100px" }}>
-                  {sale.items}
+                  {getItemsDisplay(sale)}
                 </Text>
                 <Text size="2" weight="medium" style={{ flex: "0 0 100px" }}>
-                  ₹{sale.amount}
+                  ₹{sale.totalAmount}
                 </Text>
                 <Flex style={{ flex: "0 0 100px" }}>
                   <span
@@ -132,15 +154,15 @@ export const RecentSales: React.FC<RecentSalesProps> = ({
                       fontSize: "12px",
                       fontWeight: 500,
                       textTransform: "uppercase",
-                      backgroundColor: getPaymentStyle(sale.payment).bg,
-                      color: getPaymentStyle(sale.payment).text,
+                      backgroundColor: getPaymentStyle(sale.paymentStatus).bg,
+                      color: getPaymentStyle(sale.paymentStatus).text,
                     }}
                   >
-                    {sale.payment}
+                    {sale.paymentStatus}
                   </span>
                 </Flex>
                 <Text size="2" color="gray" style={{ flex: "0 0 100px" }}>
-                  {formatTime(sale.dateTime)}
+                  {formatTime(sale.createdAt)}
                 </Text>
               </Flex>
             ))
