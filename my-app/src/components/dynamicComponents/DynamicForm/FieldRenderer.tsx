@@ -15,6 +15,51 @@ type Props<T extends string> = {
   disabled?: boolean;
 };
 
+/* ─────────────────────────────────────────────
+   HELPER: compress image before upload
+   Resizes to max 800px wide, 80% JPEG quality
+   Typical reduction: 2MB photo → ~150KB
+───────────────────────────────────────────── */
+function compressImage(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    const canvas = document.createElement("canvas");
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      const maxW = 800;
+      const scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(objectUrl);
+          if (blob) {
+            resolve(new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+              type: "image/jpeg",
+            }));
+          } else {
+            resolve(file); // fallback: use original if compression fails
+          }
+        },
+        "image/jpeg",
+        0.8 // 80% quality
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file); // fallback: use original
+    };
+
+    img.src = objectUrl;
+  });
+}
+
 const FieldRenderer = <T extends string>({
   field,
   value,
@@ -116,7 +161,13 @@ const FieldRenderer = <T extends string>({
               borderRadius: 10,
             }}
           />
-          <Select.Content>
+          <Select.Content
+            position="popper"
+            sideOffset={4}
+            side="bottom"
+            avoidCollisions={false}
+            style={{ width: "var(--radix-select-trigger-width)" }}
+          >
             {field.options?.map((opt) => (
               <Select.Item key={opt.value} value={opt.value}>
                 {opt.label}
@@ -179,10 +230,6 @@ const FieldRenderer = <T extends string>({
       );
 
     case "file": {
-      // value can be:
-      // - null/undefined  → no image (add mode)
-      // - string (URL)    → existing image from backend (edit mode)
-      // - File object     → newly selected image
       const imageUrl =
         typeof value === "string" && value !== ""
           ? value
@@ -190,7 +237,7 @@ const FieldRenderer = <T extends string>({
           ? URL.createObjectURL(value)
           : null;
 
-      // Shared hidden file input
+      // ✅ Shared hidden file input with compression on change
       const fileInput = (
         <input
           id={id}
@@ -198,11 +245,16 @@ const FieldRenderer = <T extends string>({
           hidden
           accept="image/*"
           onClick={(e) => { (e.target as HTMLInputElement).value = ""; }}
-          onChange={(e) => onChange(e.currentTarget.files?.[0] ?? null)}
+          onChange={async (e) => {
+            const file = e.currentTarget.files?.[0];
+            if (!file) return;
+            const compressed = await compressImage(file); // ✅ compress before storing
+            onChange(compressed);
+          }}
         />
       );
 
-      // ── NO IMAGE: original clickable upload box ─────────────────────────────
+      // ── NO IMAGE: clickable upload box ──────────────────────────────────────
       if (!imageUrl) {
         return (
           <>
