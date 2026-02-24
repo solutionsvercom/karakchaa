@@ -65,7 +65,7 @@ async function getOrders() {
 
 /* ================= UPDATE ORDER STATUS ================= */
 
-async function updateOrderStatus(id, status) {
+async function updateOrderStatus(id, status, paymentMethod) {
   const allowedStatuses = [
     "Pending",
     "Accepted",
@@ -83,9 +83,17 @@ async function updateOrderStatus(id, status) {
   const orderBefore = await Order.findById(id);
   if (!orderBefore) throw new Error("Order not found");
 
+  // ✅ Build update object
+  const updateData = { status };
+  
+  // ✅ If paymentMethod is provided (e.g., when completing order), update it
+  if (paymentMethod) {
+    updateData.paymentMethod = paymentMethod;
+  }
+
   const order = await Order.findByIdAndUpdate(
     id,
-    { status },
+    updateData,
     { new: true }
   ).populate("items.product");
 
