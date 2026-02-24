@@ -95,7 +95,7 @@ export default function Sales() {
       : [{ name: s.product?.name || "-", price: s.sellingPrice || s.totalAmount, quantity: s.quantity || 1 }],
     type: s.paymentMethod,
     amount: s.totalAmount,
-    payment: s.paymentStatus as PaymentStatus,
+    payment: (s.paymentStatus?.toLowerCase() as PaymentStatus), // ✅ FIXED: Normalize to lowercase
     dateTime: s.createdAt,
   }));
 
