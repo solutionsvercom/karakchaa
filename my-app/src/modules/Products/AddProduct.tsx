@@ -76,7 +76,7 @@ const AddProducts = ({ mode, initialValues }: AddProductsProps) => {
     },
     { name: "sellingPrice", label: "Selling Price (₹)", type: "number" },
     { name: "costPrice", label: "Cost Price (₹)", type: "number" },
-    { name: "stockQty", label: "Stock Qty", type: "number", group: "triple" },
+    { name: "stockQty", label: "Stock Qty", type: "number", group: "triple", disabled: mode === "edit" },
     { name: "minStock", label: "Min Stock", type: "number", group: "triple" },
     {
       name: "unit",
@@ -150,34 +150,21 @@ const mappedInitialValues = initialValues
           confirmText: mode === "create" ? "Yes, Create" : "Yes, Update",
           cancelText: "No, go back",
         }}
-    onSubmit={async (data) => {
-  try {
-    const formData = new FormData();
-
-    formData.append("name", data.name);
-    formData.append("sku", data.sku);
-    formData.append("category", data.category);
-    formData.append("sellingPrice", String(Number(data.sellingPrice)));
-    formData.append("costPrice", String(Number(data.costPrice)));
-    formData.append("stockQty", String(Number(data.stockQty)));
-    formData.append("minStock", String(Number(data.minStock)));
-    formData.append("unit", data.unit);
-    formData.append("description", data.description || "");
-    formData.append(
-      "isActive",
-      String(data.active !== undefined ? data.active : true)
-    );
-    formData.append(
-      "isVeg",
-      String(data.isVeg !== undefined ? data.isVeg : true)
-    );
-
-    // ✅ Append image ONLY if selected
-  if (data.image instanceof File) {
-  formData.append("image", data.image);           // new image selected
-} else if (data.image === null || data.image === "") {
-  formData.append("removeImage", "true");          // ✅ user removed image
-}
+        onSubmit={async (data) => {
+          try {
+            const payload = {
+              name: data.name,
+              sku: data.sku,
+              category: data.category,
+              sellingPrice: Number(data.sellingPrice),
+              costPrice: Number(data.costPrice),
+              stockQty: Number(data.stockQty),
+              minStock: Number(data.minStock),
+              unit: data.unit,
+              description: data.description,
+              isActive: data.active !== undefined ? data.active : true,
+              isVeg: data.isVeg !== undefined ? data.isVeg : true, // ✅ NEW
+            };
 
     if (mode === "create") {
       await dispatch(createProduct(formData)).unwrap();

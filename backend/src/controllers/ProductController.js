@@ -29,9 +29,10 @@ class ProductController {
                 costPrice: req.body.costPrice,
                 stockQty: req.body.stockQty,
                 minStock: req.body.minStock,
-                isActive: req.body.isActive,
+                description: req.body.description,
+                isActive: req.body.isActive !== undefined ? req.body.isActive === "true" || req.body.isActive === true : true,
+                isVeg: req.body.isVeg !== undefined ? req.body.isVeg === "true" || req.body.isVeg === true : true,
                 image: imageData,
-                isVeg: req.body.isVeg !== undefined ? req.body.isVeg : true,
             };
 
             const product = await productService.createProduct(payload);
@@ -104,8 +105,9 @@ class ProductController {
 
             const payload = {
                 ...req.body,
+                isActive: req.body.isActive !== undefined ? req.body.isActive === "true" || req.body.isActive === true : existingProduct.isActive,
+                isVeg: req.body.isVeg !== undefined ? req.body.isVeg === "true" || req.body.isVeg === true : existingProduct.isVeg,
                 image: imageData,
-                isVeg: req.body.isVeg !== undefined ? req.body.isVeg : true,
             };
 
             const product = await productService.updateProduct(
@@ -178,13 +180,21 @@ class ProductController {
         }
     }
 
+    // Sync Products → Stock Management
     async syncStock(req, res, next) {
         try {
             const result = await productService.syncAllProductsToStock();
-            res.json({
-                success: true,
-                ...result,
-            });
+            res.json({ success: true, ...result });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    // ✅ Sync Stock Management → Products (fixes minStock + stockQty drift)
+    async syncStockToProducts(req, res, next) {
+        try {
+            const result = await productService.syncStockToProducts();
+            res.json({ success: true, ...result });
         } catch (err) {
             next(err);
         }

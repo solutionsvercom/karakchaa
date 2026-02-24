@@ -18,6 +18,7 @@ export type ProductCardProps = {
   sku: string;
   price: number;
   stock: number;
+  minStock?: number; // ✅ added
   category: Category;
   image?: string;
   variant?: "default" | "pos";
@@ -56,6 +57,7 @@ export default function ProductCard({
   sku,
   price,
   stock,
+  minStock = 0, // ✅ added
   category,
   image,
   variant = "default",
@@ -68,7 +70,7 @@ export default function ProductCard({
   const isPOS = variant === "pos";
   const safeCategory: Category =
     category && categoryColorMap[category] ? category : "other";
-  const lowStock = stock <= 5;
+  const lowStock = stock <= minStock; // ✅ use minStock instead of hardcoded 5
 
   return (
     /* ✅ Plain div — no Radix Card, so no Radix styles can override our layout */
@@ -83,8 +85,6 @@ export default function ProductCard({
         boxShadow: "0 2px 8px rgba(15, 23, 42, 0.08)",
         border: "1px solid var(--gray-4)",
         transition: "box-shadow 0.25s ease, transform 0.25s ease",
-        /* ✅ CRITICAL: plain div defaults to display:block which stacks
-           children naturally — image on top, content below, always visible */
         display: "flex",
         flexDirection: "column",
       }}
@@ -101,13 +101,11 @@ export default function ProductCard({
                 top: 10,
                 right: 10,
                 zIndex: 10,
-                
               }}
             >
               <DotsVerticalIcon />
             </IconButton>
           </DropdownMenu.Trigger>
-          
 
           <DropdownMenu.Content align="end">
             {onEdit && (

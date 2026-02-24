@@ -82,15 +82,25 @@ export default function ProductsModule() {
     setSyncing(true);
     setSyncResult(null);
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/products/sync-stock"
-      );
+      const res = await axios.post("http://localhost:5000/api/products/sync-stock");
       setSyncResult(res.data.message || "Sync complete!");
     } catch (err: any) {
-      setSyncResult(
-        "Sync failed: " +
-          (err.response?.data?.message || err.message || "Unknown error")
-      );
+      setSyncResult("Sync failed: " + (err.response?.data?.message || err.message || "Unknown error"));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // ✅ Pull real stock + minStock from Stock Management → Products (fixes Low Stock drift)
+  const handleSyncFromStock = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await axios.post("http://localhost:5000/api/products/sync-from-stock");
+      setSyncResult(res.data.message || "Stock synced to products!");
+      dispatch(fetchProducts());
+    } catch (err: any) {
+      setSyncResult("Sync failed: " + (err.response?.data?.message || err.message || "Unknown error"));
     } finally {
       setSyncing(false);
     }
@@ -108,15 +118,16 @@ export default function ProductsModule() {
         </div>
 
         <Flex gap="2" align="center">
-          {/* ✅ SYNC BUTTON — click once to push all products into Stock Management */}
-          <Button
-            variant="soft"
-            color="orange"
-            onClick={handleSyncStock}
-            disabled={syncing}
-          >
+          {/* Push Products → Stock Management */}
+          <Button variant="soft" color="orange" onClick={handleSyncStock} disabled={syncing}>
             <RefreshCw size={15} />
             {syncing ? "Syncing..." : "Sync to Stock"}
+          </Button>
+
+          {/* ✅ Pull Stock Management → Products (fixes Low Stock display) */}
+          <Button variant="soft" color="blue" onClick={handleSyncFromStock} disabled={syncing}>
+            <RefreshCw size={15} />
+            {syncing ? "Syncing..." : "Fix Stock Display"}
           </Button>
 
           <Button onClick={() => navigate("/dashboard/products/add-product")}>
@@ -215,6 +226,7 @@ export default function ProductsModule() {
             sku={product.sku}
             price={product.sellingPrice}
             stock={product.stockQty}
+            minStock={product.minStock}
             category={product.category}
            image={product.image?.url}
             isActive={product.isActive}
