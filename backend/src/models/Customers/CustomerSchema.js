@@ -13,11 +13,6 @@ const customerSchema = new mongoose.Schema({
         trim: true // ✅ Automatically trim whitespace
     },
 
-    email: {
-        type: String,
-        trim: true
-    },
-
     address: {
         type: String
     },
