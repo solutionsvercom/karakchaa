@@ -276,6 +276,7 @@ export default function OrderStatusPage() {
 
   const [stepIndex, setStepIndex] = useState(0);
   const [terminalStatus, setTerminalStatus] = useState<TerminalStatus>("none");
+  const [liveOrderNumber, setLiveOrderNumber] = useState<string>("");
 
   // Map backend status → timeline step index
   const statusToStepIndex = (status: string): number => {
@@ -301,6 +302,9 @@ export default function OrderStatusPage() {
         ).unwrap();
 
         const status = result.status.toLowerCase();
+        if (result.orderNumber) {
+          setLiveOrderNumber(result.orderNumber);
+        }
         setStepIndex(statusToStepIndex(status));
 
         if (status === "cancelled") {
@@ -342,6 +346,7 @@ export default function OrderStatusPage() {
   if (!state) return null;
 
   const { orderNumber, items, subtotal, tax, total } = state;
+  const displayOrderNumber = liveOrderNumber || orderNumber;
   const isReady = terminalStatus === "ready";
 
   return (
@@ -351,7 +356,7 @@ export default function OrderStatusPage() {
         {/* ── HEADER ── */}
         <header className={`order-header ${isReady ? "ready-header" : ""}`}>
           <p className="order-label">Order Number</p>
-          <p className="order-code">#{orderNumber}</p>
+          <p className="order-code">#{displayOrderNumber}</p>
         </header>
 
         {/* ── READY BANNER (shown inline when status = ready) ── */}

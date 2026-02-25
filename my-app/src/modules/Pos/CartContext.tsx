@@ -4,6 +4,7 @@ type Product = {
   id: string;
   name: string;
   price: number;
+  maxQty?: number;
 };
 
 type CartItem = Product & {
@@ -18,7 +19,7 @@ type CartContextType = {
   items: CartItem[];
   total: number;
   addItem: (product: Product) => void;
-  increment: (id: string) => void;
+  increment: (id: string, maxQty?: number) => void;
   decrement: (id: string) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
@@ -30,7 +31,21 @@ const cartReducer = (state: CartState, action: any): CartState => {
   switch (action.type) {
     case "ADD":
       const exists = state.items.find(i => i.id === action.payload.id);
+      if (
+        !exists &&
+        typeof action.payload.maxQty === "number" &&
+        action.payload.maxQty <= 0
+      ) {
+        return state;
+      }
       if (exists) {
+        const maxQty =
+          typeof action.payload.maxQty === "number"
+            ? action.payload.maxQty
+            : undefined;
+        if (typeof maxQty === "number" && exists.quantity >= maxQty) {
+          return state;
+        }
         return {
           items: state.items.map(i =>
             i.id === action.payload.id
@@ -44,9 +59,17 @@ const cartReducer = (state: CartState, action: any): CartState => {
       };
 
     case "INC":
+      const itemToInc = state.items.find(i => i.id === action.payload.id);
+      if (!itemToInc) return state;
+      if (
+        typeof action.payload.maxQty === "number" &&
+        itemToInc.quantity >= action.payload.maxQty
+      ) {
+        return state;
+      }
       return {
         items: state.items.map(i =>
-          i.id === action.payload ? { ...i, quantity: i.quantity + 1 } : i
+          i.id === action.payload.id ? { ...i, quantity: i.quantity + 1 } : i
         ),
       };
 
@@ -86,7 +109,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     items: state.items,
     total,
     addItem: (product) => dispatch({ type: "ADD", payload: product }),
-    increment: (id) => dispatch({ type: "INC", payload: id }),
+    increment: (id, maxQty) => dispatch({ type: "INC", payload: { id, maxQty } }),
     decrement: (id) => dispatch({ type: "DEC", payload: id }),
     removeItem: (id) => dispatch({ type: "REMOVE", payload: id }),
     clearCart: () => dispatch({ type: "CLEAR" }),

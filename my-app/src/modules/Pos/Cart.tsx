@@ -1,19 +1,21 @@
 import { Button, Flex, Text, IconButton, TextField } from "@radix-ui/themes";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { useCart } from "./CartContext";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { useCart } from "./CartContext";
+import { RootState } from "../../store/Store";
 
 interface CartProps {
-  /** Called after checkout button tap (e.g. close the mobile drawer) */
   onCheckout?: () => void;
 }
 
 const Cart = ({ onCheckout }: CartProps) => {
   const { items, total, increment, decrement, removeItem, clearCart } = useCart();
+  const { products } = useSelector((state: RootState) => state.product);
+
   const [discount, setDiscount] = useState(0);
   const navigate = useNavigate();
-
   const discountedTotal = Math.max(total - discount, 0);
 
   const handleCheckout = () => {
@@ -23,7 +25,6 @@ const Cart = ({ onCheckout }: CartProps) => {
 
   return (
     <Flex direction="column" style={{ height: "100%" }} p="4" gap="3">
-      {/* ================= HEADER ================= */}
       <Flex justify="between" align="center">
         <Flex align="center" gap="2">
           <Flex
@@ -52,7 +53,6 @@ const Cart = ({ onCheckout }: CartProps) => {
         )}
       </Flex>
 
-      {/* ================= ITEMS ================= */}
       <Flex
         direction="column"
         gap="3"
@@ -69,57 +69,68 @@ const Cart = ({ onCheckout }: CartProps) => {
           </Flex>
         )}
 
-        {items.map((item) => (
-          <Flex
-            key={item.id}
-            direction="column"
-            gap="2"
-            style={{
-              background: "var(--gray-2)",
-              padding: 12,
-              borderRadius: 12,
-            }}
-          >
-            <Flex justify="between" align="center">
-              <div>
-                <Text weight="medium">{item.name}</Text>
-                <Text size="2" color="gray">
-                  ₹{item.price} each
-                </Text>
-              </div>
-              <IconButton
-                size="1"
-                color="red"
-                variant="soft"
-                onClick={() => removeItem(item.id)}
-              >
-                <Trash2 size={14} />
-              </IconButton>
-            </Flex>
+        {items.map((item) => {
+          const product = products.find((p: any) => p._id === item.id);
+          const maxQty = typeof product?.stockQty === "number" ? product.stockQty : undefined;
+          const canIncrease = typeof maxQty === "number" ? item.quantity < maxQty : true;
 
-            <Flex justify="between" align="center">
-              <Flex align="center" gap="2">
-                <IconButton size="1" variant="soft" onClick={() => decrement(item.id)}>
-                  <Minus size={14} />
-                </IconButton>
-                <Text>{item.quantity}</Text>
-                <IconButton size="1" variant="soft" onClick={() => increment(item.id)}>
-                  <Plus size={14} />
+          return (
+            <Flex
+              key={item.id}
+              direction="column"
+              gap="2"
+              style={{
+                background: "var(--gray-2)",
+                padding: 12,
+                borderRadius: 12,
+              }}
+            >
+              <Flex justify="between" align="center">
+                <div>
+                  <Text weight="medium">{item.name}</Text>
+                  <Text size="2" color="gray">
+                    Rs {item.price} each
+                  </Text>
+                </div>
+                <IconButton
+                  size="1"
+                  color="red"
+                  variant="soft"
+                  onClick={() => removeItem(item.id)}
+                >
+                  <Trash2 size={14} />
                 </IconButton>
               </Flex>
-              <Text weight="bold">₹{item.price * item.quantity}</Text>
+
+              <Flex justify="between" align="center">
+                <Flex align="center" gap="2">
+                  <IconButton size="1" variant="soft" onClick={() => decrement(item.id)}>
+                    <Minus size={14} />
+                  </IconButton>
+                  <Text>{item.quantity}</Text>
+                  <IconButton
+                    size="1"
+                    variant="soft"
+                    onClick={() => increment(item.id, maxQty)}
+                    disabled={!canIncrease}
+                    title={!canIncrease ? "Out of stock" : "Increase quantity"}
+                  >
+                    <Plus size={14} />
+                  </IconButton>
+                </Flex>
+                <Text weight="bold">Rs {item.price * item.quantity}</Text>
+              </Flex>
             </Flex>
-          </Flex>
-        ))}
+          );
+        })}
       </Flex>
 
-      {/* ================= FOOTER ================= */}
       {items.length > 0 && (
         <Flex direction="column" gap="3" style={{ flexShrink: 0 }}>
           <Flex direction="column" gap="2">
             <Flex justify="between">
               <Text color="gray">Subtotal</Text>
-              <Text>₹{total}</Text>
+              <Text>Rs {total}</Text>
             </Flex>
 
             <Flex justify="between" align="center">
@@ -137,13 +148,13 @@ const Cart = ({ onCheckout }: CartProps) => {
                 Total
               </Text>
               <Text size="5" weight="bold" color="violet">
-                ₹{discountedTotal}
+                Rs {discountedTotal}
               </Text>
             </Flex>
           </Flex>
 
           <Button size="4" onClick={handleCheckout}>
-            Checkout · ₹{discountedTotal}
+            Checkout · Rs {discountedTotal}
           </Button>
         </Flex>
       )}

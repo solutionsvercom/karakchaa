@@ -7,8 +7,11 @@ import { fetchCustomers } from "../../features/CustomersSlice";
 import { fetchStockItems } from "../../features/StockmanagementSlice";
 import { ArrowLeft } from "lucide-react";
 import { PaymentMethodModal } from "../../components/PaymentMethodModal";
+import { Toast, ToastProvider, ToastViewport } from "../../components/Toast";
 
 type PaymentMethod = "Cash" | "UPI" | "PhonePe" | "GPay" | "Paytm" | "Card" | "Other";
+
+type FilterMode = "active" | "completed" | "cancelled" | "all";
 
 export default function DigitalOrdersBoard() {
   const dispatch = useDispatch<AppDispatch>();
@@ -19,12 +22,34 @@ export default function DigitalOrdersBoard() {
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  
+  // Toast state
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState({ title: "", description: "" });
+  const [toastVariant, setToastVariant] = useState<"success" | "error" | "info">("success");
+  
+  // Filter state (#2 - Active orders filter)
+  const [filterMode, setFilterMode] = useState<FilterMode>("active");
 
   // Filter to show only digital menu orders (orderType: 'online')
-  const orders = useMemo(
-    () => allOrders.filter((order) => order.orderType === "online"),
-    [allOrders]
-  );
+  // Then apply active/completed/all filter (#2)
+  const orders = useMemo(() => {
+    const onlineOrders = allOrders.filter((order) => order.orderType === "online");
+    
+    if (filterMode === "active") {
+      return onlineOrders.filter((order) => 
+        ["Pending", "Accepted", "Preparing", "Ready"].includes(order.status)
+      );
+    } else if (filterMode === "completed") {
+      return onlineOrders.filter((order) => 
+        ["Completed"].includes(order.status)
+      );
+    } else if (filterMode === "cancelled") {
+      return onlineOrders.filter((order) => order.status === "Cancelled");
+    }
+    
+    return onlineOrders; // "all"
+  }, [allOrders, filterMode]);
 
   useEffect(() => {
     dispatch(fetchOrders());
@@ -86,10 +111,28 @@ export default function DigitalOrdersBoard() {
   const handleCompleteWithPayment = async (paymentMethod: PaymentMethod) => {
     setPaymentLoading(true);
     try {
+      const orderNumber = orders.find(o => o._id === selectedOrderId)?.orderNumber;
+      
       await changeStatus("Completed", paymentMethod);
       setShowPaymentModal(false);
+      
+      // Show success toast (#1)
+      setToastMessage({
+        title: "Order Completed!",
+        description: `${orderNumber} - Invoice generated successfully`,
+      });
+      setToastVariant("success");
+      setToastOpen(true);
     } catch (err) {
       console.error("Failed to complete order:", err);
+      
+      // Show error toast
+      setToastMessage({
+        title: "Error",
+        description: "Failed to complete order. Please try again.",
+      });
+      setToastVariant("error");
+      setToastOpen(true);
     } finally {
       setPaymentLoading(false);
     }
@@ -135,7 +178,7 @@ export default function DigitalOrdersBoard() {
   };
 
   return (
-    <>
+    <ToastProvider>
       <style>{`
         .dob-grid {
           display: grid;
@@ -196,6 +239,44 @@ export default function DigitalOrdersBoard() {
                 Refreshing...
               </span>
             )}
+          </div>
+
+          {/* Filter tabs (#2) */}
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              marginBottom: 12,
+              padding: 4,
+              background: "var(--gray-3)",
+              borderRadius: 8,
+            }}
+          >
+            {[
+              { value: "active" as FilterMode, label: "Active" },
+              { value: "completed" as FilterMode, label: "Completed" },
+              { value: "cancelled" as FilterMode, label: "Cancelled" },
+              { value: "all" as FilterMode, label: "All" },
+            ].map((filter) => (
+              <button
+                key={filter.value}
+                onClick={() => setFilterMode(filter.value)}
+                style={{
+                  flex: 1,
+                  padding: "6px 12px",
+                  border: "none",
+                  borderRadius: 6,
+                  background: filterMode === filter.value ? "var(--accent-9)" : "transparent",
+                  color: filterMode === filter.value ? "white" : "var(--gray-11)",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -551,6 +632,16 @@ export default function DigitalOrdersBoard() {
         onConfirm={handleCompleteWithPayment}
         loading={paymentLoading}
       />
-    </>
+
+      {/* ===== TOAST NOTIFICATIONS ===== */}
+      <Toast
+        open={toastOpen}
+        onOpenChange={setToastOpen}
+        title={toastMessage.title}
+        description={toastMessage.description}
+        variant={toastVariant}
+      />
+      <ToastViewport />
+    </ToastProvider>
   );
 }

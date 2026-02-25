@@ -12,6 +12,7 @@ export interface OrderItem {
 
 export interface DigitalOrder {
   _id: string;
+  orderNumber?: string;
   items: OrderItem[];
   customerName: string;
   phone: string;
@@ -68,10 +69,10 @@ export const fetchOrderStatus = createAsyncThunk<
   DigitalOrder,
   string,
   { rejectValue: string }
->("digitalOrder/status", async (orderId, thunkAPI) => {
+>("digitalOrder/status", async (orderRef, thunkAPI) => {
   try {
     const response = await axios.get(
-      `${BASE_URL}/orders/status/${orderId}`
+      `${BASE_URL}/orders/status/${orderRef}`
     );
 
     return response.data.order;
