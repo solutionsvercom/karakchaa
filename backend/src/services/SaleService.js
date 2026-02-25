@@ -351,7 +351,7 @@ async function getAllSales(filters = {}) {
 
   return await Sale.find(query)
     .populate("product", "name sku")
-    .populate("customer", "fullName")
+    .populate("customer", "fullName phoneNumber")
     .populate("soldBy", "name")
     .sort({ createdAt: -1 });
 }

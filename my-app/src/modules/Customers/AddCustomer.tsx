@@ -23,7 +23,6 @@ interface AddCustomerProps {
 type CustomerField =
   | "name"
   | "phone"
-  | "email"
   | "address"
   | "notes";
 
@@ -44,13 +43,6 @@ const AddCustomer = ({ mode, initialValues, customerId }: AddCustomerProps) => {
       required: true,
       span: 2,
       placeholder: "Enter phone number",
-    },
-    {
-      name: "email",
-      label: "Email",
-      type: "email",
-      span: 2,
-      placeholder: "Enter email address",
     },
     {
       name: "address",
@@ -129,7 +121,6 @@ const AddCustomer = ({ mode, initialValues, customerId }: AddCustomerProps) => {
             const payload = {
               fullName: data.name,
               phoneNumber: data.phone,
-              email: data.email,
               address: data.address,
               notes: data.notes,
             };
