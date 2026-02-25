@@ -58,8 +58,13 @@ export default function Pos() {
     return () => clearInterval(interval);
   }, [dispatch]);
 
+  // ✅ UPDATED: Fix notification to only trigger for NEW ACTIVE orders (#3)
   useEffect(() => {
-    const latestIds = new Set(onlineOrders.map((order) => order._id));
+    // Filter only ACTIVE orders (not completed/cancelled)
+    const activeOnlineOrders = onlineOrders.filter((order) =>
+      ["Pending", "Accepted", "Preparing", "Ready"].includes(order.status)
+    );
+    const latestIds = new Set(activeOnlineOrders.map((order) => order._id));
 
     if (!initializedOrdersRef.current) {
       knownOnlineOrderIdsRef.current = latestIds;
@@ -74,6 +79,7 @@ export default function Pos() {
       }
     });
 
+    // Only notify for NEW active orders
     if (newOrders > 0) {
       if (activeTab !== "digital") {
         setDigitalNewCount((prev) => prev + newOrders);
@@ -169,7 +175,6 @@ export default function Pos() {
           background: "var(--gray-2)",
           padding: 6,
           borderRadius: 12,
-          maxWidth: 580,
         }}
       >
         <Flex gap="2">
@@ -276,19 +281,22 @@ export default function Pos() {
                   return (
                     <ProductCard
                       key={product._id}
-                       image={product.image?.url} 
+                      image={product.image?.url} 
                       name={product.name}
                       sku={product.sku}
                       price={product.sellingPrice}
                       stock={remainingStock}
+                      minStock={product.minStock} // ✅ Pass minStock for better stock indicators
                       category={product.category}
                       variant="pos"
                       onAdd={() => {
+                        // ✅ KEPT: Your existing check prevents adding out-of-stock items
                         if (remainingStock <= 0) return;
                         addItem({
                           id: product._id,
                           name: product.name,
                           price: product.sellingPrice,
+                          maxQty: product.stockQty,
                         });
                       }}
                     />

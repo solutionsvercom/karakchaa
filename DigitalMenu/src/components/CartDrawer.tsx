@@ -90,7 +90,7 @@ const dispatch = useAppDispatch();
 
     navigate("/order-status", {
       state: {
-        orderNumber: result._id,
+        orderNumber: result.orderNumber || result._id,
         items: orderItems,
         subtotal,
         tax,
@@ -100,7 +100,8 @@ const dispatch = useAppDispatch();
         phone,
         table,
         notes,
-        backendOrderId: result._id,
+        // Prefer orderNumber for customer tracking UI, keep _id fallback compatibility.
+        backendOrderId: result.orderNumber || result._id,
       },
     });
     
