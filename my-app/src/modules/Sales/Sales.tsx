@@ -28,8 +28,9 @@ type SaleTransaction = {
   id: number;
   invoice: string;
   customer: string;
+  phone: string;
   items: string;
-  saleItems: { name: string; price: number; quantity: number }[]; // ✅ all items for invoice
+  saleItems: { name: string; price: number; quantity: number }[];
   type: string;
   amount: number;
   payment: PaymentStatus;
@@ -88,14 +89,14 @@ export default function Sales() {
     id: index,
     invoice: s.invoiceNumber,
     customer: s.customer?.fullName || s.customerName || "Walk-in",
+    phone: s.customer?.phoneNumber || "",
     items: s.product?.name || "-",
-    // ✅ Use stored items array; fallback to single product for old records
     saleItems: (s as any).items?.length
       ? (s as any).items
       : [{ name: s.product?.name || "-", price: s.sellingPrice || s.totalAmount, quantity: s.quantity || 1 }],
     type: s.paymentMethod,
     amount: s.totalAmount,
-    payment: (s.paymentStatus?.toLowerCase() as PaymentStatus), // ✅ FIXED: Normalize to lowercase
+    payment: (s.paymentStatus?.toLowerCase() as PaymentStatus),
     dateTime: s.createdAt,
   }));
 
@@ -276,55 +277,151 @@ export default function Sales() {
             position: "fixed", top: "50%", left: "50%",
             transform: "translate(-50%, -50%)",
             background: "Canvas", color: "CanvasText",
-            padding: 28, width: "min(480px, calc(100vw - 32px))",
+            padding: "24px 24px 20px",
+            width: "min(460px, calc(100vw - 32px))",
             borderRadius: 16, zIndex: 1001,
             boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
           }}>
             <Dialog.Title asChild>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                <span style={{ fontSize: 20, fontWeight: 700 }}>🧾 Invoice</span>
-                <Dialog.Close asChild>
-                  <Button variant="ghost" style={{ cursor: "pointer" }}><X size={20} /></Button>
-                </Dialog.Close>
+              <div style={{ marginBottom: 4 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div>
+                    <div style={{ fontSize: 20, fontWeight: 700 }}>Sale Details</div>
+                    <div style={{ fontSize: 13, color: "var(--gray-10)", marginTop: 2 }}>
+                      #{viewSale?.invoice}
+                    </div>
+                  </div>
+                  <Dialog.Close asChild>
+                    <button style={{
+                      background: "none", border: "none", cursor: "pointer",
+                      color: "var(--gray-10)", padding: 4, borderRadius: 6,
+                      display: "flex", alignItems: "center",
+                    }}>
+                      <X size={20} />
+                    </button>
+                  </Dialog.Close>
+                </div>
               </div>
             </Dialog.Title>
             <Dialog.Description asChild>
-              <span style={{ display: "none" }}>Invoice details</span>
+              <span style={{ display: "none" }}>Sale invoice details</span>
             </Dialog.Description>
 
             {viewSale && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                <div style={{ background: "var(--accent-9)", color: "white", padding: "16px 20px", borderRadius: "10px 10px 0 0" }}>
-                  <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 1 }}>{viewSale.invoice}</div>
-                  <div style={{ fontSize: 13, opacity: 0.85, marginTop: 2 }}>{formatDate(viewSale.dateTime)}</div>
-                </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 0, marginTop: 16 }}>
 
-                <div style={{ border: "1px solid var(--gray-a4)", borderTop: "none", borderRadius: "0 0 10px 10px", padding: "20px" }}>
-                  <Row label="Customer" value={viewSale.customer} />
-
-                  {/* ✅ All ordered items */}
-                  <div style={{ padding: "8px 0", borderBottom: "1px solid var(--gray-a3)" }}>
-                    <span style={{ fontSize: 13, color: "var(--gray-11)" }}>Items Ordered</span>
-                    <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 4 }}>
-                      {viewSale.saleItems.map((item, i) => (
-                        <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                          <span>{item.name} × {item.quantity}</span>
-                          <span style={{ fontWeight: 500 }}>₹{(item.price * item.quantity).toLocaleString()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Row label="Payment Type" value={viewSale.type} badge="blue" />
-                  <Row label="Status" value={viewSale.payment} badge={
-                    viewSale.payment === "completed" ? "green" :
-                    viewSale.payment === "cancelled" ? "red" : "yellow"
+                {/* ── Info Grid ── */}
+                <div style={{
+                  display: "grid", gridTemplateColumns: "1fr 1fr",
+                  gap: "12px 0",
+                  padding: "16px 0",
+                  borderTop: "1px solid var(--gray-a4)",
+                  borderBottom: "1px solid var(--gray-a4)",
+                  marginBottom: 16,
+                }}>
+                  <InfoCell label="Customer" value={viewSale.customer} />
+                  <InfoCell label="Phone" value={viewSale.phone || "—"} />
+                  <InfoCell label="Payment Method" value={viewSale.type} />
+                  <InfoCell label="Status" value={viewSale.payment} statusColor={
+                    viewSale.payment === "completed" ? "var(--green-9)" :
+                    viewSale.payment === "cancelled" ? "var(--red-9)" : "var(--yellow-9)"
                   } />
-                  <div style={{ borderTop: "2px solid var(--gray-a4)", marginTop: 12, paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontWeight: 600, fontSize: 16 }}>Total Amount</span>
-                    <span style={{ fontWeight: 800, fontSize: 22, color: "var(--green-9)" }}>₹{viewSale.amount.toLocaleString()}</span>
+                </div>
+
+                {/* ── Items ── */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>Items</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {viewSale.saleItems.map((item, i) => (
+                      <div key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                        <span>{item.name} × {item.quantity}</span>
+                        <span>₹{(item.price * item.quantity).toLocaleString()}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
+
+                {/* ── Totals ── */}
+                <div style={{
+                  borderTop: "1px solid var(--gray-a4)",
+                  paddingTop: 12,
+                  display: "flex", flexDirection: "column", gap: 6,
+                  marginBottom: 20,
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                    <span style={{ color: "var(--gray-11)" }}>Subtotal</span>
+                    <span>₹{viewSale.amount.toLocaleString()}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
+                    <span style={{ color: "var(--gray-11)" }}>Discount</span>
+                    <span>-₹0</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 700, marginTop: 4 }}>
+                    <span>Total</span>
+                    <span style={{ color: "var(--accent-9)" }}>₹{viewSale.amount.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {/* ── Action Button ── */}
+                {viewSale.payment === "cancelled" ? (
+                  <button
+                    disabled={editLoading}
+                    onClick={async () => {
+                      const sale = sales.find(s => s.invoiceNumber === viewSale.invoice);
+                      if (!sale) return;
+                      setEditLoading(true);
+                      try {
+                        await dispatch(updateSale({
+                          id: sale._id,
+                          data: { paymentStatus: "Completed" },
+                        })).unwrap();
+                        dispatch(fetchSales());
+                        setViewSale(null);
+                      } finally {
+                        setEditLoading(false);
+                      }
+                    }}
+                    style={{
+                      width: "100%", padding: "13px 0", borderRadius: 10,
+                      background: "var(--green-9)", color: "white",
+                      border: "none", cursor: editLoading ? "not-allowed" : "pointer",
+                      opacity: editLoading ? 0.7 : 1,
+                      fontSize: 15, fontWeight: 600,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    }}
+                  >
+                    ✓ Mark as Completed
+                  </button>
+                ) : (
+                  <button
+                    disabled={editLoading}
+                    onClick={async () => {
+                      const sale = sales.find(s => s.invoiceNumber === viewSale.invoice);
+                      if (!sale) return;
+                      setEditLoading(true);
+                      try {
+                        await dispatch(updateSale({
+                          id: sale._id,
+                          data: { paymentStatus: "Cancelled" },
+                        })).unwrap();
+                        dispatch(fetchSales());
+                        setViewSale(null);
+                      } finally {
+                        setEditLoading(false);
+                      }
+                    }}
+                    style={{
+                      width: "100%", padding: "13px 0", borderRadius: 10,
+                      background: "var(--red-9)", color: "white",
+                      border: "none", cursor: editLoading ? "not-allowed" : "pointer",
+                      opacity: editLoading ? 0.7 : 1,
+                      fontSize: 15, fontWeight: 600,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    }}
+                  >
+                    ⊗ Cancel Sale
+                  </button>
+                )}
               </div>
             )}
           </Dialog.Content>
@@ -407,15 +504,15 @@ export default function Sales() {
 }
 
 /* ===== HELPER COMPONENT ===== */
-function Row({ label, value, badge }: { label: string; value: string; badge?: string }) {
+function InfoCell({ label, value, statusColor }: { label: string; value: string; statusColor?: string }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid var(--gray-a3)" }}>
-      <span style={{ fontSize: 13, color: "var(--gray-11)" }}>{label}</span>
-      {badge ? (
-        <Badge color={badge as any} variant="soft" style={{ textTransform: "capitalize" }}>{value}</Badge>
-      ) : (
-        <span style={{ fontSize: 14, fontWeight: 500 }}>{value}</span>
-      )}
+    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <span style={{ fontSize: 12, color: "var(--gray-10)" }}>{label}</span>
+      <span style={{
+        fontSize: 14, fontWeight: 600,
+        color: statusColor || "CanvasText",
+        textTransform: statusColor ? "capitalize" : undefined,
+      }}>{value}</span>
     </div>
   );
 }

@@ -16,6 +16,7 @@ export interface Sale {
   customer?: {
     _id: string;
     fullName: string;
+    phoneNumber?: string;
   };
   customerName?: string;
   product?: {
