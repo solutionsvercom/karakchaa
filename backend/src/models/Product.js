@@ -55,12 +55,7 @@ const productSchema = new mongoose.Schema({
     // },
 
     image: {
-        url: {
-            type: String,
-        },
-        public_id: {
-            type: String,
-        },
+        url: { type: String },
     },
     isVeg: {
         type: Boolean,
