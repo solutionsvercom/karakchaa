@@ -533,7 +533,7 @@ export default function DigitalOrdersBoard() {
               {selectedOrder.notes && (
                 <div
                   style={{
-                    background: "rgba(180, 83, 9, 0.2)",
+                    background: "var(--gray-2)",
                     border: "1px solid #D97706",
                     borderRadius: 10,
                     padding: 12,
@@ -542,14 +542,14 @@ export default function DigitalOrdersBoard() {
                   <p
                     style={{
                       margin: "0 0 6px 0",
-                      color: "#FBBF24",
+                      color: "var(--amber-11)",
                       fontWeight: 600,
                       fontSize: 13,
                     }}
                   >
                     Special Instructions
                   </p>
-                  <p style={{ margin: 0, color: "#FDE68A", fontSize: 13 }}>
+                  <p style={{ margin: 0, color: "var(--gray-12)", fontSize: 13 }}>
                     {selectedOrder.notes}
                   </p>
                 </div>

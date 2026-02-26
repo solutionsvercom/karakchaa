@@ -1,21 +1,64 @@
 const Sale = require("../models/Sale");
 const Product = require("../models/Product");
 const Order = require("../models/Order/OrderSchema");
+const Counter = require("../models/System/CounterSchema");
 const Customer = require("../models/Customers/CustomerSchema");
 const Stockmanagement = require("../models/Stockmanagement/StockmanagementSchema");
 
 /* ================= INVOICE ================= */
 
 async function generateInvoiceNumber() {
-  const count = await Sale.countDocuments();
-  return `INV-${String(count + 1).padStart(4, "0")}`;
+  const counterKey = "invoice_number";
+
+  const latest = await Sale.findOne({ invoiceNumber: /^INV-\d+$/ })
+    .sort({ invoiceNumber: -1 })
+    .select("invoiceNumber")
+    .lean();
+  const latestSeq = latest
+    ? Number(String(latest.invoiceNumber).replace("INV-", "")) || 0
+    : 0;
+
+  await Counter.updateOne(
+    { key: counterKey },
+    { $max: { seq: latestSeq } },
+    { upsert: true }
+  );
+
+  const counter = await Counter.findOneAndUpdate(
+    { key: counterKey },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  ).lean();
+
+  return `INV-${String(counter.seq).padStart(4, "0")}`;
 }
 
 /* ================= ORDER NUMBER ================= */
 
 async function generateOrderNumber() {
-  const count = await Order.countDocuments();
-  return `ORD-${String(count + 1).padStart(5, "0")}`;
+  const counterKey = "order_number";
+
+  const latest = await Order.findOne({ orderNumber: /^ORD-\d+$/ })
+    .sort({ orderNumber: -1 })
+    .select("orderNumber")
+    .lean();
+  const latestSeq = latest
+    ? Number(String(latest.orderNumber).replace("ORD-", "")) || 0
+    : 0;
+
+  await Counter.updateOne(
+    { key: counterKey },
+    { $max: { seq: latestSeq } },
+    { upsert: true }
+  );
+
+  const counter = await Counter.findOneAndUpdate(
+    { key: counterKey },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  ).lean();
+
+  return `ORD-${String(counter.seq).padStart(5, "0")}`;
 }
 
 /* ================= FIND OR CREATE CUSTOMER ================= */

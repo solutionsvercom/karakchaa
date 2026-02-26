@@ -10,6 +10,7 @@ import { createOrder } from "../../features/OrdersSlice";
 import { fetchSales } from "../../features/SalesSlice";
 import { fetchCustomers } from "../../features/CustomersSlice";
 import { fetchStockItems } from "../../features/StockmanagementSlice";
+import { fetchProducts } from "../../features/ProductsSlice";
 
 type OrderType = "dine-in" | "takeaway" | "delivery" | "online";
 type PaymentMethod = "Cash" | "UPI" | "PhonePe" | "GPay" | "Paytm" | "Card" | "Other";
@@ -79,6 +80,7 @@ export const CheckoutDialog = ({
       dispatch(fetchSales());
       dispatch(fetchCustomers());
       dispatch(fetchStockItems());
+      dispatch(fetchProducts());
 
       // Reset form
       setCustomerName("");

@@ -1,9 +1,33 @@
 const Order = require("../models/Order/OrderSchema");
 const SaleService = require("./SaleService");
+const Counter = require("../models/System/CounterSchema");
 
 async function generateOrderNumber() {
-  const count = await Order.countDocuments();
-  return `ORD-${String(count + 1).padStart(5, "0")}`;
+  const counterKey = "order_number";
+
+  // Keep counter in sync with existing data (safe for old databases and restarts).
+  const latest = await Order.findOne({ orderNumber: /^ORD-\d+$/ })
+    .sort({ orderNumber: -1 })
+    .select("orderNumber")
+    .lean();
+  const latestSeq = latest
+    ? Number(String(latest.orderNumber).replace("ORD-", "")) || 0
+    : 0;
+
+  // $max prevents moving the counter backwards under concurrency.
+  await Counter.updateOne(
+    { key: counterKey },
+    { $max: { seq: latestSeq } },
+    { upsert: true }
+  );
+
+  const counter = await Counter.findOneAndUpdate(
+    { key: counterKey },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  ).lean();
+
+  return `ORD-${String(counter.seq).padStart(5, "0")}`;
 }
 
 /* ================= CREATE ORDER ================= */

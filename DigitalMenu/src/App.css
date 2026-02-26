@@ -1718,7 +1718,7 @@ box-shadow: 0 0 0 rgba(0, 0, 0, 0);  font-weight: 600;
 
 /* ── READY STATE — header accent ── */
 .ready-header {
-  background: linear-gradient(135deg, #16a34a, #15803d);
+  background: linear-gradient(135deg, #27fa74, #77eea3);
   /* override whatever colour your order-header already uses */
 }
 
@@ -1766,7 +1766,7 @@ box-shadow: 0 0 0 rgba(0, 0, 0, 0);  font-weight: 600;
 
 /* ── CANCELLED STATE — header accent ── */
 .cancelled-header {
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  background: linear-gradient(135deg, #f05353, #f8adad);
 }
 
 /* ── CANCELLED HERO ── */
