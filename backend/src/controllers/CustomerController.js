@@ -6,7 +6,7 @@ const Customer = require('../models/Customers/CustomerSchema');
 ========================= */
 exports.createCustomer = async(req, res) => {
     try {
-        const { fullName, phoneNumber, email, address, notes } = req.body;
+        const { fullName, phoneNumber, address, notes } = req.body;
 
         if (!fullName || !phoneNumber) {
             return res.status(400).json({
@@ -31,7 +31,6 @@ exports.createCustomer = async(req, res) => {
         const customer = new Customer({
             fullName: fullName.trim(),
             phoneNumber: phoneNumber.trim(),
-            email,
             address,
             notes
         });

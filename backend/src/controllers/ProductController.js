@@ -1,6 +1,6 @@
 const productService = require("../services/ProductService");
 const cloudinary = require("../../config/cloudinary");
-const streamifier = require("streamifier"); // ✅ npm install streamifier
+const streamifier = require("streamifier");
 
 /* ─────────────────────────────────────────────
    HELPER: stream buffer directly to Cloudinary
@@ -18,6 +18,17 @@ function uploadToCloudinary(buffer) {
     });
 }
 
+/* ─────────────────────────────────────────────
+   HELPER: extract public_id from Cloudinary URL
+   e.g. ".../upload/v1234/restaurant/products/abc123.jpg"
+   → "restaurant/products/abc123"
+───────────────────────────────────────────── */
+function getPublicIdFromUrl(url) {
+    if (!url) return null;
+    const matches = url.match(/\/upload\/(?:v\d+\/)?(.+?)(\.[^.]+)?$/);
+    return matches ? matches[1] : null;
+}
+
 class ProductController {
 
     async createProduct(req, res, next) {
@@ -25,10 +36,9 @@ class ProductController {
             let imageData = null;
 
             if (req.file) {
-                const result = await uploadToCloudinary(req.file.buffer); // ✅ fast stream
+                const result = await uploadToCloudinary(req.file.buffer);
                 imageData = {
-                    url: result.secure_url,
-                    public_id: result.public_id,
+                    url: result.secure_url, // ✅ only store URL, no public_id
                 };
             }
 
@@ -49,10 +59,7 @@ class ProductController {
 
             const product = await productService.createProduct(payload);
 
-            res.status(201).json({
-                success: true,
-                data: product,
-            });
+            res.status(201).json({ success: true, data: product });
         } catch (err) {
             next(err);
         }
@@ -83,20 +90,24 @@ class ProductController {
             let imageData = existingProduct.image; // default: keep existing
 
             if (req.file) {
-                // Delete old image from Cloudinary
-                if (existingProduct.image && existingProduct.image.public_id) {
-                    await cloudinary.uploader.destroy(existingProduct.image.public_id);
+                // ✅ Delete old image from Cloudinary using URL extraction
+                const existingImageUrl = existingProduct.image ? existingProduct.image.url : null;
+                const oldPublicId = getPublicIdFromUrl(existingImageUrl);
+                if (oldPublicId) {
+                    await cloudinary.uploader.destroy(oldPublicId);
                 }
-                const result = await uploadToCloudinary(req.file.buffer); // ✅ fast stream
+
+                const result = await uploadToCloudinary(req.file.buffer);
                 imageData = {
-                    url: result.secure_url,
-                    public_id: result.public_id,
+                    url: result.secure_url, // ✅ only store URL, no public_id
                 };
 
             } else if (req.body.removeImage === "true") {
-                // User clicked Remove — delete from Cloudinary and set null
-                if (existingProduct.image && existingProduct.image.public_id) {
-                    await cloudinary.uploader.destroy(existingProduct.image.public_id);
+                // ✅ Delete old image from Cloudinary using URL extraction
+                const existingImageUrl = existingProduct.image ? existingProduct.image.url : null;
+                const oldPublicId = getPublicIdFromUrl(existingImageUrl);
+                if (oldPublicId) {
+                    await cloudinary.uploader.destroy(oldPublicId);
                 }
                 imageData = null;
             }
@@ -142,8 +153,11 @@ class ProductController {
         try {
             const existingProduct = await productService.getProductById(req.params.id);
 
-            if (existingProduct.image && existingProduct.image.public_id) {
-                await cloudinary.uploader.destroy(existingProduct.image.public_id);
+            // ✅ Delete image from Cloudinary using URL extraction
+            const existingImageUrl = existingProduct.image ? existingProduct.image.url : null;
+            const publicId = getPublicIdFromUrl(existingImageUrl);
+            if (publicId) {
+                await cloudinary.uploader.destroy(publicId);
             }
 
             await productService.deleteProduct(req.params.id);

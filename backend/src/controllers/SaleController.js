@@ -40,7 +40,7 @@ class SaleController {
                 id,
                 { $set: { paymentStatus } },
                 { new: true }
-            ).populate("product", "name sku").populate("customer", "fullName");
+            ).populate("product", "name sku").populate("customer", "fullName phoneNumber");
 
             if (!sale) return res.status(404).json({ success: false, message: "Sale not found" });
 

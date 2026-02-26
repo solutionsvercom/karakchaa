@@ -16,7 +16,6 @@ import {
 } from "@radix-ui/themes";
 
 import {
-  EnvelopeClosedIcon,
   MobileIcon,
 } from "@radix-ui/react-icons";
 
@@ -31,7 +30,6 @@ type CustomerRow = {
   id: string;
   name: string;
   phone: string;
-  email: string;
   purchases: number;
   totalSpent: number;
   loyaltyPoints: number;
@@ -68,7 +66,6 @@ export default function Customers() {
     id: c?._id || "",
     name: c?.fullName || "",
     phone: c?.phoneNumber || "",
-    email: c?.email || "",
     purchases: c?.totalPurchases || 0,
     totalSpent: c?.totalSpent || 0,
     loyaltyPoints: c?.points || 0,
@@ -77,7 +74,7 @@ export default function Customers() {
   /* ================= FILTER ================= */
 
   const filteredCustomers = formattedCustomers.filter((c) =>
-    `${c.name} ${c.phone} ${c.email}`
+    `${c.name} ${c.phone}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
@@ -103,10 +100,6 @@ export default function Customers() {
           <Flex align="center" gap="2">
             <MobileIcon />
             <Text size="2">{row.phone}</Text>
-          </Flex>
-          <Flex align="center" gap="2">
-            <EnvelopeClosedIcon />
-            <Text size="2" color="gray">{row.email}</Text>
           </Flex>
         </Flex>
       ),
@@ -240,7 +233,6 @@ export default function Customers() {
                 ? {
                     name: customerToEdit.fullName,
                     phone: customerToEdit.phoneNumber,
-                    email: customerToEdit.email || "",
                     address: customerToEdit.address || "",
                     notes: customerToEdit.notes || "",
                   }
