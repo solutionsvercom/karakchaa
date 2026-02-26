@@ -14,10 +14,9 @@ export interface Product {
   stockQty: number;
   minStock: number;
   isActive: boolean;
-  isVeg: boolean; // ✅ NEW
-   image?: {              // ✅ add this
-    url: string;
-    public_id: string;
+  isVeg: boolean;
+  image?: {
+    url: string; // ✅ public_id removed
   };
 }
 
