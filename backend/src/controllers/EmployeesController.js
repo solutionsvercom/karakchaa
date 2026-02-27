@@ -4,6 +4,7 @@ const {
   getEmployeeById,
   updateEmployee,
   deleteEmployee,
+  getEmployeeStats,
 } = require("../services/EmployeesService");
 
 /* ================= CREATE ================= */
@@ -38,6 +39,16 @@ exports.getEmployees = async (req, res) => {
     const { search = "" } = req.query;
     const employees = await getEmployees(search);
     res.status(200).json(employees);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/* ================= STATS ================= */
+exports.getEmployeeStats = async (req, res) => {
+  try {
+    const stats = await getEmployeeStats();
+    res.status(200).json({ data: stats });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

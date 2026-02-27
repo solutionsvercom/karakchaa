@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { Flex, Button, Text, DropdownMenu } from "@radix-ui/themes";
 import { ChevronDown } from "lucide-react";
 import { useDataFilter } from "../../hooks/useDataFilter";
@@ -14,6 +14,7 @@ import {
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
 import { fetchExpenseTotals, fetchExpenses } from "../../features/ExpensesSlice";
 import { fetchEmployees } from "../../features/EmployeesSlice";
+import axios from "axios";
 
 /* ================= HELPER ================= */
 
@@ -36,12 +37,34 @@ export default function Reports() {
   const { totals, expenses } = useSelector((state: RootState) => state.expenses);
   const { employees } = useSelector((state: RootState) => state.employees);
 
+  const [reportSummary, setReportSummary] = useState<{
+    period: string;
+    totalRevenue: number;
+    totalOrders: number;
+    totalExpenses: number;
+    netProfit: number;
+  } | null>(null);
+
   useEffect(() => {
-    dispatch(fetchSales());
+    dispatch(fetchSales({ page: 1, limit: 100000 }));
     dispatch(fetchExpenseTotals());
     dispatch(fetchExpenses());
     dispatch(fetchEmployees("")); // ✅ FIXED HERE
   }, [dispatch]);
+
+  useEffect(() => {
+    const loadReports = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/reports", {
+          params: { period: category },
+        });
+        setReportSummary(res.data);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    loadReports();
+  }, [category]);
 
   /* ⭐ MAP SALES → DASHBOARD FORMAT */
   const dashboardSales = useMemo(
@@ -142,21 +165,21 @@ export default function Reports() {
       <div className="kb-summary-row">
         <SummaryCard
           title="Total Revenue"
-          value={`₹${salesSummary.totalRevenue.toLocaleString()}`}
+          value={`₹${(reportSummary?.totalRevenue ?? 0).toLocaleString()}`}
           accentColor="#7C4DFF"
           softColor="#F0E9FF"
           icon="💰"
         />
         <SummaryCard
           title="Total Orders"
-          value={String(salesSummary.totalOrders)}
+          value={String(reportSummary?.totalOrders ?? 0)}
           accentColor="#00C853"
           softColor="#E5F9EE"
           icon="🧾"
         />
         <SummaryCard
           title="Total Expenses"
-          value={`₹${totalExpenses.toLocaleString()}`}
+          value={`₹${(reportSummary?.totalExpenses ?? 0).toLocaleString()}`}
           accentColor="#FF9100"
           softColor="#FFF3E0"
           icon="📉"
@@ -165,7 +188,7 @@ export default function Reports() {
           title="Net Profit"
           value={
             <span style={{ color: netProfit >= 0 ? "#16A34A" : "#DC2626", fontWeight: 600 }}>
-              {netProfit < 0 ? "-" : "+"}₹{Math.abs(netProfit).toLocaleString()}
+              { (reportSummary?.netProfit ?? 0) < 0 ? "-" : "+"}₹{Math.abs(reportSummary?.netProfit ?? 0).toLocaleString()}
             </span>
           }
           accentColor="#2962FF"

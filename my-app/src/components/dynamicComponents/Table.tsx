@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { TableRowSkeleton } from '../Skeleton';
 
 interface Column<T = any> {
   key: string;
@@ -49,31 +50,17 @@ function Table<T extends Record<string, any> = Record<string, any>>({
 }: TableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
-  const [loadedPages, setLoadedPages] = useState(1);
 
   useEffect(() => {
     setCurrentPage(1);
-    setLoadedPages(1);
-  }, [data]);
+  }, [data, rowsPerPage]);
 
   const totalPages = useMemo(() => {
     if (!enablePagination) return 1;
     return Math.max(1, Math.ceil(data.length / rowsPerPage));
   }, [data.length, enablePagination, rowsPerPage]);
 
-  const maxVisiblePage = useMemo(() => {
-    if (!enablePagination) return 1;
-    if (!enableLazyLoad) return totalPages;
-    return Math.min(totalPages, loadedPages);
-  }, [enableLazyLoad, enablePagination, loadedPages, totalPages]);
-
-  const safeCurrentPage = Math.min(currentPage, maxVisiblePage);
-
-  useEffect(() => {
-    if (currentPage > maxVisiblePage) {
-      setCurrentPage(maxVisiblePage);
-    }
-  }, [currentPage, maxVisiblePage]);
+  const safeCurrentPage = Math.min(Math.max(currentPage, 1), totalPages);
 
   const pageStartIndex = enablePagination ? (safeCurrentPage - 1) * rowsPerPage : 0;
   const visibleRows = enablePagination
@@ -109,8 +96,56 @@ function Table<T extends Record<string, any> = Record<string, any>>({
 
   if (loading) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--gray-10)' }}>
-        Loading...
+      <div
+        className={className}
+        style={{
+          width: '100%',
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch' as any,
+          borderRadius: 12,
+          border: '1px solid var(--gray-6)',
+          background: 'var(--gray-1)',
+        }}
+      >
+        <table
+          style={{
+            width: '100%',
+            minWidth: 480,
+            borderCollapse: 'collapse',
+            fontSize: 14,
+          }}
+        >
+          <thead>
+            <tr
+              style={{
+                borderBottom: '1px solid var(--gray-6)',
+                background: 'var(--gray-2)',
+              }}
+            >
+              {columns.map((column) => (
+                <th
+                  key={column.key}
+                  style={{
+                    padding: '12px 16px',
+                    textAlign: column.align || 'left',
+                    fontWeight: 600,
+                    fontSize: 13,
+                    color: 'var(--gray-11)',
+                    whiteSpace: 'nowrap',
+                    width: column.width,
+                    userSelect: 'none',
+                  }}
+                >
+                  {column.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          <tbody>
+            <TableRowSkeleton columns={columns.length} rows={rowsPerPage} />
+          </tbody>
+        </table>
       </div>
     );
   }
@@ -251,7 +286,6 @@ function Table<T extends Record<string, any> = Record<string, any>>({
                 const nextRowsPerPage = Number(e.target.value);
                 setRowsPerPage(nextRowsPerPage);
                 setCurrentPage(1);
-                setLoadedPages(1);
               }}
               style={{
                 border: '1px solid var(--gray-7)',
@@ -275,67 +309,80 @@ function Table<T extends Record<string, any> = Record<string, any>>({
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               disabled={safeCurrentPage <= 1}
               style={{
+                minWidth: 28,
+                height: 28,
+                borderRadius: 999,
                 border: '1px solid var(--gray-7)',
                 background: 'var(--gray-1)',
                 color: 'var(--gray-12)',
-                borderRadius: 6,
-                padding: '4px 10px',
+                fontSize: 12,
                 cursor: safeCurrentPage <= 1 ? 'not-allowed' : 'pointer',
                 opacity: safeCurrentPage <= 1 ? 0.5 : 1,
               }}
             >
-              Prev
+              ‹
             </button>
 
-            <span>
-              Page {safeCurrentPage} / {maxVisiblePage}
-              {maxVisiblePage < totalPages ? ` (loaded ${maxVisiblePage}/${totalPages})` : ''}
-            </span>
+            {Array.from({ length: totalPages }).map((_, i) => {
+              const page = i + 1;
+
+              if (
+                page === 1 ||
+                page === totalPages ||
+                (page >= safeCurrentPage - 1 && page <= safeCurrentPage + 1)
+              ) {
+                const isActive = page === safeCurrentPage;
+                return (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => setCurrentPage(page)}
+                    style={{
+                      minWidth: 28,
+                      height: 28,
+                      borderRadius: 999,
+                      border: isActive ? '1px solid var(--accent-8)' : '1px solid var(--gray-7)',
+                      background: isActive ? 'var(--accent-3)' : 'var(--gray-1)',
+                      color: isActive ? 'var(--accent-11)' : 'var(--gray-12)',
+                      fontSize: 12,
+                      fontWeight: isActive ? 600 : 400,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {page}
+                  </button>
+                );
+              }
+
+              if (page === safeCurrentPage - 2 || page === safeCurrentPage + 2) {
+                return (
+                  <span key={page} style={{ padding: '0 4px' }}>
+                    …
+                  </span>
+                );
+              }
+
+              return null;
+            })}
 
             <button
               type="button"
-              onClick={() => {
-                if (safeCurrentPage < maxVisiblePage) {
-                  setCurrentPage((prev) => Math.min(maxVisiblePage, prev + 1));
-                  return;
-                }
-                if (enableLazyLoad && maxVisiblePage < totalPages) {
-                  setLoadedPages((prev) => Math.min(totalPages, prev + lazyLoadPagesStep));
-                  setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-                }
-              }}
-              disabled={!enableLazyLoad && safeCurrentPage >= totalPages}
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={safeCurrentPage >= totalPages}
               style={{
+                minWidth: 28,
+                height: 28,
+                borderRadius: 999,
                 border: '1px solid var(--gray-7)',
                 background: 'var(--gray-1)',
                 color: 'var(--gray-12)',
-                borderRadius: 6,
-                padding: '4px 10px',
-                cursor: !enableLazyLoad && safeCurrentPage >= totalPages ? 'not-allowed' : 'pointer',
-                opacity: !enableLazyLoad && safeCurrentPage >= totalPages ? 0.5 : 1,
+                fontSize: 12,
+                cursor: safeCurrentPage >= totalPages ? 'not-allowed' : 'pointer',
+                opacity: safeCurrentPage >= totalPages ? 0.5 : 1,
               }}
             >
-              Next
+              ›
             </button>
-
-            {enableLazyLoad && maxVisiblePage < totalPages && (
-              <button
-                type="button"
-                onClick={() =>
-                  setLoadedPages((prev) => Math.min(totalPages, prev + lazyLoadPagesStep))
-                }
-                style={{
-                  border: '1px solid var(--accent-7)',
-                  background: 'var(--accent-3)',
-                  color: 'var(--accent-11)',
-                  borderRadius: 6,
-                  padding: '4px 10px',
-                  cursor: 'pointer',
-                }}
-              >
-                Load more
-              </button>
-            )}
           </div>
         </div>
       )}

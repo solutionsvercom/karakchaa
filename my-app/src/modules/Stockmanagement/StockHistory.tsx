@@ -25,7 +25,7 @@ type HistoryRow = {
 
 export default function StockHistory() {
   const dispatch = useDispatch<AppDispatch>();
-  const { items } = useSelector((state: RootState) => state.stock);
+  const { items, loading } = useSelector((state: RootState) => state.stock);
 
   const [searchValue, setSearchValue] = React.useState("");
   const [actionFilter, setActionFilter] = React.useState("All Actions");
@@ -187,7 +187,16 @@ export default function StockHistory() {
       </Flex>
 
       {/* ===== TABLE ===== */}
-      {filteredHistory.length === 0 ? (
+      {loading ? (
+        <Table
+          data={filteredHistory}
+          columns={columns}
+          emptyMessage="No history found"
+          hoverable
+          striped
+          loading={loading}
+        />
+      ) : filteredHistory.length === 0 ? (
         <Flex
           direction="column"
           align="center"

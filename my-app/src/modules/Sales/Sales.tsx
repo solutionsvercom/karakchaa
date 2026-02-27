@@ -16,6 +16,8 @@ import {
   fetchSales,
   updateSale,
   Sale,
+  SalesPagination,
+  fetchSalesSummary,
 } from "../../features/SalesSlice";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
@@ -72,7 +74,7 @@ export const calculateTotals = (data: SaleTransaction[]) => {
 
 export default function Sales() {
   const dispatch = useDispatch<AppDispatch>();
-  const { sales, loading } = useSelector((state: RootState) => state.sales);
+  const { sales, loading, pagination, summary } = useSelector((state: RootState) => state.sales);
 
   const [searchValue, setSearchValue] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
@@ -82,7 +84,8 @@ export default function Sales() {
   const [editLoading, setEditLoading] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchSales());
+    dispatch(fetchSales({ page: 1, limit: 10 }));
+    dispatch(fetchSalesSummary());
   }, [dispatch]);
 
   const mappedSales: SaleTransaction[] = sales.map((s: Sale, index) => ({
@@ -110,7 +113,11 @@ export default function Sales() {
     return matchesSearch && matchesPayment;
   });
 
-  const { totalRevenue, totalOrders, averageOrder } = calculateTotals(filteredSales);
+  const { totalRevenue, totalOrders, averageOrder } = summary || {
+    totalRevenue: 0,
+    totalOrders: 0,
+    averageOrder: 0,
+  };
 
   /* ================= TABLE COLUMNS ================= */
 
@@ -156,8 +163,6 @@ export default function Sales() {
       ),
     },
   ];
-
-  if (loading) return <div>Loading sales...</div>;
 
   return (
     <>
@@ -264,8 +269,157 @@ export default function Sales() {
             emptyMessage="No sales found"
             hoverable
             striped
+            loading={loading}
+            enablePagination={false}
           />
         </div>
+
+        {/* ================= SERVER PAGINATION ================= */}
+        {pagination && (
+          <div
+            style={{
+              marginTop: 12,
+              padding: "8px 4px",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 12,
+              alignItems: "center",
+              justifyContent: "space-between",
+              color: "var(--gray-11)",
+              fontSize: 13,
+            }}
+          >
+            <div>
+              Showing page {pagination.page} of {pagination.totalPages} · Total{" "}
+              {pagination.total} sales
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button
+                type="button"
+                onClick={() =>
+                  pagination.page > 1 &&
+                  dispatch(
+                    fetchSales({
+                      page: pagination.page - 1,
+                      limit: pagination.limit,
+                    })
+                  )
+                }
+                disabled={pagination.page <= 1 || loading}
+                style={{
+                  minWidth: 28,
+                  height: 28,
+                  borderRadius: 999,
+                  border: "1px solid var(--gray-7)",
+                  background: "var(--gray-1)",
+                  color: "var(--gray-12)",
+                  fontSize: 12,
+                  cursor:
+                    pagination.page <= 1 || loading ? "not-allowed" : "pointer",
+                  opacity: pagination.page <= 1 || loading ? 0.5 : 1,
+                }}
+              >
+                ‹
+              </button>
+
+              {Array.from({ length: pagination.totalPages }).map((_, i) => {
+                const page = i + 1;
+
+                if (
+                  page === 1 ||
+                  page === pagination.totalPages ||
+                  (page >= pagination.page - 1 && page <= pagination.page + 1)
+                ) {
+                  const isActive = page === pagination.page;
+                  return (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() =>
+                        dispatch(
+                          fetchSales({
+                            page,
+                            limit: pagination.limit,
+                          })
+                        )
+                      }
+                      disabled={loading}
+                      style={{
+                        minWidth: 28,
+                        height: 28,
+                        borderRadius: 999,
+                        border: isActive
+                          ? "1px solid var(--accent-8)"
+                          : "1px solid var(--gray-7)",
+                        background: isActive
+                          ? "var(--accent-3)"
+                          : "var(--gray-1)",
+                        color: isActive
+                          ? "var(--accent-11)"
+                          : "var(--gray-12)",
+                        fontSize: 12,
+                        fontWeight: isActive ? 600 : 400,
+                        cursor: loading ? "not-allowed" : "pointer",
+                        opacity: loading ? 0.7 : 1,
+                      }}
+                    >
+                      {page}
+                    </button>
+                  );
+                }
+
+                if (
+                  page === pagination.page - 2 ||
+                  page === pagination.page + 2
+                ) {
+                  return (
+                    <span key={page} style={{ padding: "0 4px" }}>
+                      …
+                    </span>
+                  );
+                }
+
+                return null;
+              })}
+
+              <button
+                type="button"
+                onClick={() =>
+                  pagination.page < pagination.totalPages &&
+                  dispatch(
+                    fetchSales({
+                      page: pagination.page + 1,
+                      limit: pagination.limit,
+                    })
+                  )
+                }
+                disabled={
+                  pagination.page >= pagination.totalPages || loading
+                }
+                style={{
+                  minWidth: 28,
+                  height: 28,
+                  borderRadius: 999,
+                  border: "1px solid var(--gray-7)",
+                  background: "var(--gray-1)",
+                  color: "var(--gray-12)",
+                  fontSize: 12,
+                  cursor:
+                    pagination.page >= pagination.totalPages || loading
+                      ? "not-allowed"
+                      : "pointer",
+                  opacity:
+                    pagination.page >= pagination.totalPages || loading
+                      ? 0.5
+                      : 1,
+                }}
+              >
+                ›
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
 

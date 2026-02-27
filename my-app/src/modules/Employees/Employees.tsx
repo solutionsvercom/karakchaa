@@ -6,7 +6,7 @@ import { Plus, MoreVertical, Pencil, Trash2, X } from "lucide-react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../store/Store";
-import { fetchEmployees, deleteEmployee } from "../../features/EmployeesSlice";
+import { fetchEmployees, deleteEmployee, fetchEmployeeStats } from "../../features/EmployeesSlice";
 import type { Employee } from "../../features/EmployeesSlice";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import Table, { Column } from "../../components/dynamicComponents/Table";
@@ -32,7 +32,7 @@ export default function Employees() {
   const { id } = useParams();
 
   const dispatch = useDispatch<AppDispatch>();
-  const { employees, loading } = useSelector((state: RootState) => state.employees);
+  const { employees, loading, stats } = useSelector((state: RootState) => state.employees);
 
   const [search, setSearch] = React.useState("");
   const [debouncedSearch, setDebouncedSearch] = React.useState("");
@@ -46,6 +46,7 @@ export default function Employees() {
 
   React.useEffect(() => {
     dispatch(fetchEmployees(debouncedSearch));
+    dispatch(fetchEmployeeStats());
   }, [dispatch, debouncedSearch]);
 
   const isAddEmployee = location.pathname.endsWith("add-employee");
@@ -56,18 +57,25 @@ export default function Employees() {
     return employees.find((e) => String(e._id) === String(id));
   }, [employees, id]);
 
-  // ✅ FIXED SUMMARY (only active salary counted)
   const summary = React.useMemo(() => {
+    if (stats) {
+      return {
+        total: stats.totalEmployees,
+        active: stats.active,
+        inactive: stats.inactive,
+        salary: stats.totalSalary,
+      };
+    }
+
     const total = employees.length;
     const active = employees.filter((e) => e.active !== false).length;
     const inactive = employees.filter((e) => e.active === false).length;
-
     const salary = employees
       .filter((e) => e.active !== false)
       .reduce((sum, e) => sum + (e.salary || 0), 0);
 
     return { total, active, inactive, salary };
-  }, [employees]);
+  }, [employees, stats]);
 
   const handleEdit = React.useCallback((id: string | undefined) => {
     if (!id) return;
@@ -195,16 +203,13 @@ export default function Employees() {
           </Button>
         </Flex>
 
-        {loading ? (
-          <div style={{ textAlign: "center", padding: 40 }}>Loading...</div>
-        ) : (
-          <Table
-            data={employees}
-            columns={columns}
-            emptyMessage="No employees found"
-            hoverable
-          />
-        )}
+        <Table
+          data={employees}
+          columns={columns}
+          emptyMessage="No employees found"
+          hoverable
+          loading={loading}
+        />
       </Flex>
 
       {/* ADD / EDIT DIALOG */}

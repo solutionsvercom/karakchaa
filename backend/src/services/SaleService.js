@@ -392,11 +392,58 @@ async function getAllSales(filters = {}) {
     query.product = filters.product;
   }
 
-  return await Sale.find(query)
-    .populate("product", "name sku")
-    .populate("customer", "fullName phoneNumber")
-    .populate("soldBy", "name")
-    .sort({ createdAt: -1 });
+  const page = Number(filters.page) > 0 ? Number(filters.page) : 1;
+  const limit = Number(filters.limit) > 0 ? Number(filters.limit) : 10;
+  const skip = (page - 1) * limit;
+
+  const [items, total] = await Promise.all([
+    Sale.find(query)
+      .populate("product", "name sku")
+      .populate("customer", "fullName phoneNumber")
+      .populate("soldBy", "name")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    Sale.countDocuments(query),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  return {
+    items,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  };
+}
+
+/* ================= SUMMARY (AGGREGATED) ================= */
+
+async function getSalesSummary() {
+  const result = await Sale.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: "$totalAmount" },
+        totalOrders: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const summary = result[0] || { totalRevenue: 0, totalOrders: 0 };
+  const averageOrder =
+    summary.totalOrders > 0
+      ? Math.round(summary.totalRevenue / summary.totalOrders)
+      : 0;
+
+  return {
+    totalRevenue: summary.totalRevenue || 0,
+    totalOrders: summary.totalOrders || 0,
+    averageOrder,
+  };
 }
 
 module.exports = {
@@ -404,4 +451,5 @@ module.exports = {
   getAllSales,
   createSaleFromOrder,
   reverseSaleFromOrder,
+  getSalesSummary,
 };

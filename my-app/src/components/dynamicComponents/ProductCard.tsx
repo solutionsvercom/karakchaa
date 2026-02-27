@@ -125,7 +125,7 @@ export default function ProductCard({
         </div>
       )}
 
-      {/* FLOATING LOW STOCK BADGE (Now stays on top-right of image) */}
+      {/* FLOATING LOW STOCK BADGE (top-right of image) */}
       {!isPOS && !isOutOfStock && lowStock && (
         <div
           style={{
@@ -145,30 +145,6 @@ export default function ProductCard({
           }}
         >
           LOW STOCK
-        </div>
-      )}
-
-      {/* TOGGLE SWITCH */}
-      {!isPOS && onToggleActive && (
-        <div
-          style={{
-            position: "absolute",
-            top: 10,
-            left: 10,
-            zIndex: 10,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            background: "rgba(255, 255, 255, 0.95)",
-            padding: "4px 8px",
-            borderRadius: 999,
-            border: "1px solid var(--gray-6)",
-          }}
-        >
-          <span style={{ fontSize: 11, fontWeight: 500, color: isActive ? "var(--green-11)" : "var(--gray-10)" }}>
-            {isActive ? "Active" : "Inactive"}
-          </span>
-          <Switch checked={isActive} onCheckedChange={onToggleActive} size="1" />
         </div>
       )}
 
@@ -268,12 +244,26 @@ export default function ProductCard({
               <Badge radius="full" variant="soft" color={categoryColorMap[safeCategory]}>
                 {formatLabel(safeCategory)}
               </Badge>
-              <span style={{ fontSize: 12, fontWeight: 500, color: isOutOfStock ? "#dc2626" : lowStock ? "#f59e0b" : "var(--green-11)" }}>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: isOutOfStock ? "#dc2626" : lowStock ? "#f59e0b" : "var(--green-11)",
+                }}
+              >
                 {isOutOfStock ? "Out" : lowStock ? "Low" : "Stock"}: {stock}
               </span>
             </div>
 
-            <div style={{ marginTop: 4, height: 4, background: "var(--gray-4)", borderRadius: 999, overflow: "hidden" }}>
+            <div
+              style={{
+                marginTop: 4,
+                height: 4,
+                background: "var(--gray-4)",
+                borderRadius: 999,
+                overflow: "hidden",
+              }}
+            >
               <div
                 style={{
                   height: "100%",
@@ -283,6 +273,41 @@ export default function ProductCard({
                 }}
               />
             </div>
+
+            {onToggleActive && (
+              <div
+                style={{
+                  marginTop: 8,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 500,
+                      color: isActive ? "var(--green-11)" : "var(--gray-10)",
+                    }}
+                  >
+                    {isActive ? "Active" : "Inactive"}
+                  </span>
+                  <Switch checked={isActive} onCheckedChange={onToggleActive} size="1" />
+                </div>
+
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: "var(--gray-9)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  SKU: {sku}
+                </span>
+              </div>
+            )}
           </>
         )}
       </div>

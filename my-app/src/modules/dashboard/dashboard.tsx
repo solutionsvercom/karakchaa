@@ -167,7 +167,7 @@ export default function Dashboard() {
   useEffect(() => {
     dispatch(fetchStockItems());
     dispatch(fetchStockStats());
-    dispatch(fetchSales());
+    dispatch(fetchSales({ page: 1, limit: 100000 }));
     dispatch(fetchCustomers());
     dispatch(fetchProducts());
     dispatch(fetchExpenses());

@@ -52,19 +52,32 @@ class SaleController {
 
     async getSales(req, res, next) {
         try {
-            // ✅ Controlled filter payload
             const payload = {
                 from: req.query.from,
                 to: req.query.to,
                 product: req.query.product,
+                page: req.query.page,
+                limit: req.query.limit,
             };
 
-            const sales = await saleService.getAllSales(payload);
+            const { items, pagination } = await saleService.getAllSales(payload);
 
             res.json({
                 success: true,
-                count: sales.length,
-                data: sales,
+                data: items,
+                pagination,
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    async getSalesSummary(req, res, next) {
+        try {
+            const summary = await saleService.getSalesSummary();
+            res.json({
+                success: true,
+                data: summary,
             });
         } catch (err) {
             next(err);
