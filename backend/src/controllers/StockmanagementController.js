@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 const Stockmanagement = require('../models/Stockmanagement/StockmanagementSchema');
-const Product = require('../models/Product'); // ✅ Added to sync stockQty back to Product
+const Product = require('../models/Product/ProductSchema'); // ✅ Added to sync stockQty back to Product
 
 /* =========================
    CREATE PRODUCT
 ========================= */
-exports.createStockItem = async(req, res) => {
+exports.createStockItem = async (req, res) => {
     try {
         const { productName, sku, category, currentStock, minStockLevel, unit } = req.body;
 
@@ -44,7 +44,7 @@ exports.createStockItem = async(req, res) => {
 /* =========================
    GET ALL STOCK ITEMS
 ========================= */
-exports.getAllStock = async(req, res) => {
+exports.getAllStock = async (req, res) => {
     try {
         const items = await Stockmanagement.find().sort({ createdAt: -1 });
 
@@ -65,7 +65,7 @@ exports.getAllStock = async(req, res) => {
 /* =========================
    GET SINGLE STOCK BY ID
 ========================= */
-exports.getStockById = async(req, res) => {
+exports.getStockById = async (req, res) => {
     try {
         const id = req.params.id.trim();
 
@@ -102,7 +102,7 @@ exports.getStockById = async(req, res) => {
    ADD STOCK
    ✅ Syncs updated quantity back to Product.stockQty
 ========================= */
-exports.addStock = async(req, res) => {
+exports.addStock = async (req, res) => {
     try {
         const { quantity, reason, referenceNo, notes } = req.body;
         const { id } = req.params;
@@ -130,10 +130,10 @@ exports.addStock = async(req, res) => {
 
         stockItem.status =
             stockItem.currentStock === 0 ?
-            'Out of Stock' :
-            stockItem.currentStock <= stockItem.minStockLevel ?
-            'Low Stock' :
-            'In Stock';
+                'Out of Stock' :
+                stockItem.currentStock <= stockItem.minStockLevel ?
+                    'Low Stock' :
+                    'In Stock';
 
         stockItem.stockHistory.push({
             action: 'add',
@@ -169,7 +169,7 @@ exports.addStock = async(req, res) => {
    REMOVE STOCK
    ✅ Syncs updated quantity back to Product.stockQty
 ========================= */
-exports.removeStock = async(req, res) => {
+exports.removeStock = async (req, res) => {
     try {
         const { quantity, reason, referenceNo, notes } = req.body;
         const { id } = req.params;
@@ -201,10 +201,10 @@ exports.removeStock = async(req, res) => {
 
         stockItem.status =
             stockItem.currentStock === 0 ?
-            'Out of Stock' :
-            stockItem.currentStock <= stockItem.minStockLevel ?
-            'Low Stock' :
-            'In Stock';
+                'Out of Stock' :
+                stockItem.currentStock <= stockItem.minStockLevel ?
+                    'Low Stock' :
+                    'In Stock';
 
         stockItem.stockHistory.push({
             action: 'remove',
@@ -239,7 +239,7 @@ exports.removeStock = async(req, res) => {
 /* =========================
    STOCK HISTORY
 ========================= */
-exports.getStockHistory = async(req, res) => {
+exports.getStockHistory = async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -269,7 +269,7 @@ exports.getStockHistory = async(req, res) => {
 /* =========================
    STOCK DASHBOARD STATS
 ========================= */
-exports.getStockStats = async(req, res) => {
+exports.getStockStats = async (req, res) => {
     try {
         const totalProducts = await Stockmanagement.countDocuments();
         const inStock = await Stockmanagement.countDocuments({ status: 'In Stock' });

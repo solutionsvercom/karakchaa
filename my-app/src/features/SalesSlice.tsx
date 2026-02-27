@@ -67,7 +67,7 @@ const BASE_URL = `http://localhost:5000/api/sales`;
 
 export const fetchSales = createAsyncThunk<
   { data: Sale[]; pagination: SalesPagination },
-  { from?: string; to?: string; product?: string; page?: number; limit?: number } | undefined,
+  { from?: string; to?: string; product?: string; orderSource?: string; page?: number; limit?: number } | undefined,
   { rejectValue: string }
 >("sales/fetchAll", async (filters, thunkAPI) => {
   try {

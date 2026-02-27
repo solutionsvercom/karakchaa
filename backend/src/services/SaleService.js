@@ -1,5 +1,5 @@
-const Sale = require("../models/Sale");
-const Product = require("../models/Product");
+const Sale = require("../models/Sales/SaleSchema");
+const Product = require("../models/Product/ProductSchema");
 const Order = require("../models/Order/OrderSchema");
 const Counter = require("../models/System/CounterSchema");
 const Customer = require("../models/Customers/CustomerSchema");
@@ -210,6 +210,7 @@ async function createSale(data) {
       paymentMethod,
       paymentStatus,
       soldBy,
+      orderSource: orderType || "POS", // Map the orderType from the payload to orderSource
     });
 
     // ✅ Sync Stockmanagement
@@ -283,8 +284,8 @@ async function createSaleFromOrder(order, paymentMethod = "Cash") {
 
     saleItems.push({
       product: productDoc._id,
-      name:    item.name || productDoc.name,
-      price:   item.price,
+      name: item.name || productDoc.name,
+      price: item.price,
       quantity: item.quantity,
     });
 
@@ -309,6 +310,7 @@ async function createSaleFromOrder(order, paymentMethod = "Cash") {
     customer: customerId,
     paymentMethod: normalizePayment(paymentMethod || lockedOrder.paymentMethod),
     paymentStatus: "Completed",
+    orderSource: lockedOrder.orderSource || "POS",
   });
 
   if (customerId) {
@@ -390,6 +392,19 @@ async function getAllSales(filters = {}) {
 
   if (filters.product) {
     query.product = filters.product;
+  }
+
+  if (filters.orderSource) {
+    if (filters.orderSource === "POS") {
+      // Because older POS orders might not have an orderSource field at all, 
+      // we match records where orderSource is either "POS" or doesn't exist.
+      query.$or = [
+        { orderSource: "POS" },
+        { orderSource: { $exists: false } }
+      ];
+    } else {
+      query.orderSource = filters.orderSource;
+    }
   }
 
   const page = Number(filters.page) > 0 ? Number(filters.page) : 1;

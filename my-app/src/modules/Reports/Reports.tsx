@@ -52,20 +52,6 @@ export default function Reports() {
     dispatch(fetchEmployees("")); // ✅ FIXED HERE
   }, [dispatch]);
 
-  useEffect(() => {
-    const loadReports = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/reports", {
-          params: { period: category },
-        });
-        setReportSummary(res.data);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    loadReports();
-  }, [category]);
-
   /* ⭐ MAP SALES → DASHBOARD FORMAT */
   const dashboardSales = useMemo(
     () =>
@@ -83,6 +69,20 @@ export default function Reports() {
   );
 
   const { category, setCategory, filteredData } = useDataFilter(dashboardSales);
+
+  useEffect(() => {
+    const loadReports = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/reports", {
+          params: { period: category },
+        });
+        setReportSummary(res.data);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    loadReports();
+  }, [category]);
 
   const salesSummary = calculateTotals(filteredData);
 

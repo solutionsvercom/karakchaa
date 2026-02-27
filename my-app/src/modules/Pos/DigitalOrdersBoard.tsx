@@ -48,8 +48,13 @@ export default function DigitalOrdersBoard() {
       );
     } else if (filterMode === "completed") {
       return onlineOrders.filter((order) => 
-        ["Completed", "Cancelled"].includes(order.status)
+        ["Completed"].includes(order.status)
       );
+    }
+      else if (filterMode === "cancelled") {
+        return onlineOrders.filter((order) => 
+          order.status === "Cancelled"
+        );
     }
     
     return onlineOrders; // "all"
@@ -151,7 +156,7 @@ export default function DigitalOrdersBoard() {
       
       setToastMessage({
         title: "Order Completed!",
-        description: `${orderNumber} - Invoice generated successfully`,
+        description: `${orderNumber} Invoice generated successfully`,
       });
       setToastVariant("success");
       setToastOpen(true);
@@ -285,7 +290,8 @@ export default function DigitalOrdersBoard() {
             {[
               { value: "active" as FilterMode, label: "Active" },
               { value: "completed" as FilterMode, label: "Completed" },
-              { value: "all" as FilterMode, label: "All" },
+              // { value: "all" as FilterMode, label: "All" },
+              { value: "cancelled" as FilterMode, label: "Cancelled" },
             ].map((filter) => (
               <button
                 key={filter.value}

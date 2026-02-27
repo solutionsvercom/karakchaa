@@ -34,6 +34,7 @@ type SaleTransaction = {
   items: string;
   saleItems: { name: string; price: number; quantity: number }[];
   type: string;
+  orderSource?: string;
   amount: number;
   payment: PaymentStatus;
   dateTime: string;
@@ -44,7 +45,7 @@ type SaleTransaction = {
 const getPaymentColor = (status: PaymentStatus) => {
   switch (status) {
     case "completed": return "green";
-    case "pending":   return "yellow";
+    case "pending": return "yellow";
     case "cancelled": return "red";
   }
 };
@@ -78,15 +79,30 @@ export default function Sales() {
 
   const [searchValue, setSearchValue] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
+  const [orderTypeFilter, setOrderTypeFilter] = useState("All Orders");
 
   const [viewSale, setViewSale] = useState<SaleTransaction | null>(null);
   const [editSale, setEditSale] = useState<{ row: SaleTransaction; sale: Sale } | null>(null);
   const [editLoading, setEditLoading] = useState(false);
 
+  const fetchFilteredSales = (page = 1) => {
+    let source: string | undefined = undefined;
+    if (orderTypeFilter === "POS") source = "POS";
+    if (orderTypeFilter === "Digital Menu") source = "DIGITAL";
+
+    // TODO: payment filters / search strings could also be added to server-side logic in the future
+
+    dispatch(fetchSales({
+      page,
+      limit: 10,
+      orderSource: source,
+    }));
+  };
+
   useEffect(() => {
-    dispatch(fetchSales({ page: 1, limit: 10 }));
+    fetchFilteredSales(1);
     dispatch(fetchSalesSummary());
-  }, [dispatch]);
+  }, [dispatch, orderTypeFilter]);
 
   const mappedSales: SaleTransaction[] = sales.map((s: Sale, index) => ({
     id: index,
@@ -98,6 +114,8 @@ export default function Sales() {
       ? (s as any).items
       : [{ name: s.product?.name || "-", price: s.sellingPrice || s.totalAmount, quantity: s.quantity || 1 }],
     type: s.paymentMethod,
+    orderSource: (s as any).orderSource ||
+      (["online", "digital_menu"].includes((s as any).orderType?.toLowerCase()) ? "DIGITAL" : "POS"),
     amount: s.totalAmount,
     payment: (s.paymentStatus?.toLowerCase() as PaymentStatus),
     dateTime: s.createdAt,
@@ -110,7 +128,17 @@ export default function Sales() {
     const matchesPayment =
       paymentFilter === "All Payments" ||
       sale.type.toLowerCase() === paymentFilter.toLowerCase();
-    return matchesSearch && matchesPayment;
+
+    // NOTE: OrderSource matching is now handled mostly by the server,
+    // but the local filter applies too for robustness (and search/payment).
+    let matchesOrderType = true;
+    if (orderTypeFilter === "POS") {
+      matchesOrderType = !sale.orderSource || sale.orderSource.toUpperCase() !== "DIGITAL";
+    } else if (orderTypeFilter === "Digital Menu") {
+      matchesOrderType = sale.orderSource?.toUpperCase() === "DIGITAL";
+    }
+
+    return matchesSearch && matchesPayment && matchesOrderType;
   });
 
   const { totalRevenue, totalOrders, averageOrder } = summary || {
@@ -122,28 +150,40 @@ export default function Sales() {
   /* ================= TABLE COLUMNS ================= */
 
   const columns: Column<SaleTransaction>[] = [
-    { key: "invoice",  header: "Invoice",    accessor: "invoice" },
-    { key: "customer", header: "Customer",   accessor: "customer" },
-    { key: "amount",   header: "Amount",     accessor: "amount",
-      render: (value) => <strong>₹{value}</strong> },
-    { key: "type",     header: "Payment Type", accessor: "type",
+    { key: "invoice", header: "Invoice", accessor: "invoice" },
+    { key: "customer", header: "Customer", accessor: "customer" },
+    {
+      key: "amount", header: "Amount", accessor: "amount",
+      render: (value) => <strong>₹{value}</strong>
+    },
+    {
+      key: "type", header: "Payment Type", accessor: "type",
       render: (value: string) => (
         <Badge color="blue" variant="soft" style={{ textTransform: "capitalize" }}>{value}</Badge>
       ),
     },
-    { key: "payment",  header: "Status",    accessor: "payment",
+    {
+      key: "orderSource", header: "Order Source", accessor: "orderSource",
+      render: (value: string) => (
+        <Badge color={value === "DIGITAL" ? "violet" : "orange"} variant="soft">
+          {value || "POS"}
+        </Badge>
+      ),
+    },
+    {
+      key: "payment", header: "Status", accessor: "payment",
       render: (value: PaymentStatus) => (
         <Badge color={getPaymentColor(value)} variant="soft" style={{ textTransform: "capitalize" }}>{value}</Badge>
       ),
     },
-    { key: "dateTime", header: "Date & Time", accessor: "dateTime",
+    {
+      key: "dateTime", header: "Date & Time", accessor: "dateTime",
       render: (value) => (
         <span style={{ whiteSpace: "nowrap", fontSize: 13 }}>{formatDate(value)}</span>
       ),
     },
     {
-      key: "actions",
-      header: "",
+      key: "actions", header: "Actions",
       render: (_, row) => (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
@@ -155,9 +195,9 @@ export default function Sales() {
             <DropdownMenu.Item onClick={() => setViewSale(row)}>
               <Eye size={14} /> View Invoice
             </DropdownMenu.Item>
-            <DropdownMenu.Item onClick={() => setEditSale({ row, sale: sales[row.id] })}>
+            {/* <DropdownMenu.Item onClick={() => setEditSale({ row, sale: sales[row.id] })}>
               <Pencil size={14} /> Change Status
-            </DropdownMenu.Item>
+            </DropdownMenu.Item> */}
           </DropdownMenu.Content>
         </DropdownMenu.Root>
       ),
@@ -247,6 +287,22 @@ export default function Sales() {
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               <Button variant="soft">
+                {orderTypeFilter}
+                <ChevronDown size={16} />
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              {["All Orders", "POS", "Digital Menu"].map((item) => (
+                <DropdownMenu.Item key={item} onSelect={() => setOrderTypeFilter(item)}>
+                  {item}
+                </DropdownMenu.Item>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              <Button variant="soft">
                 {paymentFilter}
                 <ChevronDown size={16} />
               </Button>
@@ -299,12 +355,7 @@ export default function Sales() {
                 type="button"
                 onClick={() =>
                   pagination.page > 1 &&
-                  dispatch(
-                    fetchSales({
-                      page: pagination.page - 1,
-                      limit: pagination.limit,
-                    })
-                  )
+                  fetchFilteredSales(pagination.page - 1)
                 }
                 disabled={pagination.page <= 1 || loading}
                 style={{
@@ -336,14 +387,7 @@ export default function Sales() {
                     <button
                       key={page}
                       type="button"
-                      onClick={() =>
-                        dispatch(
-                          fetchSales({
-                            page,
-                            limit: pagination.limit,
-                          })
-                        )
-                      }
+                      onClick={() => fetchFilteredSales(page)}
                       disabled={loading}
                       style={{
                         minWidth: 28,
@@ -387,12 +431,7 @@ export default function Sales() {
                 type="button"
                 onClick={() =>
                   pagination.page < pagination.totalPages &&
-                  dispatch(
-                    fetchSales({
-                      page: pagination.page + 1,
-                      limit: pagination.limit,
-                    })
-                  )
+                  fetchFilteredSales(pagination.page + 1)
                 }
                 disabled={
                   pagination.page >= pagination.totalPages || loading
@@ -478,7 +517,7 @@ export default function Sales() {
                   <InfoCell label="Payment Method" value={viewSale.type} />
                   <InfoCell label="Status" value={viewSale.payment} statusColor={
                     viewSale.payment === "completed" ? "var(--green-9)" :
-                    viewSale.payment === "cancelled" ? "var(--red-9)" : "var(--yellow-9)"
+                      viewSale.payment === "cancelled" ? "var(--red-9)" : "var(--yellow-9)"
                   } />
                 </div>
 

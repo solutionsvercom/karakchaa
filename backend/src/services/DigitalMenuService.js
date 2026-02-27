@@ -1,6 +1,6 @@
-const Product = require("../models/Product");
+const Product = require("../models/Product/ProductSchema");
 
-exports.getAllDigitalMenuProducts = async() => {
+exports.getAllDigitalMenuProducts = async () => {
 
     const products = await Product.find({ isActive: true })
         .select("_id name sellingPrice category image stockQty isActive isVeg")
@@ -24,7 +24,7 @@ exports.getAllDigitalMenuProducts = async() => {
 
 /* ================= GET PRODUCT BY ID ================= */
 
-exports.getDigitalMenuProductById = async(productId) => {
+exports.getDigitalMenuProductById = async (productId) => {
 
     const product = await Product.findById(productId);
 
