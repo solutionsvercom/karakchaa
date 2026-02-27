@@ -86,12 +86,12 @@ const Cart = ({ onCheckout }: CartProps) => {
               }}
             >
               <Flex justify="between" align="center">
-                <div>
+                <Flex direction="column">
                   <Text weight="medium">{item.name}</Text>
                   <Text size="2" color="gray">
                     Rs {item.price} each
                   </Text>
-                </div>
+                </Flex>
                 <IconButton
                   size="1"
                   color="red"

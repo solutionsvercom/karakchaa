@@ -125,55 +125,11 @@ export default function ProductCard({
         </div>
       )}
 
-      {/* FLOATING LOW STOCK BADGE (Now stays on top-right of image) */}
-      {!isPOS && !isOutOfStock && lowStock && (
-        <div
-          style={{
-            position: "absolute",
-            top: 10,
-            right: 10, 
-            background: "rgba(245, 158, 11, 0.95)",
-            color: "white",
-            padding: "4px 10px",
-            fontSize: 10,
-            fontWeight: 700,
-            borderRadius: 999,
-            zIndex: 15,
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-            border: "1px solid rgba(255,255,255,0.2)",
-            letterSpacing: "0.3px",
-          }}
-        >
-          LOW STOCK
-        </div>
-      )}
-
-      {/* TOGGLE SWITCH */}
-      {!isPOS && onToggleActive && (
-        <div
-          style={{
-            position: "absolute",
-            top: 10,
-            left: 10,
-            zIndex: 10,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            background: "rgba(255, 255, 255, 0.95)",
-            padding: "4px 8px",
-            borderRadius: 999,
-            border: "1px solid var(--gray-6)",
-          }}
-        >
-          <span style={{ fontSize: 11, fontWeight: 500, color: isActive ? "var(--green-11)" : "var(--gray-10)" }}>
-            {isActive ? "Active" : "Inactive"}
-          </span>
-          <Switch checked={isActive} onCheckedChange={onToggleActive} size="1" />
-        </div>
-      )}
+      {/* FLOATING LOW STOCK BADGE (top-right of image) */}
+      {/* We moved this into the body below for a cleaner look */}
 
       {/* IMAGE SECTION */}
-      <div 
+      <div
         className="product-card-img"
         style={{
           height: 160,
@@ -187,9 +143,9 @@ export default function ProductCard({
           <img
             src={image}
             alt={name}
-            style={{ 
-              width: "100%", 
-              height: "100%", 
+            style={{
+              width: "100%",
+              height: "100%",
               objectFit: "cover",
               filter: isOutOfStock ? "grayscale(100%) contrast(0.8)" : "none",
             }}
@@ -201,17 +157,17 @@ export default function ProductCard({
 
       {/* CONTENT BODY (WHITE BACKGROUND) */}
       <div className="product-card-body" style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-        
+
         {/* NAME AND MENU ROW */}
         <Flex justify="between" align="center">
-          <span style={{ 
-            fontWeight: 600, 
-            fontSize: 14, 
-            overflow: "hidden", 
-            textOverflow: "ellipsis", 
-            whiteSpace: "nowrap", 
+          <span style={{
+            fontWeight: 600,
+            fontSize: 14,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
             color: "var(--gray-12)",
-            maxWidth: "85%" 
+            maxWidth: "85%"
           }}>
             {name}
           </span>
@@ -233,11 +189,6 @@ export default function ProductCard({
 
               <DropdownMenu.Content align="end">
                 {onEdit && <DropdownMenu.Item onSelect={onEdit}><Pencil size={14} /> Edit</DropdownMenu.Item>}
-                {/* {onToggleActive && (
-                  <DropdownMenu.Item onSelect={() => onToggleActive(!isActive)}>
-                    {isActive ? "Disable Product" : "Enable Product"}
-                  </DropdownMenu.Item>
-                )} */}
                 {onDelete && <DropdownMenu.Item color="red" onSelect={onDelete}><Trash2 size={14} /> Delete</DropdownMenu.Item>}
               </DropdownMenu.Content>
             </DropdownMenu.Root>
@@ -245,20 +196,22 @@ export default function ProductCard({
         </Flex>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontWeight: 700, fontSize: 16, color: "var(--gray-12)" }}>
-            ₹{price}
-          </span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ fontWeight: 700, fontSize: 16, color: "var(--gray-12)" }}>
+              ₹{price}
+            </span>
+          </div>
 
           {isPOS && (
-            <IconButton
+            <Button
               radius="full"
-              size="3"
+              size="2"
               onClick={() => onAdd?.()}
               disabled={isOutOfStock}
               style={{ flexShrink: 0, cursor: isOutOfStock ? "not-allowed" : "pointer", opacity: isOutOfStock ? 0.5 : 1 }}
             >
-              <Plus size={18} />
-            </IconButton>
+              <Plus size={16} /> Add
+            </Button>
           )}
         </div>
 
@@ -268,12 +221,26 @@ export default function ProductCard({
               <Badge radius="full" variant="soft" color={categoryColorMap[safeCategory]}>
                 {formatLabel(safeCategory)}
               </Badge>
-              <span style={{ fontSize: 12, fontWeight: 500, color: isOutOfStock ? "#dc2626" : lowStock ? "#f59e0b" : "var(--green-11)" }}>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: isOutOfStock ? "#dc2626" : lowStock ? "#f59e0b" : "var(--green-11)",
+                }}
+              >
                 {isOutOfStock ? "Out" : lowStock ? "Low" : "Stock"}: {stock}
               </span>
             </div>
 
-            <div style={{ marginTop: 4, height: 4, background: "var(--gray-4)", borderRadius: 999, overflow: "hidden" }}>
+            <div
+              style={{
+                marginTop: 4,
+                height: 4,
+                background: "var(--gray-4)",
+                borderRadius: 999,
+                overflow: "hidden",
+              }}
+            >
               <div
                 style={{
                   height: "100%",
@@ -283,6 +250,41 @@ export default function ProductCard({
                 }}
               />
             </div>
+
+            {onToggleActive && (
+              <div
+                style={{
+                  marginTop: 8,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 500,
+                      color: isActive ? "var(--green-11)" : "var(--gray-10)",
+                    }}
+                  >
+                    {isActive ? "Active" : "Inactive"}
+                  </span>
+                  <Switch checked={isActive} onCheckedChange={onToggleActive} size="1" />
+                </div>
+
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: "var(--gray-9)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  SKU: {sku}
+                </span>
+              </div>
+            )}
           </>
         )}
       </div>

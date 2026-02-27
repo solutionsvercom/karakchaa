@@ -15,7 +15,8 @@ export interface Order {
   customerName?: string;
   phone?: string;
   orderType: "dine-in" | "takeaway" | "delivery" | "online";
-  paymentMethod?: string; // ✅ NEW
+  orderSource?: "POS" | "DIGITAL"; // ✅ NEW
+  paymentMethod?: string;
   status:
     | "Pending"
     | "Accepted"
@@ -34,35 +35,104 @@ interface CreateOrderPayload {
   customerName?: string;
   phone?: string;
   orderType: "dine-in" | "takeaway" | "delivery" | "online";
-  paymentMethod?: string; // ✅ NEW
+  paymentMethod?: string;
   notes?: string;
+}
+
+// ✅ STAFF-LEVEL: Pagination state
+interface PaginationState {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasMore: boolean;
 }
 
 interface OrdersState {
   orders: Order[];
+  pagination: PaginationState | null; // ✅ NEW
   loading: boolean;
   error: string | null;
+  // ✅ STAFF-LEVEL: Track if we're loading more (for lazy load UX)
+  loadingMore: boolean;
 }
 
 const initialState: OrdersState = {
   orders: [],
+  pagination: null,
   loading: false,
   error: null,
+  loadingMore: false,
 };
 
 const BASE_URL = "http://localhost:5000/api/orders";
 
+// ✅ UPDATED: Fetch orders with pagination support
 export const fetchOrders = createAsyncThunk<
-  Order[],
-  void,
+  { data: Order[]; pagination: PaginationState },
+  {
+    page?: number;
+    limit?: number;
+    status?: string;
+    orderSource?: string;
+    orderType?: string;
+  } | void,
   { rejectValue: string }
->("orders/fetch", async (_, thunkAPI) => {
+>("orders/fetch", async (params = {}, thunkAPI) => {
   try {
-    const res = await axios.get(BASE_URL);
-    return res.data.data;
+    const queryParams = new URLSearchParams();
+    
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.limit) queryParams.append("limit", params.limit.toString());
+    if (params.status) queryParams.append("status", params.status);
+    if (params.orderSource) queryParams.append("orderSource", params.orderSource);
+    if (params.orderType) queryParams.append("orderType", params.orderType);
+
+    const url = `${BASE_URL}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+    const res = await axios.get(url);
+    
+    return {
+      data: res.data.data,
+      pagination: res.data.pagination,
+    };
   } catch (error: any) {
     return thunkAPI.rejectWithValue(
       error.response?.data?.message || "Failed to fetch orders"
+    );
+  }
+});
+
+// ✅ NEW: Load more orders (for lazy loading)
+export const loadMoreOrders = createAsyncThunk<
+  { data: Order[]; pagination: PaginationState },
+  {
+    page: number;
+    limit?: number;
+    status?: string;
+    orderSource?: string;
+    orderType?: string;
+  },
+  { rejectValue: string }
+>("orders/loadMore", async (params, thunkAPI) => {
+  try {
+    const queryParams = new URLSearchParams();
+    
+    queryParams.append("page", params.page.toString());
+    if (params.limit) queryParams.append("limit", params.limit.toString());
+    if (params.status) queryParams.append("status", params.status);
+    if (params.orderSource) queryParams.append("orderSource", params.orderSource);
+    if (params.orderType) queryParams.append("orderType", params.orderType);
+
+    const url = `${BASE_URL}?${queryParams.toString()}`;
+    const res = await axios.get(url);
+    
+    return {
+      data: res.data.data,
+      pagination: res.data.pagination,
+    };
+  } catch (error: any) {
+    return thunkAPI.rejectWithValue(
+      error.response?.data?.message || "Failed to load more orders"
     );
   }
 });
@@ -84,13 +154,13 @@ export const createOrder = createAsyncThunk<
 
 export const updateOrderStatus = createAsyncThunk<
   Order,
-  { id: string; status: Order["status"]; paymentMethod?: string }, // ✅ ADD paymentMethod
+  { id: string; status: Order["status"]; paymentMethod?: string },
   { rejectValue: string }
 >("orders/updateStatus", async ({ id, status, paymentMethod }, thunkAPI) => {
   try {
     const res = await axios.put(`${BASE_URL}/${id}/status`, { 
       status,
-      ...(paymentMethod && { paymentMethod }) // ✅ PASS paymentMethod if provided
+      ...(paymentMethod && { paymentMethod })
     });
     return res.data.data;
   } catch (error: any) {
@@ -103,22 +173,48 @@ export const updateOrderStatus = createAsyncThunk<
 const ordersSlice = createSlice({
   name: "orders",
   initialState,
-  reducers: {},
+  reducers: {
+    // ✅ STAFF-LEVEL: Reset pagination when filters change
+    resetOrders: (state) => {
+      state.orders = [];
+      state.pagination = null;
+      state.error = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
+      /* FETCH ORDERS */
       .addCase(fetchOrders.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload;
+        state.orders = action.payload.data;
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchOrders.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to fetch orders";
       })
 
+      /* LOAD MORE ORDERS (Lazy Loading) */
+      .addCase(loadMoreOrders.pending, (state) => {
+        state.loadingMore = true;
+        state.error = null;
+      })
+      .addCase(loadMoreOrders.fulfilled, (state, action) => {
+        state.loadingMore = false;
+        // ✅ STAFF-LEVEL: Append new orders, don't replace
+        state.orders = [...state.orders, ...action.payload.data];
+        state.pagination = action.payload.pagination;
+      })
+      .addCase(loadMoreOrders.rejected, (state, action) => {
+        state.loadingMore = false;
+        state.error = action.payload || "Failed to load more orders";
+      })
+
+      /* CREATE ORDER */
       .addCase(createOrder.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -126,12 +222,17 @@ const ordersSlice = createSlice({
       .addCase(createOrder.fulfilled, (state, action) => {
         state.loading = false;
         state.orders.unshift(action.payload);
+        // ✅ STAFF-LEVEL: Update total count
+        if (state.pagination) {
+          state.pagination.total += 1;
+        }
       })
       .addCase(createOrder.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || "Failed to create order";
       })
 
+      /* UPDATE ORDER STATUS */
       .addCase(updateOrderStatus.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -152,4 +253,5 @@ const ordersSlice = createSlice({
   },
 });
 
+export const { resetOrders } = ordersSlice.actions;
 export default ordersSlice.reducer;

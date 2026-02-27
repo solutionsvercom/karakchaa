@@ -64,7 +64,7 @@ class ProductController {
             next(err);
         }
     }
-
+    
     async getProducts(req, res, next) {
         try {
             const products = await productService.getAllProducts();

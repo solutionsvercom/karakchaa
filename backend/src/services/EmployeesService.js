@@ -19,6 +19,26 @@ const getEmployees = async (search = "") => {
   return await Employee.find(query).sort({ createdAt: -1 });
 };
 
+/* ================= STATS ================= */
+
+const getEmployeeStats = async () => {
+  const employees = await Employee.find({});
+
+  const totalEmployees = employees.length;
+  const active = employees.filter((e) => e.active !== false).length;
+  const inactive = totalEmployees - active;
+  const totalSalary = employees
+    .filter((e) => e.active !== false)
+    .reduce((sum, e) => sum + (e.salary || 0), 0);
+
+  return {
+    totalEmployees,
+    active,
+    inactive,
+    totalSalary,
+  };
+};
+
 /* ================= GET BY ID ================= */
 const getEmployeeById = async (id) => {
   return await Employee.findById(id);
@@ -40,4 +60,5 @@ module.exports = {
   getEmployeeById,
   updateEmployee,
   deleteEmployee,
+  getEmployeeStats,
 };

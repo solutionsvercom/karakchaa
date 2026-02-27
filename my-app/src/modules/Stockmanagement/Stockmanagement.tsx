@@ -235,6 +235,7 @@ export default function Stockmanagement() {
           emptyMessage="No products found"
           hoverable
           striped
+          loading={loading}
         />
       ) : (
         <StockHistory />

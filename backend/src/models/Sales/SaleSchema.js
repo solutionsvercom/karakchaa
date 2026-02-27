@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 
 // ✅ Each ordered item stored on the sale for full invoice display
 const saleItemSchema = new mongoose.Schema({
-    product:  { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
-    name:     { type: String, required: true },
-    price:    { type: Number, required: true },
+    product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+    name: { type: String, required: true },
+    price: { type: Number, required: true },
     quantity: { type: Number, required: true },
 }, { _id: false });
 
@@ -57,6 +57,11 @@ const saleSchema = new mongoose.Schema({
         type: String,
         enum: ["Completed", "Pending", "Cancelled"],
         default: "Completed",
+    },
+
+    orderSource: {
+        type: String,
+        default: "POS",
     },
 
     soldBy: {

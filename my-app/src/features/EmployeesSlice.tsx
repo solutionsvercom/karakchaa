@@ -18,16 +18,25 @@ export interface Employee {
   active?: boolean;
 }
 
+export interface EmployeeStats {
+  totalEmployees: number;
+  active: number;
+  inactive: number;
+  totalSalary: number;
+}
+
 interface EmployeesState {
   employees: Employee[];
   loading: boolean;
   error: string | null;
+  stats: EmployeeStats | null;
 }
 
 const initialState: EmployeesState = {
   employees: [],
   loading: false,
   error: null,
+  stats: null,
 };
 
 /* ================= ASYNC THUNKS ================= */
@@ -40,6 +49,18 @@ export const fetchEmployees = createAsyncThunk(
         params: { search },
       });
       return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message);
+    }
+  }
+);
+
+export const fetchEmployeeStats = createAsyncThunk(
+  "employees/fetchEmployeeStats",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_URL}/stats`);
+      return response.data.data as EmployeeStats;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message);
     }
@@ -109,6 +130,11 @@ const employeesSlice = createSlice({
       .addCase(fetchEmployees.rejected, (state, action: any) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+      /* STATS */
+      .addCase(fetchEmployeeStats.fulfilled, (state, action) => {
+        state.stats = action.payload;
       })
 
       /* CREATE */

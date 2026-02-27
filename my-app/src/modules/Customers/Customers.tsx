@@ -213,6 +213,7 @@ export default function Customers() {
           emptyMessage="No customers found"
           hoverable
           striped
+          loading={loading}
         />
       </Flex>
 
