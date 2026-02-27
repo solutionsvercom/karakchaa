@@ -31,13 +31,19 @@ const orderSchema = new mongoose.Schema(
       default: "dine-in",
     },
 
+    // ✅ NEW: Explicit order source for clear differentiation
+    orderSource: {
+      type: String,
+      enum: ["POS", "DIGITAL"],
+      default: "POS", // Backward compatible - existing orders without this field get POS
+    },
+
     status: {
       type: String,
       enum: ["Pending", "Accepted", "Preparing", "Ready", "Completed", "Cancelled"],
       default: "Pending",
     },
 
-    // ✅ NEW: Store payment method so it can be used when creating the Sale
     paymentMethod: {
       type: String,
       enum: ["Cash", "Card", "UPI", "PhonePe", "GPay", "Paytm", "Other"],
@@ -56,5 +62,12 @@ const orderSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// ✅ STAFF-LEVEL: Compound index for pagination queries
+// Most common query: filter by status/orderType, sort by createdAt
+orderSchema.index({ status: 1, orderType: 1, createdAt: -1 });
+
+// ✅ STAFF-LEVEL: Index for orderSource filtering
+orderSchema.index({ orderSource: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Order", orderSchema);

@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../store/Store";
-import { fetchOrders, updateOrderStatus } from "../../features/OrdersSlice";
+import { fetchOrders, loadMoreOrders, updateOrderStatus } from "../../features/OrdersSlice";
 import { fetchSales } from "../../features/SalesSlice";
 import { fetchCustomers } from "../../features/CustomersSlice";
 import { fetchStockItems } from "../../features/StockmanagementSlice";
@@ -13,9 +13,10 @@ type PaymentMethod = "Cash" | "UPI" | "PhonePe" | "GPay" | "Paytm" | "Card" | "O
 
 type FilterMode = "active" | "completed" | "cancelled" | "all";
 
+
 export default function DigitalOrdersBoard() {
   const dispatch = useDispatch<AppDispatch>();
-  const { orders: allOrders, loading } = useSelector(
+  const { orders: allOrders, loading, loadingMore, pagination } = useSelector(
     (state: RootState) => state.orders
   );
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -28,13 +29,18 @@ export default function DigitalOrdersBoard() {
   const [toastMessage, setToastMessage] = useState({ title: "", description: "" });
   const [toastVariant, setToastVariant] = useState<"success" | "error" | "info">("success");
   
-  // Filter state (#2 - Active orders filter)
+  // Filter state
   const [filterMode, setFilterMode] = useState<FilterMode>("active");
 
-  // Filter to show only digital menu orders (orderType: 'online')
-  // Then apply active/completed/all filter (#2)
+  // ✅ STAFF-LEVEL: Lazy loading with intersection observer
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  // Filter to show only digital menu orders (orderType: 'online' OR orderSource: 'DIGITAL')
+  // Then apply active/completed/all filter
   const orders = useMemo(() => {
-    const onlineOrders = allOrders.filter((order) => order.orderType === "online");
+    const onlineOrders = allOrders.filter((order) => 
+      order.orderType === "online" || order.orderSource === "DIGITAL"
+    );
     
     if (filterMode === "active") {
       return onlineOrders.filter((order) => 
@@ -42,18 +48,48 @@ export default function DigitalOrdersBoard() {
       );
     } else if (filterMode === "completed") {
       return onlineOrders.filter((order) => 
-        ["Completed"].includes(order.status)
+        ["Completed", "Cancelled"].includes(order.status)
       );
-    } else if (filterMode === "cancelled") {
-      return onlineOrders.filter((order) => order.status === "Cancelled");
     }
     
     return onlineOrders; // "all"
   }, [allOrders, filterMode]);
 
+  // Initial fetch
   useEffect(() => {
-    dispatch(fetchOrders());
+    dispatch(fetchOrders({ 
+      orderSource: "DIGITAL", // ✅ NEW: Filter by source
+      limit: 20 // Staff-level: reasonable initial load
+    }));
   }, [dispatch]);
+
+  // ✅ STAFF-LEVEL: Intersection Observer for lazy loading
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && pagination?.hasMore && !loadingMore) {
+          // Load next page
+          dispatch(loadMoreOrders({
+            page: pagination.page + 1,
+            limit: 20,
+            orderSource: "DIGITAL",
+          }));
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [dispatch, pagination, loadingMore]);
 
   useEffect(() => {
     if (!orders.length) {
@@ -75,12 +111,10 @@ export default function DigitalOrdersBoard() {
   const isCancelDisabled =
     statusLower === "cancelled" || statusLower === "completed";
 
-  // ✅ Refreshes stock, sales, customers after any status change
   const refreshRelatedData = async (newStatus: string) => {
     dispatch(fetchStockItems());
     dispatch(fetchSales());
 
-    // Only refresh customers when an order completes or cancels (stats change)
     if (newStatus === "Completed" || newStatus === "Cancelled") {
       dispatch(fetchCustomers());
     }
@@ -101,7 +135,6 @@ export default function DigitalOrdersBoard() {
         })
       ).unwrap();
 
-      // ✅ Refresh related data after successful status update
       await refreshRelatedData(status);
     } catch (err) {
       console.error("Failed to update order status:", err);
@@ -116,7 +149,6 @@ export default function DigitalOrdersBoard() {
       await changeStatus("Completed", paymentMethod);
       setShowPaymentModal(false);
       
-      // Show success toast (#1)
       setToastMessage({
         title: "Order Completed!",
         description: `${orderNumber} - Invoice generated successfully`,
@@ -126,7 +158,6 @@ export default function DigitalOrdersBoard() {
     } catch (err) {
       console.error("Failed to complete order:", err);
       
-      // Show error toast
       setToastMessage({
         title: "Error",
         description: "Failed to complete order. Please try again.",
@@ -139,7 +170,6 @@ export default function DigitalOrdersBoard() {
   };
 
   const handleMarkAsCompleted = () => {
-    // Show payment method modal before completing
     setShowPaymentModal(true);
   };
 
@@ -241,7 +271,7 @@ export default function DigitalOrdersBoard() {
             )}
           </div>
 
-          {/* Filter tabs (#2) */}
+          {/* Filter tabs */}
           <div
             style={{
               display: "flex",
@@ -255,7 +285,6 @@ export default function DigitalOrdersBoard() {
             {[
               { value: "active" as FilterMode, label: "Active" },
               { value: "completed" as FilterMode, label: "Completed" },
-              { value: "cancelled" as FilterMode, label: "Cancelled" },
               { value: "all" as FilterMode, label: "All" },
             ].map((filter) => (
               <button
@@ -349,20 +378,45 @@ export default function DigitalOrdersBoard() {
                     fontSize: 13,
                   }}
                 >
-                  {order.customerName || "Walk-in"}
+                  {order.customerName || "Walk-in"} · {order.items.length} item(s)
                 </p>
-                <p
+                <div
                   style={{
-                    margin: 0,
-                    color: "var(--accent-10)",
-                    fontSize: 14,
-                    fontWeight: 600,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                   }}
                 >
-                  ₹{order.totalAmount}
-                </p>
+                  <span
+                    style={{
+                      fontSize: 15,
+                      fontWeight: 600,
+                      color: "var(--gray-12)",
+                    }}
+                  >
+                    ₹{order.totalAmount}
+                  </span>
+                  <span style={{ color: "var(--gray-9)", fontSize: 11 }}>
+                    {new Date(order.createdAt).toLocaleTimeString()}
+                  </span>
+                </div>
               </div>
             ))}
+
+            {/* ✅ STAFF-LEVEL: Lazy loading indicator */}
+            {pagination?.hasMore && (
+              <div
+                ref={observerTarget}
+                style={{
+                  padding: 16,
+                  textAlign: "center",
+                  color: "var(--gray-10)",
+                  fontSize: 13,
+                }}
+              >
+                {loadingMore ? "Loading more..." : "Scroll for more"}
+              </div>
+            )}
           </div>
         </div>
 
@@ -373,18 +427,19 @@ export default function DigitalOrdersBoard() {
             borderRadius: 14,
             background: "var(--gray-1)",
             border: "1px solid var(--gray-6)",
-            padding: 18,
+            padding: 20,
             overflowY: "auto",
           }}
         >
           {!selectedOrder ? (
             <div
               style={{
-                height: "100%",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                height: "100%",
                 color: "var(--gray-10)",
+                fontSize: 14,
               }}
             >
               Select an order to view details
@@ -533,7 +588,7 @@ export default function DigitalOrdersBoard() {
               {selectedOrder.notes && (
                 <div
                   style={{
-                    background: "var(--gray-2)",
+                    background: "rgba(180, 83, 9, 0.2)",
                     border: "1px solid #D97706",
                     borderRadius: 10,
                     padding: 12,
@@ -542,14 +597,14 @@ export default function DigitalOrdersBoard() {
                   <p
                     style={{
                       margin: "0 0 6px 0",
-                      color: "var(--amber-11)",
+                      color: "#FBBF24",
                       fontWeight: 600,
                       fontSize: 13,
                     }}
                   >
                     Special Instructions
                   </p>
-                  <p style={{ margin: 0, color: "var(--gray-12)", fontSize: 13 }}>
+                  <p style={{ margin: 0, color: "#FDE68A", fontSize: 13 }}>
                     {selectedOrder.notes}
                   </p>
                 </div>
