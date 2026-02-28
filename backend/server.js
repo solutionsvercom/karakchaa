@@ -63,6 +63,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/digital-menu", digitalMenuRoutes);
 app.use("/api/digital-menu", digitalOrderRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/reports", require("./src/routes/ReportsRoutes"));
 
 
 
@@ -95,8 +96,8 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
-  try {
-    await connectDB(); // Wait for DB connection
+    try {
+        await connectDB(); // Wait for DB connection
 
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);

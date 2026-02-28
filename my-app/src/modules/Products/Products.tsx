@@ -9,6 +9,7 @@ import { fetchProducts } from "../../features/ProductsSlice";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import ProductCard from "../../components/dynamicComponents/ProductCard";
 import AddProducts from "./AddProduct";
+import { ProductCardSkeleton } from "../../components/Skeleton";
 import { deleteProduct } from "../../features/ProductsSlice";
 import { toggleProductStatus } from "../../features/ProductsSlice";
 import axios from "axios";
@@ -52,14 +53,15 @@ export default function ProductsModule() {
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<"all" | Category>("all");
+  const [stockStatus, setStockStatus] = useState<"all" | "low" | "out" | "active" | "inactive">("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   /* ---------- EDIT PRODUCT DATA ---------- */
 
   const editingProduct = isEditMode
     ? products.find((p: any) =>
-        location.pathname.includes(`/${p._id}/edit-product`)
-      )
+      location.pathname.includes(`/${p._id}/edit-product`)
+    )
     : undefined;
 
   /* ---------- FILTER ---------- */
@@ -69,7 +71,19 @@ export default function ProductsModule() {
       ?.toLowerCase()
       .includes(search.toLowerCase());
     const matchesCategory = category === "all" || p.category === category;
-    return matchesSearch && matchesCategory;
+
+    let matchesStock = true;
+    if (stockStatus === "low") {
+      matchesStock = p.stockQty > 0 && p.stockQty <= (p.minStock || 0);
+    } else if (stockStatus === "out") {
+      matchesStock = p.stockQty <= 0;
+    } else if (stockStatus === "active") {
+      matchesStock = p.isActive === true;
+    } else if (stockStatus === "inactive") {
+      matchesStock = p.isActive === false;
+    }
+
+    return matchesSearch && matchesCategory && matchesStock;
   });
 
   return (
@@ -153,6 +167,27 @@ export default function ProductsModule() {
             ))}
           </DropdownMenu.Content>
         </DropdownMenu.Root>
+
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger>
+            <Button variant="soft">
+              {stockStatus === "all" ? "All Status"
+                : stockStatus === "low" ? "Low Stock"
+                  : stockStatus === "out" ? "Out of Stock"
+                    : stockStatus === "active" ? "Active"
+                      : "Inactive"}
+              <ChevronDown size={16} />
+            </Button>
+          </DropdownMenu.Trigger>
+
+          <DropdownMenu.Content>
+            <DropdownMenu.Item onSelect={() => setStockStatus("all")}>All Status</DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => setStockStatus("low")}>Low Stock</DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => setStockStatus("out")}>Out of Stock</DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => setStockStatus("active")}>Active</DropdownMenu.Item>
+            <DropdownMenu.Item onSelect={() => setStockStatus("inactive")}>Inactive</DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
       </Flex>
 
       {/* ================= PRODUCT GRID ================= */}
@@ -164,33 +199,41 @@ export default function ProductsModule() {
           gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
         }}
       >
-        {filteredProducts.map((product: any) => (
-          <ProductCard
-            key={product._id}
-            name={product.name}
-            sku={product.sku}
-            price={product.sellingPrice}
-            stock={product.stockQty}
-            minStock={product.minStock}
-            category={product.category}
-           image={product.image?.url}
-            isActive={product.isActive}
-            onToggleActive={async (value: boolean) => {
-              await dispatch(
-                toggleProductStatus({
-                  id: product._id,
-                  isActive: value,
-                })
-              );
-            }}
-            onEdit={() =>
-              navigate(`/dashboard/products/${product._id}/edit-product`)
-            }
-            onDelete={() => {
-              setDeleteId(product._id);
-            }}
-          />
-        ))}
+        {loading && products.length === 0 ? (
+          <ProductCardSkeleton count={8} />
+        ) : filteredProducts.length === 0 ? (
+          <p style={{ padding: 16, color: "#6b7280", fontSize: 14 }}>
+            No products found.
+          </p>
+        ) : (
+          filteredProducts.map((product: any) => (
+            <ProductCard
+              key={product._id}
+              name={product.name}
+              sku={product.sku}
+              price={product.sellingPrice}
+              stock={product.stockQty}
+              minStock={product.minStock}
+              category={product.category}
+              image={product.image?.url}
+              isActive={product.isActive}
+              onToggleActive={async (value: boolean) => {
+                await dispatch(
+                  toggleProductStatus({
+                    id: product._id,
+                    isActive: value,
+                  })
+                );
+              }}
+              onEdit={() =>
+                navigate(`/dashboard/products/${product._id}/edit-product`)
+              }
+              onDelete={() => {
+                setDeleteId(product._id);
+              }}
+            />
+          ))
+        )}
       </Flex>
 
       {/* ================= DELETE CONFIRM DIALOG ================= */}

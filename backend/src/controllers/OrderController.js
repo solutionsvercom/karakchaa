@@ -14,13 +14,32 @@ class OrderController {
         }
     }
 
+    // ✅ UPDATED: Support pagination via query params
     async getOrders(req, res, next) {
         try {
-            const orders = await orderService.getOrders();
+            const {
+                page,
+                limit,
+                status,
+                orderSource,
+                orderType,
+                sortBy,
+                sortOrder,
+            } = req.query;
+
+            const result = await orderService.getOrders({
+                page: page ? parseInt(page) : undefined,
+                limit: limit ? parseInt(limit) : undefined,
+                status,
+                orderSource,
+                orderType,
+                sortBy,
+                sortOrder,
+            });
 
             res.json({
                 success: true,
-                data: orders,
+                ...result, // Spreads: data, pagination
             });
         } catch (err) {
             next(err);
@@ -32,7 +51,7 @@ class OrderController {
             const order = await orderService.updateOrderStatus(
                 req.params.id,
                 req.body.status,
-                req.body.paymentMethod // ✅ NEW: pass payment method from request
+                req.body.paymentMethod
             );
 
             res.json({

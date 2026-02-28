@@ -32,16 +32,33 @@ export interface Sale {
   }[];
 }
 
+export interface SalesPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface SalesSummary {
+  totalRevenue: number;
+  totalOrders: number;
+  averageOrder: number;
+}
+
 interface SalesState {
   sales: Sale[];
   loading: boolean;
   error: string | null;
+  pagination: SalesPagination | null;
+  summary: SalesSummary | null;
 }
 
 const initialState: SalesState = {
   sales: [],
   loading: false,
   error: null,
+  pagination: null,
+  summary: null,
 };
 
 const BASE_URL = `http://localhost:5000/api/sales`;
@@ -49,16 +66,34 @@ const BASE_URL = `http://localhost:5000/api/sales`;
 /* ================= ASYNC THUNKS ================= */
 
 export const fetchSales = createAsyncThunk<
-  Sale[],
-  { from?: string; to?: string; product?: string } | undefined,
+  { data: Sale[]; pagination: SalesPagination },
+  { from?: string; to?: string; product?: string; orderSource?: string; page?: number; limit?: number } | undefined,
   { rejectValue: string }
 >("sales/fetchAll", async (filters, thunkAPI) => {
   try {
     const res = await axios.get(BASE_URL, { params: filters });
-    return res.data.data;
+    return {
+      data: res.data.data as Sale[],
+      pagination: res.data.pagination as SalesPagination,
+    };
   } catch (error: any) {
     return thunkAPI.rejectWithValue(
       error.response?.data?.message || "Error fetching sales"
+    );
+  }
+});
+
+export const fetchSalesSummary = createAsyncThunk<
+  SalesSummary,
+  void,
+  { rejectValue: string }
+>("sales/fetchSummary", async (_, thunkAPI) => {
+  try {
+    const res = await axios.get(`${BASE_URL}/summary`);
+    return res.data.data as SalesSummary;
+  } catch (error: any) {
+    return thunkAPI.rejectWithValue(
+      error.response?.data?.message || "Error fetching sales summary"
     );
   }
 });
@@ -134,11 +169,17 @@ const salesSlice = createSlice({
       })
       .addCase(fetchSales.fulfilled, (state, action) => {
         state.loading = false;
-        state.sales = action.payload;
+        state.sales = action.payload.data;
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchSales.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+
+      /* SUMMARY */
+      .addCase(fetchSalesSummary.fulfilled, (state, action) => {
+        state.summary = action.payload;
       })
 
       /* CREATE */

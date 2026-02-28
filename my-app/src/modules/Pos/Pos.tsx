@@ -15,6 +15,7 @@ import { fetchProducts } from "../../features/ProductsSlice";
 import { fetchOrders } from "../../features/OrdersSlice";
 
 import DigitalOrdersBoard from "./DigitalOrdersBoard";
+import { ProductCardSkeleton } from "../../components/Skeleton";
 
 type TabType = "pos" | "digital";
 
@@ -26,7 +27,7 @@ export default function Pos() {
   const dispatch = useDispatch<AppDispatch>();
   const { addItem, items, total } = useCart();
 
-  const { products } = useSelector((state: RootState) => state.product);
+  const { products, loading } = useSelector((state: RootState) => state.product);
   const { orders } = useSelector((state: RootState) => state.orders);
 
   const [search, setSearch] = useState("");
@@ -175,6 +176,8 @@ export default function Pos() {
           background: "var(--gray-2)",
           padding: 6,
           borderRadius: 12,
+          border: "1px solid var(--gray-5)",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
         }}
       >
         <Flex gap="2">
@@ -275,33 +278,36 @@ export default function Pos() {
                 }}
                 className="pos-product-grid"
               >
-                {filteredProducts.map((product: any) => {
-                  const cartQty = getCartQty(product._id);
-                  const remainingStock = product.stockQty - cartQty;
-                  return (
-                    <ProductCard
-                      key={product._id}
-                      image={product.image?.url} 
-                      name={product.name}
-                      sku={product.sku}
-                      price={product.sellingPrice}
-                      stock={remainingStock}
-                      minStock={product.minStock} // ✅ Pass minStock for better stock indicators
-                      category={product.category}
-                      variant="pos"
-                      onAdd={() => {
-                        // ✅ KEPT: Your existing check prevents adding out-of-stock items
-                        if (remainingStock <= 0) return;
-                        addItem({
-                          id: product._id,
-                          name: product.name,
-                          price: product.sellingPrice,
-                          maxQty: product.stockQty,
-                        });
-                      }}
-                    />
-                  );
-                })}
+                {loading && products.length === 0 ? (
+                  <ProductCardSkeleton count={8} />
+                ) : (
+                  filteredProducts.map((product: any) => {
+                    const cartQty = getCartQty(product._id);
+                    const remainingStock = product.stockQty - cartQty;
+                    return (
+                      <ProductCard
+                        key={product._id}
+                        image={product.image?.url}
+                        name={product.name}
+                        sku={product.sku}
+                        price={product.sellingPrice}
+                        stock={remainingStock}
+                        minStock={product.minStock}
+                        category={product.category}
+                        variant="pos"
+                        onAdd={() => {
+                          if (remainingStock <= 0) return;
+                          addItem({
+                            id: product._id,
+                            name: product.name,
+                            price: product.sellingPrice,
+                            maxQty: product.stockQty,
+                          });
+                        }}
+                      />
+                    );
+                  })
+                )}
               </Box>
             </Flex>
 

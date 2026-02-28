@@ -5,14 +5,16 @@ const {
   getEmployeeById,
   updateEmployee,
   deleteEmployee,
+  getEmployeeStats,
 } = require("../controllers/EmployeesController");
 
 const router = express.Router();
 
 router.post("/", createEmployee);          // POST /api/employees
-router.get("/", getEmployees);              // GET  /api/employees
-router.get("/:id", getEmployeeById);        // GET  /api/employees/:id
-router.put("/:id", updateEmployee);         // PUT  /api/employees/:id
-router.delete("/:id", deleteEmployee);      // DELETE /api/employees/:id
+router.get("/", getEmployees);             // GET  /api/employees
+router.get("/stats", getEmployeeStats);    // GET  /api/employees/stats
+router.get("/:id", getEmployeeById);       // GET  /api/employees/:id
+router.put("/:id", updateEmployee);        // PUT  /api/employees/:id
+router.delete("/:id", deleteEmployee);     // DELETE /api/employees/:id
 
 module.exports = router;

@@ -1,5 +1,5 @@
-const Sale = require("../models/Sales/SalesSchema");
-const Expense = require("../models/Expenses/ExpensesSchema");
+const Sale = require("../models/Sales/SaleSchema");
+const Expense = require("../models/Expenses/ExpenseSchema");
 
 /* ======================================================
    HELPER: Convert period to date range

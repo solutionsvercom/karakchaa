@@ -16,6 +16,8 @@ import {
   fetchSales,
   updateSale,
   Sale,
+  SalesPagination,
+  fetchSalesSummary,
 } from "../../features/SalesSlice";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
@@ -37,6 +39,7 @@ type SaleTransaction = {
   items: string;
   saleItems: { name: string; price: number; quantity: number }[];
   type: string;
+  orderSource?: string;
   amount: number;
   payment: PaymentStatus;
   dateTime: string;
@@ -47,7 +50,7 @@ type SaleTransaction = {
 const getPaymentColor = (status: PaymentStatus) => {
   switch (status) {
     case "completed": return "green";
-    case "pending":   return "yellow";
+    case "pending": return "yellow";
     case "cancelled": return "red";
   }
 };
@@ -77,18 +80,34 @@ export const calculateTotals = (data: SaleTransaction[]) => {
 
 export default function Sales() {
   const dispatch = useDispatch<AppDispatch>();
-  const { sales, loading } = useSelector((state: RootState) => state.sales);
+  const { sales, loading, pagination, summary } = useSelector((state: RootState) => state.sales);
 
   const [searchValue, setSearchValue] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
+  const [orderTypeFilter, setOrderTypeFilter] = useState("All Orders");
 
   const [viewSale, setViewSale] = useState<SaleTransaction | null>(null);
   const [editSale, setEditSale] = useState<{ row: SaleTransaction; sale: Sale } | null>(null);
   const [editLoading, setEditLoading] = useState(false);
 
+  const fetchFilteredSales = (page = 1) => {
+    let source: string | undefined = undefined;
+    if (orderTypeFilter === "POS") source = "POS";
+    if (orderTypeFilter === "Digital Menu") source = "DIGITAL";
+
+    // TODO: payment filters / search strings could also be added to server-side logic in the future
+
+    dispatch(fetchSales({
+      page,
+      limit: 10,
+      orderSource: source,
+    }));
+  };
+
   useEffect(() => {
-    dispatch(fetchSales());
-  }, [dispatch]);
+    fetchFilteredSales(1);
+    dispatch(fetchSalesSummary());
+  }, [dispatch, orderTypeFilter]);
 
   const mappedSales: SaleTransaction[] = sales.map((s: Sale, index) => ({
     id: index,
@@ -100,6 +119,8 @@ export default function Sales() {
       ? (s as any).items
       : [{ name: s.product?.name || "-", price: s.sellingPrice || s.totalAmount, quantity: s.quantity || 1 }],
     type: s.paymentMethod,
+    orderSource: (s as any).orderSource ||
+      (["online", "digital_menu"].includes((s as any).orderType?.toLowerCase()) ? "DIGITAL" : "POS"),
     amount: s.totalAmount,
     payment: (s.paymentStatus?.toLowerCase() as PaymentStatus),
     dateTime: s.createdAt,
@@ -112,36 +133,62 @@ export default function Sales() {
     const matchesPayment =
       paymentFilter === "All Payments" ||
       sale.type.toLowerCase() === paymentFilter.toLowerCase();
-    return matchesSearch && matchesPayment;
+
+    // NOTE: OrderSource matching is now handled mostly by the server,
+    // but the local filter applies too for robustness (and search/payment).
+    let matchesOrderType = true;
+    if (orderTypeFilter === "POS") {
+      matchesOrderType = !sale.orderSource || sale.orderSource.toUpperCase() !== "DIGITAL";
+    } else if (orderTypeFilter === "Digital Menu") {
+      matchesOrderType = sale.orderSource?.toUpperCase() === "DIGITAL";
+    }
+
+    return matchesSearch && matchesPayment && matchesOrderType;
   });
 
-  const { totalRevenue, totalOrders, averageOrder } = calculateTotals(filteredSales);
+  const { totalRevenue, totalOrders, averageOrder } = summary || {
+    totalRevenue: 0,
+    totalOrders: 0,
+    averageOrder: 0,
+  };
 
   /* ================= TABLE COLUMNS ================= */
 
   const columns: Column<SaleTransaction>[] = [
-    { key: "invoice",  header: "Invoice",    accessor: "invoice" },
-    { key: "customer", header: "Customer",   accessor: "customer" },
-    { key: "amount",   header: "Amount",     accessor: "amount",
-      render: (value) => <strong>₹{value}</strong> },
-    { key: "type",     header: "Payment Type", accessor: "type",
+    { key: "invoice", header: "Invoice", accessor: "invoice" },
+    { key: "customer", header: "Customer", accessor: "customer" },
+    {
+      key: "amount", header: "Amount", accessor: "amount",
+      render: (value) => <strong>₹{value}</strong>
+    },
+    {
+      key: "type", header: "Payment Type", accessor: "type",
       render: (value: string) => (
         <Badge color="blue" variant="soft" style={{ textTransform: "capitalize" }}>{value}</Badge>
       ),
     },
-    { key: "payment",  header: "Status",    accessor: "payment",
+    {
+      key: "orderSource", header: "Order Source", accessor: "orderSource",
+      render: (value: string) => (
+        <Badge color={value === "DIGITAL" ? "violet" : "orange"} variant="soft">
+          {value || "POS"}
+        </Badge>
+      ),
+    },
+    {
+      key: "payment", header: "Status", accessor: "payment",
       render: (value: PaymentStatus) => (
         <Badge color={getPaymentColor(value)} variant="soft" style={{ textTransform: "capitalize" }}>{value}</Badge>
       ),
     },
-    { key: "dateTime", header: "Date & Time", accessor: "dateTime",
+    {
+      key: "dateTime", header: "Date & Time", accessor: "dateTime",
       render: (value) => (
         <span style={{ whiteSpace: "nowrap", fontSize: 13 }}>{formatDate(value)}</span>
       ),
     },
     {
-      key: "actions",
-      header: "",
+      key: "actions", header: "Actions",
       render: (_, row) => (
         <DropdownMenu.Root>
           <DropdownMenu.Trigger>
@@ -153,16 +200,14 @@ export default function Sales() {
             <DropdownMenu.Item onClick={() => setViewSale(row)}>
               <Eye size={14} /> View Invoice
             </DropdownMenu.Item>
-            <DropdownMenu.Item onClick={() => setEditSale({ row, sale: sales[row.id] })}>
+            {/* <DropdownMenu.Item onClick={() => setEditSale({ row, sale: sales[row.id] })}>
               <Pencil size={14} /> Change Status
-            </DropdownMenu.Item>
+            </DropdownMenu.Item> */}
           </DropdownMenu.Content>
         </DropdownMenu.Root>
       ),
     },
   ];
-
-  if (loading) return <div>Loading sales...</div>;
 
   return (
     <>
@@ -249,6 +294,22 @@ export default function Sales() {
           <DropdownMenu.Root>
             <DropdownMenu.Trigger>
               <Button variant="soft">
+                {orderTypeFilter}
+                <ChevronDown size={16} />
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              {["All Orders", "POS", "Digital Menu"].map((item) => (
+                <DropdownMenu.Item key={item} onSelect={() => setOrderTypeFilter(item)}>
+                  {item}
+                </DropdownMenu.Item>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+              <Button variant="soft">
                 {paymentFilter}
                 <ChevronDown size={16} />
               </Button>
@@ -271,8 +332,140 @@ export default function Sales() {
             emptyMessage="No sales found"
             hoverable
             striped
+            loading={loading}
+            enablePagination={false}
           />
         </div>
+
+        {/* ================= SERVER PAGINATION ================= */}
+        {pagination && (
+          <div
+            style={{
+              marginTop: 12,
+              padding: "8px 4px",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 12,
+              alignItems: "center",
+              justifyContent: "space-between",
+              color: "var(--gray-11)",
+              fontSize: 13,
+            }}
+          >
+            <div>
+              Showing page {pagination.page} of {pagination.totalPages} · Total{" "}
+              {pagination.total} sales
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <button
+                type="button"
+                onClick={() =>
+                  pagination.page > 1 &&
+                  fetchFilteredSales(pagination.page - 1)
+                }
+                disabled={pagination.page <= 1 || loading}
+                style={{
+                  minWidth: 28,
+                  height: 28,
+                  borderRadius: 999,
+                  border: "1px solid var(--gray-7)",
+                  background: "var(--gray-1)",
+                  color: "var(--gray-12)",
+                  fontSize: 12,
+                  cursor:
+                    pagination.page <= 1 || loading ? "not-allowed" : "pointer",
+                  opacity: pagination.page <= 1 || loading ? 0.5 : 1,
+                }}
+              >
+                ‹
+              </button>
+
+              {Array.from({ length: pagination.totalPages }).map((_, i) => {
+                const page = i + 1;
+
+                if (
+                  page === 1 ||
+                  page === pagination.totalPages ||
+                  (page >= pagination.page - 1 && page <= pagination.page + 1)
+                ) {
+                  const isActive = page === pagination.page;
+                  return (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => fetchFilteredSales(page)}
+                      disabled={loading}
+                      style={{
+                        minWidth: 28,
+                        height: 28,
+                        borderRadius: 999,
+                        border: isActive
+                          ? "1px solid var(--accent-8)"
+                          : "1px solid var(--gray-7)",
+                        background: isActive
+                          ? "var(--accent-3)"
+                          : "var(--gray-1)",
+                        color: isActive
+                          ? "var(--accent-11)"
+                          : "var(--gray-12)",
+                        fontSize: 12,
+                        fontWeight: isActive ? 600 : 400,
+                        cursor: loading ? "not-allowed" : "pointer",
+                        opacity: loading ? 0.7 : 1,
+                      }}
+                    >
+                      {page}
+                    </button>
+                  );
+                }
+
+                if (
+                  page === pagination.page - 2 ||
+                  page === pagination.page + 2
+                ) {
+                  return (
+                    <span key={page} style={{ padding: "0 4px" }}>
+                      …
+                    </span>
+                  );
+                }
+
+                return null;
+              })}
+
+              <button
+                type="button"
+                onClick={() =>
+                  pagination.page < pagination.totalPages &&
+                  fetchFilteredSales(pagination.page + 1)
+                }
+                disabled={
+                  pagination.page >= pagination.totalPages || loading
+                }
+                style={{
+                  minWidth: 28,
+                  height: 28,
+                  borderRadius: 999,
+                  border: "1px solid var(--gray-7)",
+                  background: "var(--gray-1)",
+                  color: "var(--gray-12)",
+                  fontSize: 12,
+                  cursor:
+                    pagination.page >= pagination.totalPages || loading
+                      ? "not-allowed"
+                      : "pointer",
+                  opacity:
+                    pagination.page >= pagination.totalPages || loading
+                      ? 0.5
+                      : 1,
+                }}
+              >
+                ›
+              </button>
+            </div>
+          </div>
+        )}
 
       </div>
 
@@ -331,7 +524,7 @@ export default function Sales() {
                   <InfoCell label="Payment Method" value={viewSale.type} />
                   <InfoCell label="Status" value={viewSale.payment} statusColor={
                     viewSale.payment === "completed" ? "var(--green-9)" :
-                    viewSale.payment === "cancelled" ? "var(--red-9)" : "var(--yellow-9)"
+                      viewSale.payment === "cancelled" ? "var(--red-9)" : "var(--yellow-9)"
                   } />
                 </div>
 

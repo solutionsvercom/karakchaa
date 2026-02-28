@@ -1,21 +1,64 @@
-const Sale = require("../models/Sale");
-const Product = require("../models/Product");
+const Sale = require("../models/Sales/SaleSchema");
+const Product = require("../models/Product/ProductSchema");
 const Order = require("../models/Order/OrderSchema");
+const Counter = require("../models/System/CounterSchema");
 const Customer = require("../models/Customers/CustomerSchema");
 const Stockmanagement = require("../models/Stockmanagement/StockmanagementSchema");
 
 /* ================= INVOICE ================= */
 
 async function generateInvoiceNumber() {
-  const count = await Sale.countDocuments();
-  return `INV-${String(count + 1).padStart(4, "0")}`;
+  const counterKey = "invoice_number";
+
+  const latest = await Sale.findOne({ invoiceNumber: /^INV-\d+$/ })
+    .sort({ invoiceNumber: -1 })
+    .select("invoiceNumber")
+    .lean();
+  const latestSeq = latest
+    ? Number(String(latest.invoiceNumber).replace("INV-", "")) || 0
+    : 0;
+
+  await Counter.updateOne(
+    { key: counterKey },
+    { $max: { seq: latestSeq } },
+    { upsert: true }
+  );
+
+  const counter = await Counter.findOneAndUpdate(
+    { key: counterKey },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  ).lean();
+
+  return `INV-${String(counter.seq).padStart(4, "0")}`;
 }
 
 /* ================= ORDER NUMBER ================= */
 
 async function generateOrderNumber() {
-  const count = await Order.countDocuments();
-  return `ORD-${String(count + 1).padStart(5, "0")}`;
+  const counterKey = "order_number";
+
+  const latest = await Order.findOne({ orderNumber: /^ORD-\d+$/ })
+    .sort({ orderNumber: -1 })
+    .select("orderNumber")
+    .lean();
+  const latestSeq = latest
+    ? Number(String(latest.orderNumber).replace("ORD-", "")) || 0
+    : 0;
+
+  await Counter.updateOne(
+    { key: counterKey },
+    { $max: { seq: latestSeq } },
+    { upsert: true }
+  );
+
+  const counter = await Counter.findOneAndUpdate(
+    { key: counterKey },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  ).lean();
+
+  return `ORD-${String(counter.seq).padStart(5, "0")}`;
 }
 
 /* ================= FIND OR CREATE CUSTOMER ================= */
@@ -167,6 +210,7 @@ async function createSale(data) {
       paymentMethod,
       paymentStatus,
       soldBy,
+      orderSource: orderType || "POS", // Map the orderType from the payload to orderSource
     });
 
     // ✅ Sync Stockmanagement
@@ -240,8 +284,8 @@ async function createSaleFromOrder(order, paymentMethod = "Cash") {
 
     saleItems.push({
       product: productDoc._id,
-      name:    item.name || productDoc.name,
-      price:   item.price,
+      name: item.name || productDoc.name,
+      price: item.price,
       quantity: item.quantity,
     });
 
@@ -266,6 +310,7 @@ async function createSaleFromOrder(order, paymentMethod = "Cash") {
     customer: customerId,
     paymentMethod: normalizePayment(paymentMethod || lockedOrder.paymentMethod),
     paymentStatus: "Completed",
+    orderSource: lockedOrder.orderSource || "POS",
   });
 
   if (customerId) {
@@ -349,11 +394,71 @@ async function getAllSales(filters = {}) {
     query.product = filters.product;
   }
 
-  return await Sale.find(query)
-    .populate("product", "name sku")
-    .populate("customer", "fullName phoneNumber")
-    .populate("soldBy", "name")
-    .sort({ createdAt: -1 });
+  if (filters.orderSource) {
+    if (filters.orderSource === "POS") {
+      // Because older POS orders might not have an orderSource field at all, 
+      // we match records where orderSource is either "POS" or doesn't exist.
+      query.$or = [
+        { orderSource: "POS" },
+        { orderSource: { $exists: false } }
+      ];
+    } else {
+      query.orderSource = filters.orderSource;
+    }
+  }
+
+  const page = Number(filters.page) > 0 ? Number(filters.page) : 1;
+  const limit = Number(filters.limit) > 0 ? Number(filters.limit) : 10;
+  const skip = (page - 1) * limit;
+
+  const [items, total] = await Promise.all([
+    Sale.find(query)
+      .populate("product", "name sku")
+      .populate("customer", "fullName phoneNumber")
+      .populate("soldBy", "name")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    Sale.countDocuments(query),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  return {
+    items,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  };
+}
+
+/* ================= SUMMARY (AGGREGATED) ================= */
+
+async function getSalesSummary() {
+  const result = await Sale.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: "$totalAmount" },
+        totalOrders: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const summary = result[0] || { totalRevenue: 0, totalOrders: 0 };
+  const averageOrder =
+    summary.totalOrders > 0
+      ? Math.round(summary.totalRevenue / summary.totalOrders)
+      : 0;
+
+  return {
+    totalRevenue: summary.totalRevenue || 0,
+    totalOrders: summary.totalOrders || 0,
+    averageOrder,
+  };
 }
 
 module.exports = {
@@ -361,4 +466,5 @@ module.exports = {
   getAllSales,
   createSaleFromOrder,
   reverseSaleFromOrder,
+  getSalesSummary,
 };
