@@ -21,6 +21,11 @@ import {
 } from "../../features/SalesSlice";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import {
+  IndianRupee,
+  ReceiptText,
+  BarChart3,
+} from "lucide-react";
 
 /* ================= TYPES ================= */
 
@@ -256,21 +261,23 @@ export default function Sales() {
             subtitle={`${totalOrders} orders`}
             accentColor="#00C853"
             softColor="#E5F9EE"
-            icon="₹"
+            icon={<IndianRupee size={22} strokeWidth={2.2} /> as any}
           />
+
           <SummaryCard
             title="Total Orders"
             value={String(totalOrders)}
             accentColor="#2962FF"
             softColor="#E3F2FD"
-            icon="📦"
+            icon={<ReceiptText size={22} strokeWidth={2.2} /> as any}
           />
+
           <SummaryCard
             title="Average Order"
             value={`₹${averageOrder.toLocaleString()}`}
             accentColor="#FF9100"
             softColor="#FFF3E0"
-            icon="📊"
+            icon={<BarChart3 size={22} strokeWidth={2.2} /> as any}
           />
         </div>
 

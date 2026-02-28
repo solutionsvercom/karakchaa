@@ -6,6 +6,12 @@ import { fetchCustomers, fetchCustomerStats, deleteCustomer, Customer } from "..
 import { RootState, AppDispatch } from "../../store/Store";
 
 import {
+  Users,
+  ShoppingCart,
+  IndianRupee,
+} from "lucide-react";
+
+import {
   Flex,
   Text,
   Avatar,
@@ -167,15 +173,17 @@ export default function Customers() {
             value={(stats?.totalCustomers || 0).toString()}
             accentColor="#2962FF"
             softColor="#E3F2FD"
-            icon="👥"
+            icon={<Users size={20}  /> as any}
           />
+
           <SummaryCard
             title="Total Revenue"
             value={`₹${(stats?.totalRevenue || 0).toLocaleString()}`}
             accentColor="#00C853"
             softColor="#E5F9EE"
-            icon="🛒"
+            icon={<ShoppingCart size={20}  /> as any}
           />
+
           <SummaryCard
             title="Avg per Customer"
             value={`₹${
@@ -185,7 +193,7 @@ export default function Customers() {
             }`}
             accentColor="#FF9100"
             softColor="#FFF3E0"
-            icon="₹"
+            icon={<IndianRupee size={20}  /> as any}
           />
         </div>
 

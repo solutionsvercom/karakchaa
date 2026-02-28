@@ -13,6 +13,12 @@ import { ChevronDown, History, Plus, Minus } from "lucide-react";
 import AddStock from "./AddStock";
 import StockHistory from "./StockHistory";
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
+import {
+  Package,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+} from "lucide-react";
 
 /* ================= TYPES ================= */
 
@@ -163,28 +169,31 @@ export default function Stockmanagement() {
           value={String(stats?.totalProducts || 0)}
           accentColor="#2962FF"
           softColor="#E3F2FD"
-          icon="📦"
+          icon={<Package size={22} strokeWidth={2.2} /> as any}
         />
+
         <SummaryCard
           title="In Stock"
           value={String(stats?.inStock || 0)}
           accentColor="#00C853"
           softColor="#E5F9EE"
-          icon="✅"
+          icon={<CheckCircle2 size={22} strokeWidth={2.2} />as any}
         />
+
         <SummaryCard
           title="Low Stock"
           value={String(stats?.lowStock || 0)}
           accentColor="#FF9100"
           softColor="#FFF3E0"
-          icon="⚠️"
+          icon={<AlertTriangle size={22} strokeWidth={2.2} />as any}
         />
+
         <SummaryCard
           title="Out of Stock"
           value={String(stats?.outOfStock || 0)}
           accentColor="#D32F2F"
           softColor="#FDECEA"
-          icon="❌"
+          icon={<XCircle size={22} strokeWidth={2.2} />as any}
         />
       </div>
 

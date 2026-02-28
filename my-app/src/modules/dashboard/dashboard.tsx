@@ -15,6 +15,14 @@ import {
   TopProductsChart,
 } from "../../components/dynamicComponents/Charts";
 
+import {
+  IndianRupee,
+  TrendingUp,
+  BarChart3,
+  Package,
+  Users,
+} from "lucide-react";
+
 import { LowStockAlert } from "../../components/dynamicComponents/Charts/LowStockAlert";
 import { RecentSales } from "../../components/dynamicComponents/Charts/RecentSales";
 
@@ -271,28 +279,31 @@ export default function Dashboard() {
             value={`₹${todaysSummary.totalRevenue.toLocaleString()}`}
             accentColor="#00C853"
             softColor="#E5F9EE"
-            icon="₹"
+            icon={<IndianRupee size={22} strokeWidth={2.2} /> as any}
           />
+
           <SummaryCard
             title="Weekly Revenue"
             value={`₹${weeklySummary.totalRevenue.toLocaleString()}`}
             accentColor="#7C4DFF"
             softColor="#F0E9FF"
-            icon="📊"
+            icon={<BarChart3 size={22} strokeWidth={2.2} /> as any}
           />
+
           <SummaryCard
             title="Active Products"
             value={String(activeProductsCount)}
             accentColor="#FF9100"
             softColor="#FFF3E0"
-            icon="📦"
+            icon={<Package size={22} strokeWidth={2.2} /> as any}
           />
+
           <SummaryCard
             title="Today's Customers"
             value={String(todaysCustomers)}
             accentColor="#2962FF"
             softColor="#E3F2FD"
-            icon="👥"
+            icon={<Users size={22} strokeWidth={2.2} /> as any}
           />
         </div>
 

@@ -14,6 +14,19 @@ import {
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
 import { fetchExpenseTotals, fetchExpenses } from "../../features/ExpensesSlice";
 import { fetchEmployees } from "../../features/EmployeesSlice";
+import {
+  IndianRupee,
+  ReceiptText,
+  TrendingDown,
+  TrendingUp,
+  Package,
+  ShoppingCart,
+  BriefcaseBusiness,
+  Lightbulb,
+  Building2,
+  Wrench,
+  Folder
+} from "lucide-react";
 import axios from "axios";
 
 /* ================= HELPER ================= */
@@ -168,32 +181,46 @@ export default function Reports() {
           value={`₹${(reportSummary?.totalRevenue ?? 0).toLocaleString()}`}
           accentColor="#7C4DFF"
           softColor="#F0E9FF"
-          icon="💰"
+          icon={<IndianRupee size={22} strokeWidth={2.2} /> as any}
         />
+
         <SummaryCard
           title="Total Orders"
           value={String(reportSummary?.totalOrders ?? 0)}
           accentColor="#00C853"
           softColor="#E5F9EE"
-          icon="🧾"
+          icon={<ReceiptText size={22} strokeWidth={2.2} />as any}
         />
+
         <SummaryCard
           title="Total Expenses"
           value={`₹${(reportSummary?.totalExpenses ?? 0).toLocaleString()}`}
           accentColor="#FF9100"
           softColor="#FFF3E0"
-          icon="📉"
+          icon={<TrendingDown size={22} strokeWidth={2.2} />as any}
         />
+
         <SummaryCard
           title="Net Profit"
           value={
-            <span style={{ color: netProfit >= 0 ? "#16A34A" : "#DC2626", fontWeight: 600 }}>
-              { (reportSummary?.netProfit ?? 0) < 0 ? "-" : "+"}₹{Math.abs(reportSummary?.netProfit ?? 0).toLocaleString()}
+            <span
+              style={{
+                color: netProfit >= 0 ? "#16A34A" : "#DC2626",
+                fontWeight: 600
+              }}
+            >
+              {netProfit < 0 ? "-" : "+"}₹{Math.abs(netProfit).toLocaleString()}
             </span>
           }
           accentColor="#2962FF"
           softColor="#E3F2FD"
-          icon={netProfit >= 0 ? "📈" : "📉"}
+          icon={
+            netProfit >= 0 ? (
+              <TrendingUp size={22} strokeWidth={2.2} />
+            ) : (
+              <TrendingDown size={22} strokeWidth={2.2} />as any
+            )
+          }
         />
       </div>
 
@@ -209,13 +236,61 @@ export default function Reports() {
       </Text>
 
       <div className="kb-summary-row">
-        <SummaryCard title="Inventory" value={`₹${(categoryTotals["inventory"] ?? 0).toLocaleString()}`} accentColor="#ECEFF1" softColor="#F5F5F5" icon="📦" />
-        <SummaryCard title="Supplies" value={`₹${(categoryTotals["supplies"] ?? 0).toLocaleString()}`} accentColor="#ECEFF1" softColor="#F5F5F5" icon="🛒" />
-        <SummaryCard title="Salary" value={`₹${(categoryTotals["salary"] ?? 0).toLocaleString()}`} accentColor="#ECEFF1" softColor="#F5F5F5" icon="👨‍💼" />
-        <SummaryCard title="Utilities" value={`₹${(categoryTotals["utilities"] ?? 0).toLocaleString()}`} accentColor="#ECEFF1" softColor="#F5F5F5" icon="💡" />
-        <SummaryCard title="Rent" value={`₹${(categoryTotals["rent"] ?? 0).toLocaleString()}`} accentColor="#ECEFF1" softColor="#F5F5F5" icon="🏢" />
-        <SummaryCard title="Maintenance" value={`₹${(categoryTotals["maintenance"] ?? 0).toLocaleString()}`} accentColor="#ECEFF1" softColor="#F5F5F5" icon="🛠️" />
-        <SummaryCard title="Others" value={`₹${(categoryTotals["others"] ?? 0).toLocaleString()}`} accentColor="#ECEFF1" softColor="#F5F5F5" icon="📂" />
+        <SummaryCard
+            title="Inventory"
+            value={`₹${(categoryTotals["inventory"] ?? 0).toLocaleString()}`}
+            accentColor="#ECEFF1"
+            softColor="#F5F5F5"
+            icon={<Package size={22} strokeWidth={2.2} color="#1E88E5" />as any}
+          />
+
+          <SummaryCard
+            title="Supplies"
+            value={`₹${(categoryTotals["supplies"] ?? 0).toLocaleString()}`}
+            accentColor="#ECEFF1"
+            softColor="#F5F5F5"
+            icon={<ShoppingCart size={22} strokeWidth={2.2} color="#00897B" />as any}
+          />
+
+          <SummaryCard
+            title="Salary"
+            value={`₹${(categoryTotals["salary"] ?? 0).toLocaleString()}`}
+            accentColor="#ECEFF1"
+            softColor="#F5F5F5"
+            icon={<BriefcaseBusiness size={22} strokeWidth={2.2} color="#5E35B1" />as any}
+          />
+
+          <SummaryCard
+            title="Utilities"
+            value={`₹${(categoryTotals["utilities"] ?? 0).toLocaleString()}`}
+            accentColor="#ECEFF1"
+            softColor="#F5F5F5"
+            icon={<Lightbulb size={22} strokeWidth={2.2} color="#F9A825" />as any}
+          />
+
+          <SummaryCard
+            title="Rent"
+            value={`₹${(categoryTotals["rent"] ?? 0).toLocaleString()}`}
+            accentColor="#ECEFF1"
+            softColor="#F5F5F5"
+            icon={<Building2 size={22} strokeWidth={2.2} color="#546E7A" />as any}
+          />
+
+          <SummaryCard
+            title="Maintenance"
+            value={`₹${(categoryTotals["maintenance"] ?? 0).toLocaleString()}`}
+            accentColor="#ECEFF1"
+            softColor="#F5F5F5"
+            icon={<Wrench size={22} strokeWidth={2.2} color="#FB8C00" />as any}
+          />
+
+          <SummaryCard
+            title="Others"
+            value={`₹${(categoryTotals["others"] ?? 0).toLocaleString()}`}
+            accentColor="#ECEFF1"
+            softColor="#F5F5F5"
+            icon={<Folder size={22} strokeWidth={2.2} color="#6D6D6D" />as any}
+          />
       </div>
     </Flex>
   );
