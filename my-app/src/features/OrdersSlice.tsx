@@ -15,10 +15,18 @@ export interface Order {
   customerName?: string;
   phone?: string;
   orderType: "dine-in" | "takeaway" | "delivery" | "online";
-  status: "Pending" | "Accepted" | "Preparing" | "Ready" | "Completed" | "Cancelled";
+  paymentMethod?: string; // ✅ NEW
+  status:
+    | "Pending"
+    | "Accepted"
+    | "Preparing"
+    | "Ready"
+    | "Completed"
+    | "Cancelled";
   totalAmount: number;
   createdAt: string;
   notes?: string;
+  saleCreated?: boolean;
 }
 
 interface CreateOrderPayload {
@@ -26,6 +34,7 @@ interface CreateOrderPayload {
   customerName?: string;
   phone?: string;
   orderType: "dine-in" | "takeaway" | "delivery" | "online";
+  paymentMethod?: string; // ✅ NEW
   notes?: string;
 }
 
@@ -75,11 +84,14 @@ export const createOrder = createAsyncThunk<
 
 export const updateOrderStatus = createAsyncThunk<
   Order,
-  { id: string; status: Order["status"] },
+  { id: string; status: Order["status"]; paymentMethod?: string }, // ✅ ADD paymentMethod
   { rejectValue: string }
->("orders/updateStatus", async ({ id, status }, thunkAPI) => {
+>("orders/updateStatus", async ({ id, status, paymentMethod }, thunkAPI) => {
   try {
-    const res = await axios.put(`${BASE_URL}/${id}/status`, { status });
+    const res = await axios.put(`${BASE_URL}/${id}/status`, { 
+      status,
+      ...(paymentMethod && { paymentMethod }) // ✅ PASS paymentMethod if provided
+    });
     return res.data.data;
   } catch (error: any) {
     return thunkAPI.rejectWithValue(
@@ -126,7 +138,9 @@ const ordersSlice = createSlice({
       })
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.orders.findIndex((o) => o._id === action.payload._id);
+        const index = state.orders.findIndex(
+          (o) => o._id === action.payload._id
+        );
         if (index !== -1) {
           state.orders[index] = action.payload;
         }

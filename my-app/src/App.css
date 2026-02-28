@@ -66,7 +66,8 @@
 
 .kb-shell {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
     background: var(--gray-2);
     color: var(--gray-12);
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -82,6 +83,8 @@
 
 .kb-sidebar {
     width: 240px;
+    height: 100vh;
+    flex-shrink: 0;
     background: linear-gradient( 180deg, var(--accent-10), var(--accent-11));
     color: var(--gray-1);
     display: flex;
@@ -273,6 +276,7 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+    overflow: hidden;
 }
 
 
@@ -331,6 +335,7 @@
 /* Content area */
 
 .kb-content {
+    flex: 1;
     padding: 20px 24px 32px;
     overflow-y: auto;
 }
@@ -483,8 +488,8 @@
         padding: 12px 12px 20px;
     }
     .kb-summary-row {
-        grid-template-columns: repeat(1, minmax(0, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
         margin-bottom: 16px;
     }
     .kb-summary-card {
@@ -577,6 +582,30 @@
     position: relative;
     overflow: hidden;
     transition: box-shadow 0.25s ease, transform 0.25s ease;
+    /* ✅ Force flex layout so image + content always stack correctly.
+       Radix's .rt-reset and .rt-Card override inline styles, so we
+       need this in the stylesheet to win the specificity battle. */
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* ✅ Image area — fixed height, never grows */
+.product-card-img {
+    height: 140px !important;
+    flex-shrink: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+}
+
+/* ✅ Content area — fills remaining space */
+.product-card-body {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
 }
 
 
@@ -633,7 +662,8 @@
     color: var(--gray-12);
     border-radius: 16px;
     padding: 24px;
-    width: 360px;
+    width: 100%;
+    max-width: 360px;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -755,4 +785,90 @@
 .kb-supplier-gst {
     font-size: 12px;
     color: var(--gray-10);
+}
+
+/* =========================
+   SUPPLIER CARDS RESPONSIVE
+   ========================= */
+
+@media (max-width: 767px) {
+    .kb-supplier-card {
+        max-width: 100% !important;
+        padding: 16px !important;
+        border-radius: 14px !important;
+    }
+}
+
+/* =========================
+   CHART / TABLE RESPONSIVE
+   ========================= */
+
+@media (max-width: 767px) {
+    /* Make recharts/chart containers scroll horizontally if needed */
+    .recharts-wrapper {
+        overflow-x: auto;
+    }
+    /* Ensure tables inside content scroll */
+    .kb-content table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    /* Tighten gap-4 flex rows on mobile (chart rows etc.) */
+    .kb-content > * > [style*="gap"] {
+        flex-wrap: wrap;
+    }
+}
+
+/* =========================
+   SMALL SCREEN SUMMARY CARD
+   ========================= */
+
+@media (max-width: 400px) {
+    .kb-summary-card {
+        padding: 10px 12px !important;
+    }
+    .kb-summary-card-value {
+        font-size: 17px !important;
+    }
+    .kb-summary-card-title {
+        font-size: 11px !important;
+    }
+    .kb-summary-card-icon-wrapper {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    .kb-summary-card-icon-circle {
+        width: 26px !important;
+        height: 26px !important;
+    }
+}
+
+/* ===== PRODUCT CARD LAYOUT FIX =====  */
+.product-card {
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 240px !important;
+}
+
+.product-card-img {
+    height: 140px !important;
+    min-height: 140px !important;
+    flex-shrink: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+}
+
+.product-card-body {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px;
+    padding: 12px;
 }

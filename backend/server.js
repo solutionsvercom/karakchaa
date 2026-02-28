@@ -1,16 +1,22 @@
 require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
+// const express = require("express");
+// const cors = require("cors");
 const connectDB = require("./config/db");
 
 // ⏰ SCHEDULER IMPORT (new)
 const {
   registerCustomerSalesBackup,
 } = require("./src/scheduler/CustomerSalesBackupScheduler");
+const express = require('express');
+const cors = require('cors');
+// const connectDB = require('./config/db');
 
 const app = express();
 
 /* ================= MIDDLEWARE ================= */
+console.log(process.env.CLOUDINARY_CLOUD_NAME);
+
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -33,6 +39,15 @@ const saleRoutes = require("./src/routes/Sale");
 
 /* ================= ROUTES USE ================= */
 app.use("/api/auth", authRoutes);
+// const productRoutes = require('./src/routes/ProductRoutes');
+// const salesRoutes = require('./src/routes/SalesRoutes');
+const digitalMenuRoutes = require("./src/routes/DigitalMenuRoutes");
+const digitalOrderRoutes = require("./src/routes/DigitalOrderRoutes");
+
+
+/* ================= ROUTES USE ================= */
+app.use("/api/test-upload", require("./src/routes/testUpload"));
+app.use('/api/auth', authRoutes);
 app.use("/api/roles", roleRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/stock", stockRoutes);
@@ -44,6 +59,13 @@ app.use("/api/suppliers", supplierRoutes);
 // app.use("/api/digital-menu", digitalMenuRoutes);
 // app.use("/api/digital-menu", digitalOrderRoutes);
 app.use("/api/orders", orderRoutes);
+
+app.use("/api/digital-menu", digitalMenuRoutes);
+app.use("/api/digital-menu", digitalOrderRoutes);
+app.use("/api/orders", orderRoutes);
+
+
+
 
 /* ================= BASIC ROUTES ================= */
 app.get("/", (req, res) => {

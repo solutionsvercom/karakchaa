@@ -1,10 +1,17 @@
 const express = require("express");
 const router = express.Router();
-
+const upload = require("../middleware/upload");
 const productController = require("../controllers/ProductController");
 
 // Create product
-router.post("/", productController.createProduct);
+router.post("/", upload.single("image"), productController.createProduct);
+
+// Sync Products → Stock Management
+router.post("/sync-stock", productController.syncStock);
+
+// ✅ Sync Stock Management → Products (fixes minStock + stockQty drift)
+router.post("/sync-from-stock", productController.syncStockToProducts);
+
 // Low stock products
 router.get("/low-stock", productController.getLowStockProducts);
 
@@ -15,7 +22,8 @@ router.get("/", productController.getProducts);
 router.get("/:id", productController.getProduct);
 
 // Update product
-router.put("/:id", productController.updateProduct);
+router.put("/:id", upload.single("image"), productController.updateProduct);
+
 // Delete product
 router.delete("/:id", productController.deleteProduct);
 

@@ -1,9 +1,47 @@
 const productService = require("../services/ProductService");
+const cloudinary = require("../../config/cloudinary");
+const streamifier = require("streamifier");
+
+/* ─────────────────────────────────────────────
+   HELPER: stream buffer directly to Cloudinary
+   No base64 conversion — much faster
+───────────────────────────────────────────── */
+function uploadToCloudinary(buffer) {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream({ folder: "restaurant/products" },
+            (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+            }
+        );
+        streamifier.createReadStream(buffer).pipe(uploadStream);
+    });
+}
+
+/* ─────────────────────────────────────────────
+   HELPER: extract public_id from Cloudinary URL
+   e.g. ".../upload/v1234/restaurant/products/abc123.jpg"
+   → "restaurant/products/abc123"
+───────────────────────────────────────────── */
+function getPublicIdFromUrl(url) {
+    if (!url) return null;
+    const matches = url.match(/\/upload\/(?:v\d+\/)?(.+?)(\.[^.]+)?$/);
+    return matches ? matches[1] : null;
+}
 
 class ProductController {
 
     async createProduct(req, res, next) {
         try {
+            let imageData = null;
+
+            if (req.file) {
+                const result = await uploadToCloudinary(req.file.buffer);
+                imageData = {
+                    url: result.secure_url, // ✅ only store URL, no public_id
+                };
+            }
+
             const payload = {
                 name: req.body.name,
                 sku: req.body.sku,
@@ -13,16 +51,15 @@ class ProductController {
                 costPrice: req.body.costPrice,
                 stockQty: req.body.stockQty,
                 minStock: req.body.minStock,
-                isActive: req.body.isActive,
-                imageUrl: req.body.imageUrl,
+                description: req.body.description,
+                isActive: req.body.isActive !== undefined ? req.body.isActive === "true" || req.body.isActive === true : true,
+                isVeg: req.body.isVeg !== undefined ? req.body.isVeg === "true" || req.body.isVeg === true : true,
+                image: imageData,
             };
 
             const product = await productService.createProduct(payload);
 
-            res.status(201).json({
-                success: true,
-                data: product,
-            });
+            res.status(201).json({ success: true, data: product });
         } catch (err) {
             next(err);
         }
@@ -31,10 +68,7 @@ class ProductController {
     async getProducts(req, res, next) {
         try {
             const products = await productService.getAllProducts();
-            res.json({
-                success: true,
-                data: products,
-            });
+            res.json({ success: true, data: products });
         } catch (err) {
             next(err);
         }
@@ -43,10 +77,7 @@ class ProductController {
     async getProduct(req, res, next) {
         try {
             const product = await productService.getProductById(req.params.id);
-            res.json({
-                success: true,
-                data: product,
-            });
+            res.json({ success: true, data: product });
         } catch (err) {
             next(err);
         }
@@ -54,17 +85,44 @@ class ProductController {
 
     async updateProduct(req, res, next) {
         try {
-            const payload = {...req.body };
+            const existingProduct = await productService.getProductById(req.params.id);
 
-            const product = await productService.updateProduct(
-                req.params.id,
-                payload
-            );
+            let imageData = existingProduct.image; // default: keep existing
 
-            res.json({
-                success: true,
-                data: product,
-            });
+            if (req.file) {
+                // ✅ Delete old image from Cloudinary using URL extraction
+                const existingImageUrl = existingProduct.image ? existingProduct.image.url : null;
+                const oldPublicId = getPublicIdFromUrl(existingImageUrl);
+                if (oldPublicId) {
+                    await cloudinary.uploader.destroy(oldPublicId);
+                }
+
+                const result = await uploadToCloudinary(req.file.buffer);
+                imageData = {
+                    url: result.secure_url, // ✅ only store URL, no public_id
+                };
+
+            } else if (req.body.removeImage === "true") {
+                // ✅ Delete old image from Cloudinary using URL extraction
+                const existingImageUrl = existingProduct.image ? existingProduct.image.url : null;
+                const oldPublicId = getPublicIdFromUrl(existingImageUrl);
+                if (oldPublicId) {
+                    await cloudinary.uploader.destroy(oldPublicId);
+                }
+                imageData = null;
+            }
+            // else: no file, no removeImage — image unchanged
+
+            const payload = {
+                ...req.body,
+                isActive: req.body.isActive !== undefined ? req.body.isActive === "true" || req.body.isActive === true : existingProduct.isActive,
+                isVeg: req.body.isVeg !== undefined ? req.body.isVeg === "true" || req.body.isVeg === true : existingProduct.isVeg,
+                image: imageData,
+            };
+
+            const product = await productService.updateProduct(req.params.id, payload);
+
+            res.json({ success: true, data: product });
         } catch (err) {
             next(err);
         }
@@ -72,19 +130,11 @@ class ProductController {
 
     async toggleProductStatus(req, res, next) {
         try {
-            const payload = {
-                isActive: req.body.isActive,
-            };
-
             const product = await productService.toggleProductStatus(
                 req.params.id,
-                payload.isActive
+                req.body.isActive
             );
-
-            res.json({
-                success: true,
-                data: product,
-            });
+            res.json({ success: true, data: product });
         } catch (err) {
             next(err);
         }
@@ -93,29 +143,48 @@ class ProductController {
     async getLowStockProducts(req, res, next) {
         try {
             const products = await productService.getLowStockProducts();
-            res.json({
-                success: true,
-                count: products.length,
-                data: products,
-            });
+            res.json({ success: true, count: products.length, data: products });
         } catch (err) {
             next(err);
         }
     }
+
     async deleteProduct(req, res, next) {
         try {
-            const product = await productService.deleteProduct(req.params.id);
+            const existingProduct = await productService.getProductById(req.params.id);
 
-            res.json({
-                success: true,
-                message: "Product deleted successfully",
-                data: product,
-            });
+            // ✅ Delete image from Cloudinary using URL extraction
+            const existingImageUrl = existingProduct.image ? existingProduct.image.url : null;
+            const publicId = getPublicIdFromUrl(existingImageUrl);
+            if (publicId) {
+                await cloudinary.uploader.destroy(publicId);
+            }
+
+            await productService.deleteProduct(req.params.id);
+
+            res.json({ success: true, message: "Product deleted successfully" });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    async syncStock(req, res, next) {
+        try {
+            const result = await productService.syncAllProductsToStock();
+            res.json({ success: true, ...result });
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    async syncStockToProducts(req, res, next) {
+        try {
+            const result = await productService.syncStockToProducts();
+            res.json({ success: true, ...result });
         } catch (err) {
             next(err);
         }
     }
 }
-
 
 module.exports = new ProductController();

@@ -307,30 +307,152 @@ export function buildRevenueTrendSmart(
   data: { dateTime: string; amount: number }[],
   dateRange: string
 ) {
-  if (dateRange === "Last 1 Day" || dateRange === "Today") {
+  if (dateRange === "Today" || dateRange === "Yesterday") {
     return buildRevenueTrendByHour(data);
-  } else if (
-    dateRange === "Last 7 Days" ||
-    dateRange === "Yesterday" ||
-    dateRange === "Last 14 Days"
-  ) {
-    return buildRevenueTrendByDay(data);
-  } else if (
-    dateRange === "Last 30 Days" ||
-    dateRange === "Last 1 Month" ||
-    dateRange === "Last 1 Months"
-  ) {
-    return buildRevenueTrendByDay(data);
-  } else if (
-    dateRange === "Last 3 Months" ||
-    dateRange === "Last 6 Months"
-  ) {
-    return buildRevenueTrendByWeek(data);
-  } else if (dateRange === "Last 1 Year" || dateRange === "Last 2 Years") {
-    return buildRevenueTrendByMonth(data);
+  } else if (dateRange === "Last 7 Days") {
+    return buildLast7DaysFixed(data);
+  } else if (dateRange === "Last 14 Days") {
+    return buildLastNDaysFixed(data, 14);
+  } else if (dateRange === "Last 30 Days") {
+    return buildLastNDaysFixed(data, 30);
+  } else if (dateRange === "Last 3 Months") {
+    return buildLastNWeeksFixed(data, 13);
+  } else if (dateRange === "Last 6 Months") {
+    return buildLastNWeeksFixed(data, 26);
+  } else if (dateRange === "Last 1 Year") {
+    return buildLastNMonthsFixed(data, 12);
   } else {
-    return buildRevenueTrendByMonth(data);
+    return buildAllTimeMonthly(data);
   }
+}
+
+function buildLast7DaysFixed(data: { dateTime: string; amount: number }[]) {
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const today = new Date();
+  const result: { date: string; revenue: number }[] = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const target = new Date(today);
+    target.setDate(today.getDate() - i);
+    target.setHours(0, 0, 0, 0);
+    const next = new Date(target);
+    next.setDate(target.getDate() + 1);
+
+    const revenue = data
+      .filter((s) => { const d = new Date(s.dateTime); return d >= target && d < next; })
+      .reduce((sum, s) => sum + s.amount, 0);
+
+    result.push({ date: dayNames[target.getDay()], revenue });
+  }
+  return result;
+}
+
+function buildLastNDaysFixed(data: { dateTime: string; amount: number }[], days: number) {
+  const today = new Date();
+  const result: { date: string; revenue: number }[] = [];
+
+  for (let i = days - 1; i >= 0; i--) {
+    const target = new Date(today);
+    target.setDate(today.getDate() - i);
+    target.setHours(0, 0, 0, 0);
+    const next = new Date(target);
+    next.setDate(target.getDate() + 1);
+
+    const label = target.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+    const revenue = data
+      .filter((s) => { const d = new Date(s.dateTime); return d >= target && d < next; })
+      .reduce((sum, s) => sum + s.amount, 0);
+
+    result.push({ date: label, revenue });
+  }
+  return result;
+}
+
+function buildLastNWeeksFixed(data: { dateTime: string; amount: number }[], weeks: number) {
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  const result: { date: string; revenue: number }[] = [];
+
+  for (let i = weeks - 1; i >= 0; i--) {
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - i * 7);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 7);
+
+    const label = weekStart.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+    const revenue = data
+      .filter((s) => { const d = new Date(s.dateTime); return d >= weekStart && d < weekEnd; })
+      .reduce((sum, s) => sum + s.amount, 0);
+
+    result.push({ date: label, revenue });
+  }
+  return result;
+}
+
+function buildLastNMonthsFixed(data: { dateTime: string; amount: number }[], months: number) {
+  const today = new Date();
+  const result: { date: string; revenue: number }[] = [];
+
+  for (let i = months - 1; i >= 0; i--) {
+    const monthStart = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    const monthEnd = new Date(today.getFullYear(), today.getMonth() - i + 1, 1);
+
+    const label = monthStart.toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
+    const revenue = data
+      .filter((s) => { const d = new Date(s.dateTime); return d >= monthStart && d < monthEnd; })
+      .reduce((sum, s) => sum + s.amount, 0);
+
+    result.push({ date: label, revenue });
+  }
+  return result;
+}
+
+function buildAllTimeMonthly(data: { dateTime: string; amount: number }[]) {
+  const today = new Date();
+  const result: { date: string; revenue: number }[] = [];
+
+  // Find earliest sale date, fallback to 12 months ago
+  let start: Date;
+  if (data.length > 0) {
+    const sorted = [...data].sort(
+      (a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
+    );
+    start = new Date(sorted[0].dateTime);
+  } else {
+    start = new Date(today);
+    start.setMonth(today.getMonth() - 11);
+  }
+
+  // Always show at least 12 months
+  const minStart = new Date(today);
+  minStart.setMonth(today.getMonth() - 11);
+  if (start > minStart) start = minStart;
+
+  start.setDate(1);
+  start.setHours(0, 0, 0, 0);
+
+  while (start <= today) {
+    const monthStart = new Date(start);
+    const monthEnd = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+
+    const label = monthStart.toLocaleDateString("en-IN", {
+      month: "short",
+      year: "2-digit",
+    });
+
+    const revenue = data
+      .filter((s) => {
+        const d = new Date(s.dateTime);
+        return d >= monthStart && d < monthEnd;
+      })
+      .reduce((sum, s) => sum + s.amount, 0);
+
+    result.push({ date: label, revenue });
+    start.setMonth(start.getMonth() + 1);
+  }
+
+  return result;
 }
 
 /**

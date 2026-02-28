@@ -54,10 +54,13 @@ const productSchema = new mongoose.Schema({
     //   ref: "Supplier", 
     // },
 
-    imageUrl: {
-        type: String,
+    image: {
+        url: { type: String },
     },
-
+    isVeg: {
+        type: Boolean,
+        default: true,
+    },
     isActive: {
         type: Boolean,
         default: true,

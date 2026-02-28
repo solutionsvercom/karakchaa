@@ -8,11 +8,17 @@ import {
 } from "../../features/StockmanagementSlice";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import Table, { Column } from "../../components/dynamicComponents/Table";
-import { Button, Flex, Badge, DropdownMenu, Dialog } from "@radix-ui/themes";
+import { Button, Flex, Badge,IconButton, DropdownMenu, Dialog } from "@radix-ui/themes";
 import { ChevronDown, History, Plus, Minus } from "lucide-react";
 import AddStock from "./AddStock";
 import StockHistory from "./StockHistory";
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
+import {
+  Package,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+} from "lucide-react";
 
 /* ================= TYPES ================= */
 
@@ -127,24 +133,28 @@ export default function Stockmanagement() {
       width: "16%",
       render: (_v, row) => (
         <Flex gap="2">
-          <Button
+          <IconButton
             size="1"
-            variant="ghost"
+             variant="soft"
+              radius="full"
+            style={{ background: "var(--accent-4)",}}
             onClick={() =>
               navigate(`/dashboard/stockmanagement/${row.id}/add-stock`)
             }
           >
             <Plus size={16} />
-          </Button>
-          <Button
+          </IconButton>
+          <IconButton
             size="1"
-            variant="ghost"
+            variant="soft"
+              radius="full"
+            style={{ background: "var(--accent-4)",}}
             onClick={() =>
               navigate(`/dashboard/stockmanagement/${row.id}/remove-stock`)
             }
           >
             <Minus size={16} />
-          </Button>
+          </IconButton>
         </Flex>
       ),
     },
@@ -159,28 +169,31 @@ export default function Stockmanagement() {
           value={String(stats?.totalProducts || 0)}
           accentColor="#2962FF"
           softColor="#E3F2FD"
-          icon="📦"
+          icon={<Package size={22} strokeWidth={2.2} /> as any}
         />
+
         <SummaryCard
           title="In Stock"
           value={String(stats?.inStock || 0)}
           accentColor="#00C853"
           softColor="#E5F9EE"
-          icon="✅"
+          icon={<CheckCircle2 size={22} strokeWidth={2.2} />as any}
         />
+
         <SummaryCard
           title="Low Stock"
           value={String(stats?.lowStock || 0)}
           accentColor="#FF9100"
           softColor="#FFF3E0"
-          icon="⚠️"
+          icon={<AlertTriangle size={22} strokeWidth={2.2} />as any}
         />
+
         <SummaryCard
           title="Out of Stock"
           value={String(stats?.outOfStock || 0)}
           accentColor="#D32F2F"
           softColor="#FDECEA"
-          icon="❌"
+          icon={<XCircle size={22} strokeWidth={2.2} />as any}
         />
       </div>
 

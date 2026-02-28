@@ -12,12 +12,59 @@ type Props<T extends string> = {
   field: FormField<T>;
   value: any;
   onChange: (value: any) => void;
+  disabled?: boolean;
 };
+
+/* ─────────────────────────────────────────────
+   HELPER: compress image before upload
+   Resizes to max 800px wide, 80% JPEG quality
+   Typical reduction: 2MB photo → ~150KB
+───────────────────────────────────────────── */
+function compressImage(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    const canvas = document.createElement("canvas");
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      const maxW = 800;
+      const scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(objectUrl);
+          if (blob) {
+            resolve(new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+              type: "image/jpeg",
+            }));
+          } else {
+            resolve(file); // fallback: use original if compression fails
+          }
+        },
+        "image/jpeg",
+        0.8 // 80% quality
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file); // fallback: use original
+    };
+
+    img.src = objectUrl;
+  });
+}
 
 const FieldRenderer = <T extends string>({
   field,
   value,
   onChange,
+  disabled,
 }: Props<T>) => {
   const id = field.name;
 
@@ -28,45 +75,41 @@ const FieldRenderer = <T extends string>({
         <input
           type="number"
           min={0}
+          disabled={disabled}
           value={value === 0 ? "" : value}
-          placeholder="0"
+          placeholder={disabled ? "Managed via Stock Management" : "0"}
           onKeyDown={(e) => {
-            if (e.key === "-" || e.key === "e") {
-              e.preventDefault();
-            }
+            if (disabled) { e.preventDefault(); return; }
+            if (e.key === "-" || e.key === "e") e.preventDefault();
           }}
           onChange={(e) => {
+            if (disabled) return;
             let val = e.target.value;
-            if (val === "") {
-              onChange(0);
-            } else {
+            if (val === "") { onChange(0); }
+            else {
               const num = Number(val);
-              if (num < 0) {
-                onChange(0);
-              } else {
-                onChange(num);
-              }
+              onChange(num < 0 ? 0 : num);
             }
           }}
           onBlur={() => {
-            if (value === "" || value === null || value < 0) {
-              onChange(0);
-            }
+            if (disabled) return;
+            if (value === "" || value === null || value < 0) onChange(0);
           }}
           style={{
             width: "100%",
             height: 35,
             border: "1px solid #e5e7eb",
-            background: "transparent",
+            background: disabled ? "var(--gray-a3)" : "transparent",
             borderRadius: 10,
             padding: "0 12px",
             fontSize: 14,
             outline: "none",
+            cursor: disabled ? "not-allowed" : "text",
+            color: disabled ? "var(--gray-9)" : "inherit",
           }}
         />
       );
 
-    // ✅ Single merged case — no duplicates
     case "password":
     case "text":
     case "email":
@@ -118,7 +161,13 @@ const FieldRenderer = <T extends string>({
               borderRadius: 10,
             }}
           />
-          <Select.Content>
+          <Select.Content
+            position="popper"
+            sideOffset={4}
+            side="bottom"
+            avoidCollisions={false}
+            style={{ width: "var(--radix-select-trigger-width)" }}
+          >
             {field.options?.map((opt) => (
               <Select.Item key={opt.value} value={opt.value}>
                 {opt.label}
@@ -180,45 +229,167 @@ const FieldRenderer = <T extends string>({
         </div>
       );
 
-    case "file":
-      return (
-        <label
-          htmlFor={id}
-          style={{
-            border: "1.5px dashed #c7c7d1",
-            borderRadius: 10,
-            width: 90,
-            height: 90,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            color: "#6b7280",
+    case "file": {
+      const imageUrl =
+        typeof value === "string" && value !== ""
+          ? value
+          : value instanceof File
+          ? URL.createObjectURL(value)
+          : null;
+
+      // ✅ Shared hidden file input with compression on change
+      const fileInput = (
+        <input
+          id={id}
+          type="file"
+          hidden
+          accept="image/*"
+          onClick={(e) => { (e.target as HTMLInputElement).value = ""; }}
+          onChange={async (e) => {
+            const file = e.currentTarget.files?.[0];
+            if (!file) return;
+            const compressed = await compressImage(file); // ✅ compress before storing
+            onChange(compressed);
           }}
-        >
-          <input
-            id={id}
-            type="file"
-            hidden
-            onChange={(e) => onChange(e.currentTarget.files?.[0] ?? null)}
-          />
-          <div style={{ textAlign: "center", fontSize: 10 }}>
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-            <div style={{ marginTop: 4 }}>Upload</div>
-          </div>
-        </label>
+        />
       );
+
+      // ── NO IMAGE: clickable upload box ──────────────────────────────────────
+      if (!imageUrl) {
+        return (
+          <>
+            {fileInput}
+            <label
+              htmlFor={id}
+              style={{
+                border: "1.5px dashed #c7c7d1",
+                borderRadius: 10,
+                width: 90,
+                height: 90,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "#6b7280",
+                gap: 4,
+              }}
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <span style={{ fontSize: 11 }}>Upload</span>
+            </label>
+          </>
+        );
+      }
+
+      // ── HAS IMAGE: thumbnail + Change / View / Remove beside it ────────────
+      return (
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+          {fileInput}
+
+          {/* Thumbnail */}
+          <div
+            style={{
+              border: "1.5px solid #e5e7eb",
+              borderRadius: 10,
+              width: 90,
+              height: 90,
+              overflow: "hidden",
+              flexShrink: 0,
+            }}
+          >
+            <img
+              src={imageUrl}
+              alt="Preview"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </div>
+
+          {/* Buttons stacked vertically beside the image */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+              justifyContent: "center",
+              height: 90,
+            }}
+          >
+            {/* CHANGE */}
+            <label
+              htmlFor={id}
+              style={{
+                padding: "4px 12px",
+                borderRadius: 6,
+                border: "1px solid #e5e7eb",
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: "pointer",
+                background: "var(--gray-2)",
+                color: "var(--gray-12)",
+                whiteSpace: "nowrap",
+                userSelect: "none",
+                textAlign: "center",
+              }}
+            >
+              Change
+            </label>
+
+            {/* VIEW */}
+            <a
+              href={imageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: "4px 12px",
+                borderRadius: 6,
+                border: "1px solid #e5e7eb",
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: "pointer",
+                background: "var(--gray-2)",
+                color: "var(--gray-12)",
+                textDecoration: "none",
+                whiteSpace: "nowrap",
+                textAlign: "center",
+              }}
+            >
+              View
+            </a>
+
+            {/* REMOVE */}
+            <button
+              type="button"
+              onClick={() => onChange(null)}
+              style={{
+                padding: "4px 12px",
+                borderRadius: 6,
+                border: "1px solid #fecaca",
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: "pointer",
+                background: "#fee2e2",
+                color: "#991b1b",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      );
+    }
 
     default:
       return null;

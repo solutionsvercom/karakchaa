@@ -7,9 +7,12 @@ import { useDispatch } from "react-redux";
 import { useCart } from "./CartContext";
 import { AppDispatch } from "../../store/Store";
 import { createOrder } from "../../features/OrdersSlice";
+import { fetchSales } from "../../features/SalesSlice";
+import { fetchCustomers } from "../../features/CustomersSlice";
+import { fetchStockItems } from "../../features/StockmanagementSlice";
 
 type OrderType = "dine-in" | "takeaway" | "delivery" | "online";
-type PaymentMethod = "cash" | "upi" | "gpay" | "phonepe" | "paytm" | "card";
+type PaymentMethod = "Cash" | "UPI" | "PhonePe" | "GPay" | "Paytm" | "Card" | "Other";
 
 interface CheckoutDialogProps {
   open: boolean;
@@ -28,16 +31,34 @@ export const CheckoutDialog = ({
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [orderType, setOrderType] = useState<OrderType>("dine-in");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Cash");
   const [notes, setNotes] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const discountedTotal = Math.max(total - discount, 0);
 
   const handleCompleteOrder = async () => {
     if (!items.length) return;
 
+    // ✅ Required field validation — show inline error, don't submit
+    if (!customerName.trim()) {
+      setError("Customer name is required.");
+      return;
+    }
+    if (!phone.trim()) {
+      setError("Phone number is required.");
+      return;
+    }
+    if (!/^\d{10}$/.test(phone.trim())) {
+      setError("Please enter a valid 10-digit phone number.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
     try {
-      // New flow: every POS checkout becomes an order first.
       await dispatch(
         createOrder({
           items: items.map((item) => ({
@@ -46,17 +67,32 @@ export const CheckoutDialog = ({
             price: item.price,
             quantity: item.quantity,
           })),
-          customerName: customerName || undefined,
-          phone: phone || undefined,
+          customerName: customerName.trim(),
+          phone: phone.trim(),
           orderType,
+          paymentMethod,
           notes: notes || undefined,
         })
       ).unwrap();
 
       clearCart();
+      dispatch(fetchSales());
+      dispatch(fetchCustomers());
+      dispatch(fetchStockItems());
+
+      // Reset form
+      setCustomerName("");
+      setPhone("");
+      setNotes("");
+      setOrderType("dine-in");
+      setPaymentMethod("Cash");
+      setError(null);
       onClose();
-    } catch (error) {
-      console.error("Checkout failed:", error);
+    } catch (err: any) {
+      setError(err?.message || "Checkout failed. Please try again.");
+      console.error("Checkout failed:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,17 +103,14 @@ export const CheckoutDialog = ({
     { value: "online", label: "Online Order" },
   ];
 
-  const paymentMethodButtons: {
-    value: PaymentMethod;
-    label: string;
-    icon?: string;
-  }[] = [
-    { value: "cash", label: "Cash", icon: "Cash" },
-    { value: "upi", label: "UPI", icon: "UPI" },
-    { value: "phonepe", label: "PhonePe", icon: "UPI" },
-    { value: "gpay", label: "GPay", icon: "UPI" },
-    { value: "paytm", label: "Paytm", icon: "UPI" },
-    { value: "card", label: "Card", icon: "Card" },
+  const paymentMethodButtons: { value: PaymentMethod; label: string }[] = [
+    { value: "Cash", label: "💵 Cash" },
+    { value: "UPI", label: "📲 UPI" },
+    { value: "PhonePe", label: "📱 PhonePe" },
+    { value: "GPay", label: "🟢 GPay" },
+    { value: "Paytm", label: "🔵 Paytm" },
+    { value: "Card",  label: "💳 Card" },
+    { value: "Other", label: "💰 Other" },
   ];
 
   return (
@@ -99,18 +132,27 @@ export const CheckoutDialog = ({
             transform: "translate(-50%, -50%)",
             background: "Canvas",
             color: "CanvasText",
-            padding: 24,
-            width: 540,
-            maxHeight: "90vh",
+            padding: "clamp(16px, 4vw, 24px)",
+            width: "min(540px, calc(100vw - 32px))",
+            maxHeight: "90dvh",
             overflowY: "auto",
             zIndex: 1001,
             boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+            borderRadius: 16,
           }}
         >
+          {/* ===== HEADER ===== */}
           <Flex justify="between" align="center" mb="4">
-            <Text size="6" weight="bold">
-              Complete Order
-            </Text>
+            <Dialog.Title asChild>
+              <Text size="6" weight="bold">
+                Complete Order
+              </Text>
+            </Dialog.Title>
+            <Dialog.Description asChild>
+              <span style={{ display: "none" }}>
+                Review order items, choose order type and payment method, then confirm.
+              </span>
+            </Dialog.Description>
             <Dialog.Close asChild>
               <Button variant="ghost" style={{ cursor: "pointer" }}>
                 <X size={20} />
@@ -118,6 +160,23 @@ export const CheckoutDialog = ({
             </Dialog.Close>
           </Flex>
 
+          {/* ===== ERROR BANNER ===== */}
+          {error && (
+            <div
+              style={{
+                background: "#fee2e2",
+                color: "#991b1b",
+                padding: "10px 14px",
+                borderRadius: 8,
+                marginBottom: 16,
+                fontSize: 14,
+              }}
+            >
+              {error}
+            </div>
+          )}
+
+          {/* ===== ORDER SUMMARY ===== */}
           <div
             style={{
               background: "var(--gray-a2)",
@@ -126,38 +185,62 @@ export const CheckoutDialog = ({
               marginBottom: 20,
             }}
           >
-            <Text size="3" weight="bold" style={{ marginBottom: 8, display: "block" }}>
+            <Text
+              size="3"
+              weight="bold"
+              style={{ marginBottom: 8, display: "block" }}
+            >
               Order Summary
             </Text>
 
-            <Flex justify="between" mb="2">
+            {/* Item list */}
+            {items.map((item) => (
+              <Flex key={item.id} justify="between" mb="1">
+                <Text size="2" color="gray">
+                  {item.name} × {item.quantity}
+                </Text>
+                <Text size="2">₹{item.price * item.quantity}</Text>
+              </Flex>
+            ))}
+
+            <Flex justify="between" mb="2" mt="2">
               <Text size="2">{items.length} item(s)</Text>
-              <Text size="2">Rs {total}</Text>
+              <Text size="2">₹{total}</Text>
             </Flex>
 
             {discount > 0 && (
               <Flex justify="between" mb="3">
                 <Text size="2">Discount</Text>
                 <Text size="2" color="red">
-                  -Rs {discount}
+                  -₹{discount}
                 </Text>
               </Flex>
             )}
 
-            <Flex justify="between" mt="3" pt="3" style={{ borderTop: "1px solid var(--gray-a6)" }}>
+            <Flex
+              justify="between"
+              mt="3"
+              pt="3"
+              style={{ borderTop: "1px solid var(--gray-a6)" }}
+            >
               <Text size="4" weight="bold">
                 Total
               </Text>
               <Text size="5" weight="bold" color="green">
-                Rs {discountedTotal}
+                ₹{discountedTotal}
               </Text>
             </Flex>
           </div>
 
-          <Flex gap="3" mb="3">
+          {/* ===== CUSTOMER FIELDS ===== */}
+          <Flex gap="3" mb="3" wrap="wrap">
             <div style={{ flex: 1 }}>
-              <Text size="2" weight="medium" style={{ marginBottom: 4, display: "block" }}>
-                Customer Name (Optional)
+              <Text
+                size="2"
+                weight="medium"
+                style={{ marginBottom: 4, display: "block" }}
+              >
+                Customer Name *
               </Text>
               <input
                 type="text"
@@ -168,36 +251,52 @@ export const CheckoutDialog = ({
                   width: "100%",
                   height: 36,
                   padding: "0 12px",
-                  border: "1px solid var(--gray-a6)",
+                  border: error && !customerName.trim() ? "1px solid #dc2626" : "1px solid var(--gray-a6)",
                   borderRadius: 8,
                   fontSize: 14,
+                  background: "transparent",
+                  color: "inherit",
                 }}
               />
             </div>
 
             <div style={{ flex: 1 }}>
-              <Text size="2" weight="medium" style={{ marginBottom: 4, display: "block" }}>
-                Phone (Optional)
+              <Text
+                size="2"
+                weight="medium"
+                style={{ marginBottom: 4, display: "block" }}
+              >
+                Phone *
               </Text>
               <input
                 type="tel"
-                placeholder="Enter phone"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={10}
+                placeholder="10-digit phone"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 style={{
                   width: "100%",
                   height: 36,
                   padding: "0 12px",
-                  border: "1px solid var(--gray-a6)",
+                  border: error && (!phone.trim() || !/^\d{10}$/.test(phone.trim())) ? "1px solid #dc2626" : "1px solid var(--gray-a6)",
                   borderRadius: 8,
                   fontSize: 14,
+                  background: "transparent",
+                  color: "inherit",
                 }}
               />
             </div>
           </Flex>
 
+          {/* ===== ORDER TYPE ===== */}
           <div style={{ marginBottom: 20 }}>
-            <Text size="2" weight="medium" style={{ marginBottom: 8, display: "block" }}>
+            <Text
+              size="2"
+              weight="medium"
+              style={{ marginBottom: 8, display: "block" }}
+            >
               Order Type
             </Text>
             <Flex gap="2" wrap="wrap">
@@ -206,13 +305,18 @@ export const CheckoutDialog = ({
                   key={btn.value}
                   onClick={() => setOrderType(btn.value)}
                   style={{
-                    flex: "1 1 auto",
-                    padding: "10px 16px",
+                    flex: "1 1 calc(50% - 4px)",
+                    minWidth: 80,
+                    padding: "10px 8px",
                     border: "none",
                     borderRadius: 8,
-                    background: orderType === btn.value ? "var(--green-9)" : "var(--gray-a3)",
+                    background:
+                      orderType === btn.value
+                        ? "var(--green-9)"
+                        : "var(--gray-a3)",
+                    color: orderType === btn.value ? "white" : "inherit",
                     fontWeight: 500,
-                    fontSize: 14,
+                    fontSize: 13,
                     cursor: "pointer",
                   }}
                 >
@@ -222,14 +326,19 @@ export const CheckoutDialog = ({
             </Flex>
           </div>
 
+          {/* ===== PAYMENT METHOD ===== */}
           <div style={{ marginBottom: 20 }}>
-            <Text size="2" weight="medium" style={{ marginBottom: 8, display: "block" }}>
+            <Text
+              size="2"
+              weight="medium"
+              style={{ marginBottom: 8, display: "block" }}
+            >
               Payment Method
             </Text>
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
+                gridTemplateColumns: "repeat(auto-fill, minmax(100px, 1fr))",
                 gap: 8,
               }}
             >
@@ -241,7 +350,11 @@ export const CheckoutDialog = ({
                     padding: "10px",
                     border: "none",
                     borderRadius: 8,
-                    background: paymentMethod === btn.value ? "var(--green-9)" : "var(--gray-a3)",
+                    background:
+                      paymentMethod === btn.value
+                        ? "var(--green-9)"
+                        : "var(--gray-a3)",
+                    color: paymentMethod === btn.value ? "white" : "inherit",
                     fontWeight: 500,
                     fontSize: 13,
                     cursor: "pointer",
@@ -251,15 +364,19 @@ export const CheckoutDialog = ({
                     gap: 4,
                   }}
                 >
-                  {btn.icon && <span>{btn.icon}</span>}
                   {btn.label}
                 </button>
               ))}
             </div>
           </div>
 
+          {/* ===== NOTES ===== */}
           <div style={{ marginBottom: 20 }}>
-            <Text size="2" weight="medium" style={{ marginBottom: 4, display: "block" }}>
+            <Text
+              size="2"
+              weight="medium"
+              style={{ marginBottom: 4, display: "block" }}
+            >
               Notes (Optional)
             </Text>
             <textarea
@@ -275,13 +392,20 @@ export const CheckoutDialog = ({
                 fontSize: 14,
                 resize: "vertical",
                 fontFamily: "inherit",
+                background: "transparent",
+                color: "inherit",
               }}
             />
           </div>
 
+          {/* ===== ACTIONS ===== */}
           <Flex gap="3">
             <Dialog.Close asChild>
-              <Button variant="outline" style={{ flex: 1, height: 44, cursor: "pointer" }}>
+              <Button
+                variant="outline"
+                style={{ flex: 1, height: 44, cursor: "pointer" }}
+                disabled={loading}
+              >
                 Cancel
               </Button>
             </Dialog.Close>
@@ -290,14 +414,15 @@ export const CheckoutDialog = ({
               style={{
                 flex: 1,
                 height: 44,
-                background: "var(--green-9)",
+                background: loading ? "var(--gray-8)" : "var(--green-9)",
                 color: "white",
-                cursor: "pointer",
+                cursor: loading ? "not-allowed" : "pointer",
               }}
               onClick={handleCompleteOrder}
+              disabled={loading}
             >
               <Check size={18} />
-              Complete Order
+              {loading ? "Processing..." : `Complete Order · ₹${discountedTotal}`}
             </Button>
           </Flex>
         </Dialog.Content>

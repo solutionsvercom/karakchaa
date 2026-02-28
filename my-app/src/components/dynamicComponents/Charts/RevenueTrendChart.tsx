@@ -1,8 +1,8 @@
 import React from "react";
 import { Flex, Text } from "@radix-ui/themes";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -42,7 +42,14 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
 
       <div className="kb-card">
         <ResponsiveContainer width="100%" height={height}>
-          <LineChart data={data}>
+          <AreaChart data={data}>
+            <defs>
+              <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--accent-9)" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="var(--accent-9)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+
             <XAxis dataKey="date" stroke="var(--gray-8)" />
             <YAxis stroke="var(--gray-8)" tickFormatter={formatRupeesK} />
             <Tooltip
@@ -51,25 +58,22 @@ export const RevenueTrendChart: React.FC<RevenueTrendChartProps> = ({
                 border: "1px solid var(--tooltip-border)",
                 color: "var(--tooltip-text)",
               }}
-              labelStyle={{
-                color: "var(--tooltip-label)",
-              }}
-              itemStyle={{
-                color: "var(--tooltip-text)",
-              }}
+              labelStyle={{ color: "var(--tooltip-label)" }}
+              itemStyle={{ color: "var(--tooltip-text)" }}
               formatter={(value) =>
                 typeof value === "number" ? formatRupeesK(value) : ""
               }
             />
-            <Line
+            <Area
               type="monotone"
               dataKey="revenue"
               stroke="var(--accent-9)"
               strokeWidth={3}
-              dot={{ r: 4 }}
-              activeDot={{ r: 6 }}
+              fill="url(#revenueGradient)"
+              dot={false}
+              activeDot={{ r: 6, fill: "var(--accent-9)" }}
             />
-          </LineChart>
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </Flex>

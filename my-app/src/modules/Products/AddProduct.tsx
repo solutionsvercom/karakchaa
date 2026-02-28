@@ -23,7 +23,8 @@ type ProductField =
   | "minStock"
   | "unit"
   | "description"
-  | "active";
+  | "active"
+  | "isVeg";
 
 interface AddProductsProps {
   mode: "create" | "edit";
@@ -33,15 +34,14 @@ interface AddProductsProps {
 const AddProducts = ({ mode, initialValues }: AddProductsProps) => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+
   useEffect(() => {
-  dispatch(clearError());
-
-  return () => {
     dispatch(clearError());
-  };
-}, [dispatch]);
+    return () => {
+      dispatch(clearError());
+    };
+  }, [dispatch]);
 
-  /* ⭐ READ ERROR FROM REDUX SLICE */
   const { error } = useSelector((state: RootState) => state.product);
 
   const fields: FormField<ProductField>[] = [
@@ -66,12 +66,23 @@ const AddProducts = ({ mode, initialValues }: AddProductsProps) => {
         { label: "Snacks", value: "snacks" },
         { label: "Meals", value: "meals" },
         { label: "Desserts", value: "desserts" },
+        { label: "Drinks", value: "drinks" },
+        { label: "Starters", value: "starters" },
+        { label: "Breads", value: "breads" },
+        { label: "Pizza", value: "pizza" },
+        { label: "Sandwich", value: "sandwich" },
         { label: "Other", value: "other" },
       ],
     },
     { name: "sellingPrice", label: "Selling Price (₹)", type: "number" },
     { name: "costPrice", label: "Cost Price (₹)", type: "number" },
-    { name: "stockQty", label: "Stock Qty", type: "number", group: "triple" },
+    { 
+      name: "stockQty", 
+      label: "Stock Qty", 
+      type: "number", 
+      group: "triple", 
+      disabled: mode === "edit" 
+    },
     { name: "minStock", label: "Min Stock", type: "number", group: "triple" },
     {
       name: "unit",
@@ -97,20 +108,22 @@ const AddProducts = ({ mode, initialValues }: AddProductsProps) => {
       rows: 2,
       placeholder: "Enter product description...",
     },
+    { name: "isVeg", label: "🟩 Veg Product", type: "switch", span: 2 },
     { name: "active", label: "Active Product", type: "switch", span: 2 },
   ];
 
-  /* ⭐ MAP BACKEND FIELD → FORM FIELD */
+  /* MAP BACKEND FIELD → FORM FIELD */
   const mappedInitialValues = initialValues
     ? {
         ...initialValues,
         active: initialValues.isActive,
+        isVeg: initialValues.isVeg !== undefined ? initialValues.isVeg : true,
+        image: initialValues.image?.url ?? null,
       }
     : undefined;
 
   return (
     <>
-      {/* ⭐ ERROR UI WITHOUT TOUCHING DynamicForm */}
       {error && (
         <div
           style={{
@@ -144,26 +157,45 @@ const AddProducts = ({ mode, initialValues }: AddProductsProps) => {
         }}
         onSubmit={async (data) => {
           try {
-            const payload = {
-              name: data.name,
-              sku: data.sku,
-              category: data.category,
-              sellingPrice: Number(data.sellingPrice),
-              costPrice: Number(data.costPrice),
-              stockQty: Number(data.stockQty),
-              minStock: Number(data.minStock),
-              unit: data.unit,
-              description: data.description,
-              isActive: data.active ?? true,
-            };
+            const formData = new FormData();
+
+            formData.append("name", data.name);
+            formData.append("sku", data.sku);
+            formData.append("category", data.category);
+            formData.append("sellingPrice", String(Number(data.sellingPrice)));
+            formData.append("costPrice", String(Number(data.costPrice)));
+            
+            // Only append stockQty in create mode
+            if (mode === "create") {
+              formData.append("stockQty", String(Number(data.stockQty)));
+            }
+            
+            formData.append("minStock", String(Number(data.minStock)));
+            formData.append("unit", data.unit);
+            formData.append("description", data.description || "");
+            formData.append(
+              "isActive",
+              String(data.active !== undefined ? data.active : true)
+            );
+            formData.append(
+              "isVeg",
+              String(data.isVeg !== undefined ? data.isVeg : true)
+            );
+
+            // Handle image upload/removal
+            if (data.image instanceof File) {
+              formData.append("image", data.image);
+            } else if (data.image === null || data.image === "") {
+              formData.append("removeImage", "true");
+            }
 
             if (mode === "create") {
-              await dispatch(createProduct(payload)).unwrap();
+              await dispatch(createProduct(formData)).unwrap();
             } else if (mode === "edit" && initialValues?._id) {
               await dispatch(
                 updateProduct({
                   id: initialValues._id,
-                  payload,
+                  payload: formData,
                 })
               ).unwrap();
             }

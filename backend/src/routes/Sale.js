@@ -9,4 +9,7 @@ router.post("/", saleController.createSale);
 // Get all sales
 router.get("/", saleController.getSales);
 
+// Update sale status
+router.put("/:id", saleController.updateSale);
+
 module.exports = router;

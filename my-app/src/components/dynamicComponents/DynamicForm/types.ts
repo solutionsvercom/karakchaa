@@ -1,33 +1,23 @@
-export type FieldType =
-  | "text"
-  | "email"
-  | "number"
-  | "textarea"
-  | "select"
-  | "switch"
-  | "file"
-  | "date"
-  |  "button-group"
-  | "password"
-  | "isActive"
-
-export type Option = {
-  label: string;
-  value: string;
-};
-
-export type FormField<T extends string = string> = {
+export type FormField<T extends string> = {
   name: T;
   label: string;
-  type: FieldType;
-
+  type:
+    | "text"
+    | "number"
+    | "email"
+    | "password"
+    | "textarea"
+    | "select"
+    | "switch"
+    | "date"
+    | "file"
+    | "button-group";
   placeholder?: string;
   required?: boolean;
-  options?: Option[];
-  rows?: number;
-  suffix?: React.ReactNode;
-
-  span?: 1 | 2; // 1 = half width, 2 = full width
-   compact?: boolean;
+  span?: 1 | 2;
   group?: "triple";
+  rows?: number;
+  options?: { label: string; value: string }[];
+  suffix?: React.ReactNode;
+  disabled?: boolean; // ✅ locks the field visually and functionally
 };

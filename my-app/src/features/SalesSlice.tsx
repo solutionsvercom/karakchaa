@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import { API_BASE_URL } from "../config/api";
+
 /* ================= TYPES ================= */
 
 export interface Sale {
@@ -12,11 +12,24 @@ export interface Sale {
   paymentMethod: string;
   paymentStatus: string;
   createdAt: string;
+  // ✅ Added: populated customer object from backend
+  customer?: {
+    _id: string;
+    fullName: string;
+    phoneNumber?: string;
+  };
+  customerName?: string;
   product?: {
     _id: string;
     name: string;
     sku: string;
   };
+  items?: {
+    product?: string;
+    name: string;
+    price: number;
+    quantity: number;
+  }[];
 }
 
 interface SalesState {
@@ -58,18 +71,16 @@ export const createSale = createAsyncThunk<
   "sales/create",
   async (payload, thunkAPI) => {
     try {
-        const body = {
-      product: payload.productId,
-      quantity: payload.quantity,
-      sellingPrice: payload.sellingPrice,
-      paymentMethod: payload.paymentMethod,
-      paymentStatus: payload.paymentStatus,
-      customer: payload.customer,
-    };
-
+      const body = {
+        product: payload.productId,
+        quantity: payload.quantity,
+        sellingPrice: payload.sellingPrice,
+        paymentMethod: payload.paymentMethod,
+        paymentStatus: payload.paymentStatus,
+        customer: payload.customer,
+      };
 
       const res = await axios.post(BASE_URL, body);
-
       return res.data.data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue(
@@ -78,7 +89,6 @@ export const createSale = createAsyncThunk<
     }
   }
 );
-
 
 export const updateSale = createAsyncThunk<
   Sale,

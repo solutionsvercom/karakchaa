@@ -9,6 +9,9 @@ type DynamicAlertDialogProps = {
   actionText?: string;
   onAction?: () => Promise<void> | void;
   color?: "red" | "blue" | "green" | "gray";
+  // ✅ Controlled mode — used by DynamicForm to block opening until validation passes
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const DynamicAlertDialog = ({
@@ -19,6 +22,8 @@ const DynamicAlertDialog = ({
   actionText = "Confirm",
   onAction,
   color = "green",
+  open,
+  onOpenChange,
 }: DynamicAlertDialogProps) => {
   const [loading, setLoading] = useState(false);
 
@@ -31,9 +36,15 @@ const DynamicAlertDialog = ({
     }
   };
 
+  // ✅ Use controlled props only when both are provided
+  const controlledProps =
+    open !== undefined && onOpenChange !== undefined
+      ? { open, onOpenChange }
+      : {};
+
   return (
-    <AlertDialog.Root>
-      {/*  custom trigger without asChild */}
+    <AlertDialog.Root {...controlledProps}>
+      {/* ✅ No asChild — @radix-ui/themes AlertDialog.Trigger doesn't support it */}
       <AlertDialog.Trigger>
         {children}
       </AlertDialog.Trigger>
