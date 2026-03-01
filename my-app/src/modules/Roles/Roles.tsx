@@ -146,7 +146,7 @@ export default function Roles() {
         <Table data={filteredRoles} columns={columns} emptyMessage="No roles found" hoverable striped />
       </Flex>
 
-      {/* ===== ADD / EDIT DIALOG ===== */}
+      {/*  ADD / EDIT DIALOG  */}
       <Dialog.Root open={isDialogOpen} onOpenChange={(open) => { if (!open) navigate("/dashboard/roles"); }}>
         <Dialog.Content maxWidth="520px">
           <AddRole
@@ -163,7 +163,7 @@ export default function Roles() {
         </Dialog.Content>
       </Dialog.Root>
 
-      {/* ===== DELETE CONFIRM DIALOG ===== */}
+      {/*  DELETE CONFIRM DIALOG  */}
       <Dialog.Root open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
         <Dialog.Content maxWidth="380px" aria-describedby={undefined}>
           <Dialog.Title>Delete Role?</Dialog.Title>

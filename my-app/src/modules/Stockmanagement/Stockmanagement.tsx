@@ -20,7 +20,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-/* ================= TYPES ================= */
+/* TYPES */
 
 export type StockStatus = "In Stock" | "Low Stock" | "Out of Stock";
 
@@ -34,14 +34,14 @@ export type StockRow = {
   status: StockStatus;
 };
 
-/* ================= HELPERS ================= */
+/* HELPERS */
 
 export const getStockColor = (
   status: StockStatus
 ): "green" | "yellow" | "red" =>
   status === "In Stock" ? "green" : status === "Low Stock" ? "yellow" : "red";
 
-/* ================= MAIN COMPONENT ================= */
+/*  MAIN COMPONENT */
 
 export default function Stockmanagement() {
   const navigate = useNavigate();
@@ -56,7 +56,7 @@ export default function Stockmanagement() {
   const [searchValue, setSearchValue] = React.useState("");
   const [category, setCategory] = React.useState("All Products");
 
-  // ✅ CHECK URL FOR STOCK HISTORY
+  // CHECK URL FOR STOCK HISTORY
   const isStockHistory = location.pathname.includes("/stock-history");
   const isAddStock = location.pathname.includes("/add-stock");
   const isRemoveStock = location.pathname.includes("/remove-stock");
@@ -82,7 +82,7 @@ export default function Stockmanagement() {
     status: item.status,
   }));
 
-  /* ================= FILTER ================= */
+  /*  FILTER  */
 
   const filteredStock = formattedStock.filter((item) => {
     const matchesSearch =
@@ -97,7 +97,7 @@ export default function Stockmanagement() {
     return matchesSearch && matchesCategory;
   });
 
-  /* ================= TABLE COLUMNS ================= */
+  /*  TABLE COLUMNS */
 
   const columns: Column<StockRow>[] = [
     { key: "product", header: "Product", accessor: "product", width: "18%" },
@@ -162,7 +162,7 @@ export default function Stockmanagement() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* ===== SUMMARY CARDS (4) ===== */}
+      {/*  SUMMARY CARDS (4) */}
       <div className="kb-summary-row">
         <SummaryCard
           title="Total Products"
@@ -197,7 +197,7 @@ export default function Stockmanagement() {
         />
       </div>
 
-      {/* ===== FILTER BAR ===== */}
+      {/*  FILTER BAR */}
       <Flex align="center" gap="3">
         <Searchbar
           searchValue={searchValue}
@@ -221,7 +221,7 @@ export default function Stockmanagement() {
           </DropdownMenu.Content>
         </DropdownMenu.Root>
 
-        {/* ✅ UPDATED: Stock History Button with URL Navigation */}
+        {/* UPDATED: Stock History Button with URL Navigation */}
         <Button
           variant={isStockHistory ? "solid" : "soft"}
           onClick={() =>
@@ -236,7 +236,7 @@ export default function Stockmanagement() {
         </Button>
       </Flex>
 
-      {/* ✅ CONDITIONAL RENDERING BASED ON URL */}
+      {/* CONDITIONAL RENDERING BASED ON URL */}
       {!isStockHistory ? (
         <Table
           data={filteredStock}
@@ -250,7 +250,7 @@ export default function Stockmanagement() {
         <StockHistory />
       )}
 
-      {/* ===== DIALOG ===== */}
+      {/* DIALOG */}
       <Dialog.Root
         open={isDialogOpen}
         onOpenChange={(open) => {

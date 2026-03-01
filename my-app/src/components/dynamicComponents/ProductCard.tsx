@@ -10,7 +10,7 @@ import {
 import { DotsVerticalIcon, CubeIcon } from "@radix-ui/react-icons";
 import { Pencil, Trash2, Plus } from "lucide-react";
 
-/* ---------------- TYPES ---------------- */
+/*  TYPES  */
 
 type Category = "snacks" | "desserts" | "beverages" | "meals" | "drinks" | "starters" | "breads" | "pizza" | "sandwich" | "other";
 
@@ -30,7 +30,7 @@ export type ProductCardProps = {
   onDelete?: () => void;
 };
 
-/* -------- CATEGORY → COLOR MAP -------- */
+/*  CATEGORY → COLOR MAP */
 
 const categoryColorMap: Record<
   Category,
@@ -51,7 +51,7 @@ const categoryColorMap: Record<
 const formatLabel = (text: string) =>
   text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
 
-/* ---------------- COMPONENT ---------------- */
+/*  COMPONENT */
 
 export default function ProductCard({
   name,
@@ -172,7 +172,7 @@ export default function ProductCard({
             {name}
           </span>
 
-          {/* ✅ THREE DOTS MENU (Moved here to be on white background) */}
+          {/* THREE DOTS MENU (Moved here to be on white background) */}
           {!isPOS && (
             <DropdownMenu.Root>
               <DropdownMenu.Trigger>

@@ -9,7 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { DotsVerticalIcon } from "@radix-ui/react-icons";
-/* ---------- TYPES ---------- */
+/* TYPES  */
 export type SupplierCardProps = {
   name: string;
   contactPerson: string;
@@ -25,7 +25,7 @@ export type SupplierCardProps = {
   onDelete?: () => void;
 };
 
-/* ---------- SUPPLIER CARD ---------- */
+/* SUPPLIER CARD  */
 export const SupplierCard: React.FC<SupplierCardProps> = ({
   name,
   contactPerson,

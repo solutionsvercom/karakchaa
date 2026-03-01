@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-/* ================= TYPES ================= */
+/*  TYPES  */
 
 export interface CartItem {
   productId: string;
@@ -16,13 +16,13 @@ interface CartState {
   items: CartItem[];
 }
 
-/* ================= INITIAL STATE ================= */
+/*  INITIAL STATE  */
 
 const initialState: CartState = {
   items: [],
 };
 
-/* ================= SLICE ================= */
+/*  SLICE  */
 
 const cartSlice = createSlice({
   name: "cart",
@@ -68,7 +68,7 @@ const cartSlice = createSlice({
   },
 });
 
-/* ================= EXPORT ================= */
+/*  EXPORT  */
 
 export const {
   addToCart,

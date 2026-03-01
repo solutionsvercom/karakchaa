@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-/* ================= TYPES ================= */
+/* TYPES  */
 
 export interface Sale {
   _id: string;
@@ -12,7 +12,7 @@ export interface Sale {
   paymentMethod: string;
   paymentStatus: string;
   createdAt: string;
-  // ✅ Added: populated customer object from backend
+  // Added: populated customer object from backend
   customer?: {
     _id: string;
     fullName: string;
@@ -63,7 +63,7 @@ const initialState: SalesState = {
 
 const BASE_URL = `http://localhost:5000/api/sales`;
 
-/* ================= ASYNC THUNKS ================= */
+/*  ASYNC THUNKS  */
 
 export const fetchSales = createAsyncThunk<
   { data: Sale[]; pagination: SalesPagination },
@@ -155,7 +155,7 @@ export const deleteSale = createAsyncThunk<
   }
 });
 
-/* ================= SLICE ================= */
+/*  SLICE */
 
 const salesSlice = createSlice({
   name: "sales",

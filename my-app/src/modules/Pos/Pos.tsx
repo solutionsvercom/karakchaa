@@ -59,7 +59,7 @@ export default function Pos() {
     return () => clearInterval(interval);
   }, [dispatch]);
 
-  // ✅ UPDATED: Fix notification to only trigger for NEW ACTIVE orders (#3)
+  //UPDATED: Fix notification to only trigger for NEW ACTIVE orders (#3)
   useEffect(() => {
     // Filter only ACTIVE orders (not completed/cancelled)
     const activeOnlineOrders = onlineOrders.filter((order) =>

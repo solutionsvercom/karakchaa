@@ -10,7 +10,7 @@ export interface MenuProduct {
 image?: string;
   category?: string;
   isAvailable: boolean;
-  isVeg: boolean; // ✅ NEW
+  isVeg: boolean; 
 }
 
 interface DigitalMenuState {

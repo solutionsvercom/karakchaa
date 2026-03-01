@@ -7,7 +7,7 @@ import { ChevronDown } from "lucide-react";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 
-/* ================= TYPES ================= */
+/* TYPES  */
 
 type HistoryRow = {
   id: string;
@@ -21,7 +21,7 @@ type HistoryRow = {
   timestamp: number; // For sorting
 };
 
-/* ================= COMPONENT ================= */
+/*  COMPONENT  */
 
 export default function StockHistory() {
   const dispatch = useDispatch<AppDispatch>();
@@ -61,7 +61,7 @@ export default function StockHistory() {
   // Sort by date (most recent first)
   const sortedHistory = allHistory.sort((a, b) => b.timestamp - a.timestamp);
 
-  /* ================= FILTERING ================= */
+  /*  FILTERING  */
 
   const filteredHistory = sortedHistory.filter((item) => {
     // Search filter (product name, reason, or reference)
@@ -79,7 +79,7 @@ export default function StockHistory() {
     return matchesSearch && matchesAction;
   });
 
-  /* ================= TABLE COLUMNS ================= */
+  /*  TABLE COLUMNS */
 
   const columns: Column<HistoryRow>[] = [
     {
@@ -148,7 +148,7 @@ export default function StockHistory() {
 
   return (
     <Flex direction="column" gap="4">
-      {/* ===== HEADER ===== */}
+      {/* HEADER */}
       <Flex justify="between" align="center">
         <Text weight="bold" size="6">
           Stock History
@@ -158,7 +158,7 @@ export default function StockHistory() {
         </Text>
       </Flex>
 
-      {/* ===== FILTER BAR ===== */}
+      {/* FILTER BAR */}
       <Flex align="center" gap="3">
         <Searchbar
           searchValue={searchValue}
@@ -186,7 +186,7 @@ export default function StockHistory() {
         </DropdownMenu.Root>
       </Flex>
 
-      {/* ===== TABLE ===== */}
+      {/*  TABLE */}
       {loading ? (
         <Table
           data={filteredHistory}

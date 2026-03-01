@@ -41,19 +41,19 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  /* ================= TOGGLE MODULE ================= */
+  /* TOGGLE MODULE  */
   const toggleModule = (module: string) => {
     setModules((prev) =>
       prev.includes(module) ? prev.filter((m) => m !== module) : [...prev, module]
     );
   };
 
-  /* ================= SELECT ALL ================= */
+  /*  SELECT ALL  */
   const selectAllModules = () => {
     setModules(modules.length === MODULES.length ? [] : [...MODULES]);
   };
 
-  /* ================= SUBMIT ================= */
+  /*  SUBMIT */
   const handleSubmit = async () => {
     setError("");
 
@@ -88,7 +88,7 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
   return (
     <Flex direction="column" gap="4">
 
-      {/* ===== TITLE (matches DynamicForm header) ===== */}
+      {/*  TITLE (matches DynamicForm header) */}
       <Flex justify="between" align="center" mb="0">
         <Flex align="center" gap="2">
           
@@ -103,7 +103,7 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
                   </Dialog.Close>
       </Flex>
 
-      {/* ===== ERROR ===== */}
+      {/*  ERROR  */}
       {error && (
         <div style={{
           padding: "12px",
@@ -117,7 +117,7 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
         </div>
       )}
 
-      {/* ===== ROLE NAME ===== */}
+      {/*  ROLE NAME */}
       <div>
         <Text size="2" weight="medium" style={{ display: "block", marginBottom: 4,  }}>
           Role Name <Text color="red">*</Text>
@@ -133,7 +133,7 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
     padding: "10px 12px",
     fontSize: "14px",
 
-    // ✅ match customer form
+    // match customer form
     backgroundColor: "transparent",
     
     border: "1px solid var(--accent-6)",
@@ -156,7 +156,7 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
 
       </div>
 
-      {/* ===== MODULES ===== */}
+      {/*  MODULES */}
       <div>
         <Flex justify="between" align="center" mb="2">
           <Text size="2" weight="medium">
@@ -231,7 +231,7 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
         </div>
       </div>
 
-      {/* ===== FOOTER (matches DynamicForm footer) ===== */}
+      {/*  FOOTER (matches DynamicForm footer) */}
       <Flex mt="3" gap="2">
         <Dialog.Close asChild>
           <Button className="button outline" style={{ flex: 1 }} disabled={loading}>

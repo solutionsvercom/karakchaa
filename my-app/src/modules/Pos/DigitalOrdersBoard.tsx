@@ -32,7 +32,7 @@ export default function DigitalOrdersBoard() {
   // Filter state
   const [filterMode, setFilterMode] = useState<FilterMode>("active");
 
-  // ✅ STAFF-LEVEL: Lazy loading with intersection observer
+  //STAFF-LEVEL: Lazy loading with intersection observer
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // Filter to show only digital menu orders (orderType: 'online' OR orderSource: 'DIGITAL')
@@ -63,12 +63,12 @@ export default function DigitalOrdersBoard() {
   // Initial fetch
   useEffect(() => {
     dispatch(fetchOrders({ 
-      orderSource: "DIGITAL", // ✅ NEW: Filter by source
+      orderSource: "DIGITAL", // NEW: Filter by source
       limit: 20 // Staff-level: reasonable initial load
     }));
   }, [dispatch]);
 
-  // ✅ STAFF-LEVEL: Intersection Observer for lazy loading
+  //STAFF-LEVEL: Intersection Observer for lazy loading
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -240,7 +240,7 @@ export default function DigitalOrdersBoard() {
       `}</style>
 
       <div className="dob-grid" data-view={mobileView}>
-        {/* ===== ORDER LIST PANEL ===== */}
+        {/* ORDER LIST PANEL */}
         <div
           className="dob-list-panel"
           style={{
@@ -409,7 +409,7 @@ export default function DigitalOrdersBoard() {
               </div>
             ))}
 
-            {/* ✅ STAFF-LEVEL: Lazy loading indicator */}
+            {/*STAFF-LEVEL: Lazy loading indicator */}
             {pagination?.hasMore && (
               <div
                 ref={observerTarget}
@@ -426,7 +426,7 @@ export default function DigitalOrdersBoard() {
           </div>
         </div>
 
-        {/* ===== ORDER DETAIL PANEL ===== */}
+        {/* ORDER DETAIL PANEL */}
         <div
           className="dob-detail-panel"
           style={{
@@ -686,7 +686,7 @@ export default function DigitalOrdersBoard() {
         </div>
       </div>
 
-      {/* ===== PAYMENT METHOD MODAL ===== */}
+      {/* PAYMENT METHOD MODAL */}
       <PaymentMethodModal
         open={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
@@ -694,7 +694,7 @@ export default function DigitalOrdersBoard() {
         loading={paymentLoading}
       />
 
-      {/* ===== TOAST NOTIFICATIONS ===== */}
+      {/* TOAST NOTIFICATIONS */}
       <Toast
         open={toastOpen}
         onOpenChange={setToastOpen}

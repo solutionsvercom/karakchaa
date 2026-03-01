@@ -32,7 +32,7 @@ export default function Searchbar({
         placeholder={placeholder}
         onChange={(e) => onSearchChange(e.target.value)}
         style={{
-          width: "100%",          // ✅ critical
+          width: "100%",         
           border: "none",
           outline: "none",
           background: "transparent",
