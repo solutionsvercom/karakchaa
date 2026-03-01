@@ -179,7 +179,7 @@ function Table<T extends Record<string, any> = Record<string, any>>({
             fontSize: 14,
           }}
         >
-        {/* ── HEADER ── */}
+        {/*  HEADER */}
         <thead>
           <tr style={{ borderBottom: '1px solid var(--gray-6)', background: 'var(--gray-2)' }}>
             {columns.map((column) => (
@@ -209,7 +209,7 @@ function Table<T extends Record<string, any> = Record<string, any>>({
           </tr>
         </thead>
 
-        {/* ── BODY ── */}
+        {/* BODY  */}
           <tbody>
             {visibleRows.map((row, rowIndex) => {
               const absoluteIndex = pageStartIndex + rowIndex;

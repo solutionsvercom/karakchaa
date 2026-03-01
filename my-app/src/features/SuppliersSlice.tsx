@@ -3,7 +3,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../store/Store";
 
 /**
- * ✅ Adjust this if your API base is different
+ * Adjust this if your API base is different
  * Example: `${import.meta.env.VITE_API_BASE_URL}/api/suppliers`
  */
 const BASE_URL = `http://localhost:5000/api/suppliers`;
@@ -43,7 +43,7 @@ export type ListParams = {
 export type CreateSupplierPayload = Omit<Supplier, "_id" | "createdAt" | "updatedAt">;
 export type UpdateSupplierPayload = Partial<CreateSupplierPayload> & { _id: string };
 
-/* -------------------- SMALL FETCH HELPER -------------------- */
+/*  SMALL FETCH HELPER  */
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     headers: { "Content-Type": "application/json" },
@@ -75,7 +75,7 @@ function toQuery(params?: ListParams) {
   return s ? `?${s}` : "";
 }
 
-/* -------------------- THUNKS -------------------- */
+/*  THUNKS  */
 export const fetchSuppliers = createAsyncThunk<SupplierListResponse, ListParams | undefined>(
   "suppliers/fetchSuppliers",
   async (params) => {
@@ -112,7 +112,7 @@ export const deleteSupplier = createAsyncThunk<{ _id: string }, string>(
   }
 );
 
-/* -------------------- SLICE -------------------- */
+/*  SLICE  */
 type SuppliersState = {
   items: Supplier[];
   page: number;
@@ -157,7 +157,7 @@ const suppliersSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // -------- LIST --------
+      //  LIST 
       .addCase(fetchSuppliers.pending, (state) => {
         state.loadingList = true;
         state.errorList = null;
@@ -175,7 +175,7 @@ const suppliersSlice = createSlice({
         state.errorList = action.error.message || "Failed to fetch suppliers";
       })
 
-      // -------- CREATE --------
+      //  CREATE 
       .addCase(createSupplier.pending, (state) => {
         state.loadingSave = true;
         state.errorSave = null;
@@ -191,7 +191,7 @@ const suppliersSlice = createSlice({
         state.errorSave = action.error.message || "Failed to create supplier";
       })
 
-      // -------- UPDATE --------
+      //  UPDATE 
       .addCase(updateSupplier.pending, (state) => {
         state.loadingSave = true;
         state.errorSave = null;
@@ -206,7 +206,7 @@ const suppliersSlice = createSlice({
         state.errorSave = action.error.message || "Failed to update supplier";
       })
 
-      // -------- DELETE --------
+      //  DELETE 
       .addCase(deleteSupplier.pending, (state) => {
         state.loadingDelete = true;
         state.errorDelete = null;
@@ -226,7 +226,7 @@ const suppliersSlice = createSlice({
 export const { clearSuppliersErrors } = suppliersSlice.actions;
 export default suppliersSlice.reducer;
 
-/* -------------------- SELECTORS -------------------- */
+/*  SELECTORS  */
 export const selectSuppliers = (state: RootState) => state.suppliers.items;
 export const selectSuppliersMeta = (state: RootState) => ({
   page: state.suppliers.page,

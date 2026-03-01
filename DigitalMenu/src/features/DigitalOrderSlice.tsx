@@ -28,7 +28,7 @@ interface OrderState {
   error: string | null;
 }
 
-/* ================= INITIAL STATE ================= */
+/*  INITIAL STATE  */
 
 const initialState: OrderState = {
   order: null,
@@ -36,11 +36,11 @@ const initialState: OrderState = {
   error: null,
 };
 
-/* ================= API BASE ================= */
+/*  API BASE  */
 
 const BASE_URL = "http://localhost:5000/api/digital-menu";
 
-/* ================= ASYNC THUNKS ================= */
+/*  ASYNC THUNKS  */
 
 /* CREATE ORDER */
 export const createDigitalOrder = createAsyncThunk<
@@ -83,7 +83,7 @@ export const fetchOrderStatus = createAsyncThunk<
   }
 });
 
-/* ================= SLICE ================= */
+/*  SLICE  */
 
 const digitalOrderSlice = createSlice({
   name: "digitalOrder",
@@ -133,7 +133,7 @@ const digitalOrderSlice = createSlice({
   },
 });
 
-/* ================= EXPORT ================= */
+/* EXPORT  */
 
 export const { clearOrderError } = digitalOrderSlice.actions;
 export default digitalOrderSlice.reducer;

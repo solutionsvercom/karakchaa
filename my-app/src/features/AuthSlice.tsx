@@ -6,7 +6,7 @@ import axios from "axios";
 
 export interface User {
   _id: string;
-  companyId: string;   // ✅ CHANGED: login credential
+  companyId: string;   //CHANGED: login credential
   email?: string;      // contact only, optional
   name: string;
   role: string;
@@ -36,11 +36,11 @@ const initialState: AuthState = {
   error: null,
 };
 
-/* ================= API BASE ================= */
+/*  API BASE  */
 
-const BASE_URL = "http://localhost:5000/api/auth"; // ✅ CHANGED: point to backend API
+const BASE_URL = "http://localhost:5000/api/auth"; //CHANGED: point to backend API
 
-/* ================= AXIOS INTERCEPTOR ================= */
+/*  AXIOS INTERCEPTOR */
 
 let isRefreshing = false;
 let failedQueue: any[] = [];
@@ -118,14 +118,14 @@ if (token) {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 }
 
-/* ================= ASYNC THUNKS ================= */
+/*  ASYNC THUNKS  */
 
 /**
- * Login — ✅ CHANGED: sends { companyId, password } instead of { email, password }
+ * Login — CHANGED: sends { companyId, password } instead of { email, password }
  */
 export const login = createAsyncThunk<
   { user: User; token: string; refreshToken: string },
-  { companyId: string; password: string },  // ✅ CHANGED
+  { companyId: string; password: string },  
   { rejectValue: string }
 >("auth/login", async (credentials, thunkAPI) => {
   try {
@@ -133,7 +133,7 @@ export const login = createAsyncThunk<
 
     localStorage.setItem("token", response.data.token);
     localStorage.setItem("refreshToken", response.data.refreshToken);
-    // ✅ Store role so frontend admin checks work (AddUser companyId lock etc.)
+    //Store role so frontend admin checks work (AddUser companyId lock etc.)
     localStorage.setItem("userRole", response.data.user.role);
 
     axios.defaults.headers.common["Authorization"] = `Bearer ${response.data.token}`;
@@ -144,7 +144,6 @@ export const login = createAsyncThunk<
       refreshToken: response.data.refreshToken,
     };
   } catch (error: any) {
-    // ✅ CHANGED: error message references Company ID
     const message = error.response?.data?.message || "Invalid Company ID or password";
     return thunkAPI.rejectWithValue(message);
   }
@@ -192,7 +191,7 @@ export const logout = createAsyncThunk<void, void, { rejectValue: string }>(
     try {
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
-      localStorage.removeItem("userRole"); // ✅ clear role on logout
+      localStorage.removeItem("userRole"); // clear role on logout
       delete axios.defaults.headers.common["Authorization"];
       return;
     } catch (error: any) {

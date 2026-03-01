@@ -127,7 +127,7 @@ export const PaymentMethodModal = ({
             </div>
           </div>
 
-          {/* ===== ACTIONS ===== */}
+          {/* ACTIONS  */}
           <Flex gap="3">
             <Dialog.Close asChild>
               <Button

@@ -15,7 +15,7 @@ export interface Order {
   customerName?: string;
   phone?: string;
   orderType: "dine-in" | "takeaway" | "delivery" | "online";
-  orderSource?: "POS" | "DIGITAL"; // ✅ NEW
+  orderSource?: "POS" | "DIGITAL"; 
   paymentMethod?: string;
   status:
     | "Pending"
@@ -39,7 +39,7 @@ interface CreateOrderPayload {
   notes?: string;
 }
 
-// ✅ STAFF-LEVEL: Pagination state
+// STAFF-LEVEL: Pagination state
 interface PaginationState {
   total: number;
   page: number;
@@ -50,10 +50,10 @@ interface PaginationState {
 
 interface OrdersState {
   orders: Order[];
-  pagination: PaginationState | null; // ✅ NEW
+  pagination: PaginationState | null; 
   loading: boolean;
   error: string | null;
-  // ✅ STAFF-LEVEL: Track if we're loading more (for lazy load UX)
+  // STAFF-LEVEL: Track if we're loading more (for lazy load UX)
   loadingMore: boolean;
 }
 
@@ -67,7 +67,7 @@ const initialState: OrdersState = {
 
 const BASE_URL = "http://localhost:5000/api/orders";
 
-// ✅ UPDATED: Fetch orders with pagination support
+// UPDATED: Fetch orders with pagination support
 export const fetchOrders = createAsyncThunk<
   { data: Order[]; pagination: PaginationState },
   {
@@ -102,7 +102,7 @@ export const fetchOrders = createAsyncThunk<
   }
 });
 
-// ✅ NEW: Load more orders (for lazy loading)
+// NEW: Load more orders (for lazy loading)
 export const loadMoreOrders = createAsyncThunk<
   { data: Order[]; pagination: PaginationState },
   {
@@ -174,7 +174,7 @@ const ordersSlice = createSlice({
   name: "orders",
   initialState,
   reducers: {
-    // ✅ STAFF-LEVEL: Reset pagination when filters change
+    //STAFF-LEVEL: Reset pagination when filters change
     resetOrders: (state) => {
       state.orders = [];
       state.pagination = null;
@@ -205,7 +205,7 @@ const ordersSlice = createSlice({
       })
       .addCase(loadMoreOrders.fulfilled, (state, action) => {
         state.loadingMore = false;
-        // ✅ STAFF-LEVEL: Append new orders, don't replace
+        //STAFF-LEVEL: Append new orders, don't replace
         state.orders = [...state.orders, ...action.payload.data];
         state.pagination = action.payload.pagination;
       })
@@ -222,7 +222,7 @@ const ordersSlice = createSlice({
       .addCase(createOrder.fulfilled, (state, action) => {
         state.loading = false;
         state.orders.unshift(action.payload);
-        // ✅ STAFF-LEVEL: Update total count
+        // STAFF-LEVEL: Update total count
         if (state.pagination) {
           state.pagination.total += 1;
         }

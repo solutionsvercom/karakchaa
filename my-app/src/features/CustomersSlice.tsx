@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
-/* ================= TYPES ================= */
+/* TYPES  */
 
 export interface Customer {
   _id: string;
@@ -27,7 +27,7 @@ interface CustomerState {
   error: string | null;
 }
 
-/* ================= INITIAL STATE ================= */
+/*  INITIAL STATE  */
 
 const initialState: CustomerState = {
   customers: [],
@@ -36,11 +36,11 @@ const initialState: CustomerState = {
   error: null,
 };
 
-/* ================= API BASE ================= */
+/*  API BASE  */
 
-const BASE_URL = `http://localhost:5000/api/customers`; // ✅ CHANGED: point to backend API
+const BASE_URL = `http://localhost:5000/api/customers`; // CHANGED: point to backend API
 
-/* ================= ASYNC THUNKS ================= */
+/*  ASYNC THUNKS  */
 
 export const fetchCustomers = createAsyncThunk<
   Customer[],
@@ -131,7 +131,7 @@ export const deleteCustomer = createAsyncThunk<
   }
 });
 
-/* ================= SLICE ================= */
+/*  SLICE  */
 
 const customersSlice = createSlice({
   name: "customer",
@@ -140,7 +140,7 @@ const customersSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
-    // ✅ NEW: manually set an error message
+    // NEW: manually set an error message
     setError: (state, action: PayloadAction<string>) => {
       state.error = action.payload;
     },
@@ -149,7 +149,7 @@ const customersSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      /* ===== FETCH CUSTOMERS ===== */
+      /*  FETCH CUSTOMERS  */
       .addCase(fetchCustomers.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -172,7 +172,7 @@ const customersSlice = createSlice({
         state.error = action.payload || "Failed to fetch customers";
       })
 
-      /* ===== FETCH STATS ===== */
+      /*  FETCH STATS  */
       .addCase(fetchCustomerStats.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -189,7 +189,7 @@ const customersSlice = createSlice({
         state.error = action.payload || "Failed to fetch stats";
       })
 
-      /* ===== CREATE CUSTOMER ===== */
+      /*  CREATE CUSTOMER  */
       .addCase(createCustomer.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -211,7 +211,7 @@ const customersSlice = createSlice({
         state.error = action.payload || "Failed to create customer";
       })
 
-      /* ===== UPDATE CUSTOMER ===== */
+      /*  UPDATE CUSTOMER  */
       .addCase(updateCustomer.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -235,7 +235,7 @@ const customersSlice = createSlice({
         state.error = action.payload || "Failed to update customer";
       })
 
-      /* ===== DELETE CUSTOMER ===== */
+      /*  DELETE CUSTOMER  */
       .addCase(deleteCustomer.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -256,7 +256,7 @@ const customersSlice = createSlice({
   },
 });
 
-/* ================= EXPORT ================= */
+/*  EXPORT */
 
 export const { clearError, setError } = customersSlice.actions;
 export default customersSlice.reducer;

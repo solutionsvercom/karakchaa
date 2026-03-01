@@ -14,7 +14,7 @@ import { deleteProduct } from "../../features/ProductsSlice";
 import { toggleProductStatus } from "../../features/ProductsSlice";
 import axios from "axios";
 
-/* ---------------- TYPES ---------------- */
+/*  TYPES  */
 
 type Category =
   | "snacks"
@@ -28,7 +28,7 @@ type Category =
   | "sandwich"
   | "other";
 
-/* ---------------- COMPONENT ---------------- */
+/* COMPONENT */
 
 export default function ProductsModule() {
   const location = useLocation();
@@ -43,20 +43,20 @@ export default function ProductsModule() {
     dispatch(fetchProducts());
   }, [dispatch]);
 
-  /* ---------- URL MODE DETECTION ---------- */
+  /*  URL MODE DETECTION */
 
   const isAddMode = location.pathname.includes("/add-product");
   const isEditMode = location.pathname.includes("/edit-product");
   const isDialogOpen = isAddMode || isEditMode;
 
-  /* ---------- STATE ---------- */
+  /* STATE  */
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<"all" | Category>("all");
   const [stockStatus, setStockStatus] = useState<"all" | "low" | "out" | "active" | "inactive">("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  /* ---------- EDIT PRODUCT DATA ---------- */
+  /*  EDIT PRODUCT DATA  */
 
   const editingProduct = isEditMode
     ? products.find((p: any) =>
@@ -64,7 +64,7 @@ export default function ProductsModule() {
     )
     : undefined;
 
-  /* ---------- FILTER ---------- */
+  /*  FILTER  */
 
   const filteredProducts = products.filter((p: any) => {
     const matchesSearch = p.name
@@ -88,7 +88,7 @@ export default function ProductsModule() {
 
   return (
     <Flex direction="column" gap="4">
-      {/* ================= HEADER ================= */}
+      {/* HEADER */}
       <Flex justify="between" align="center">
         <div>
           <h2 style={{ margin: 0 }}>Products</h2>
@@ -104,7 +104,7 @@ export default function ProductsModule() {
         </Flex>
       </Flex>
 
-      {/* ================= ADD / EDIT DIALOG ================= */}
+      {/*  ADD / EDIT DIALOG */}
       <Dialog.Root
         open={isDialogOpen}
         onOpenChange={(open) => {
@@ -124,7 +124,7 @@ export default function ProductsModule() {
         </Dialog.Content>
       </Dialog.Root>
 
-      {/* ================= SEARCH + FILTER ================= */}
+      {/*  SEARCH + FILTER  */}
       <Flex justify="between" align="center" gap="3">
         <Flex style={{ flex: 1 }}>
           <Searchbar
@@ -190,7 +190,7 @@ export default function ProductsModule() {
         </DropdownMenu.Root>
       </Flex>
 
-      {/* ================= PRODUCT GRID ================= */}
+      {/* PRODUCT GRID */}
       <Flex
         wrap="wrap"
         gap="4"
@@ -236,7 +236,7 @@ export default function ProductsModule() {
         )}
       </Flex>
 
-      {/* ================= DELETE CONFIRM DIALOG ================= */}
+      {/*  DELETE CONFIRM DIALOG */}
       <Dialog.Root
         open={!!deleteId}
         onOpenChange={(open) => {

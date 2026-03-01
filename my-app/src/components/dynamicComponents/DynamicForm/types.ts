@@ -19,5 +19,5 @@ export type FormField<T extends string> = {
   rows?: number;
   options?: { label: string; value: string }[];
   suffix?: React.ReactNode;
-  disabled?: boolean; // ✅ locks the field visually and functionally
+  disabled?: boolean; // locks the field visually and functionally
 };

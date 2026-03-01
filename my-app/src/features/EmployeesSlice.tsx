@@ -3,7 +3,7 @@ import axios from "axios";
 
 const API_URL = `http://localhost:5000/api/employees`;
 
-/* ================= TYPES ================= */
+/*  TYPES  */
 
 export interface Employee {
   _id?: string;
@@ -39,7 +39,7 @@ const initialState: EmployeesState = {
   stats: null,
 };
 
-/* ================= ASYNC THUNKS ================= */
+/*  ASYNC THUNKS  */
 
 export const fetchEmployees = createAsyncThunk(
   "employees/fetchEmployees",
@@ -106,7 +106,7 @@ export const deleteEmployee = createAsyncThunk(
   }
 );
 
-/* ================= SLICE ================= */
+/*  SLICE  */
 
 const employeesSlice = createSlice({
   name: "employees",
