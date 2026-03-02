@@ -7,6 +7,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { API_ROLES } from "../../config/Api";
 
 import DynamicForm from "../../components/dynamicComponents/DynamicForm/DynamicForm";
 import { FormField } from "../../components/dynamicComponents/DynamicForm/types";
@@ -41,7 +42,7 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
     const fetchRoles = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/roles", {
+        const res = await axios.get(API_ROLES, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setRoles(res.data.roles || []);
@@ -56,13 +57,13 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
   /* ================= VALIDATION ================= */
 
   const validate = (data: any) => {
-    const name             = data.name?.trim();
-    const phone            = data.phone?.trim();
-    const email            = data.email?.trim();
+    const name = data.name?.trim();
+    const phone = data.phone?.trim();
+    const email = data.email?.trim();
     const emergencyContact = data.emergencyContact?.trim();
-    const role             = data.role;
-    const salary           = Number(data.salary);
-    const joinDate         = data.joinDate;
+    const role = data.role;
+    const salary = Number(data.salary);
+    const joinDate = data.joinDate;
 
     // 1️⃣ Name
     if (!name)
@@ -100,7 +101,7 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
     if (!joinDate)
       return "Join date is required";
     const selected = new Date(joinDate);
-    const today    = new Date();
+    const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (selected > today)
       return "Join date cannot be in the future";

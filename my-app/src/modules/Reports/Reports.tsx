@@ -15,6 +15,7 @@ import { SummaryCard } from "../../components/dynamicComponents/Cards";
 import { fetchExpenseTotals, fetchExpenses } from "../../features/ExpensesSlice";
 import { fetchEmployees } from "../../features/EmployeesSlice";
 import axios from "axios";
+import { API_REPORTS } from "../../config/Api";
 
 /* ================= HELPER ================= */
 
@@ -73,7 +74,7 @@ export default function Reports() {
   useEffect(() => {
     const loadReports = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/reports", {
+        const res = await axios.get(API_REPORTS, {
           params: { period: category },
         });
         setReportSummary(res.data);
@@ -150,8 +151,8 @@ export default function Reports() {
           </DropdownMenu.Trigger>
           <DropdownMenu.Content>
             {[
-              "All Time","Today","Yesterday","Last 7 Days","Last 14 Days",
-              "Last 30 Days","Last 3 Months","Last 6 Months","Last 1 Year",
+              "All Time", "Today", "Yesterday", "Last 7 Days", "Last 14 Days",
+              "Last 30 Days", "Last 3 Months", "Last 6 Months", "Last 1 Year",
             ].map((item) => (
               <DropdownMenu.Item key={item} onClick={() => setCategory(item)}>
                 {item}
@@ -188,7 +189,7 @@ export default function Reports() {
           title="Net Profit"
           value={
             <span style={{ color: netProfit >= 0 ? "#16A34A" : "#DC2626", fontWeight: 600 }}>
-              { (reportSummary?.netProfit ?? 0) < 0 ? "-" : "+"}₹{Math.abs(reportSummary?.netProfit ?? 0).toLocaleString()}
+              {(reportSummary?.netProfit ?? 0) < 0 ? "-" : "+"}₹{Math.abs(reportSummary?.netProfit ?? 0).toLocaleString()}
             </span>
           }
           accentColor="#2962FF"

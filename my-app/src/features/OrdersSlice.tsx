@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { API_ORDERS } from "../config/Api";
 
 export interface OrderItem {
   product: string;
@@ -18,12 +19,12 @@ export interface Order {
   orderSource?: "POS" | "DIGITAL"; // ✅ NEW
   paymentMethod?: string;
   status:
-    | "Pending"
-    | "Accepted"
-    | "Preparing"
-    | "Ready"
-    | "Completed"
-    | "Cancelled";
+  | "Pending"
+  | "Accepted"
+  | "Preparing"
+  | "Ready"
+  | "Completed"
+  | "Cancelled";
   totalAmount: number;
   createdAt: string;
   notes?: string;
@@ -65,7 +66,7 @@ const initialState: OrdersState = {
   loadingMore: false,
 };
 
-const BASE_URL = "http://localhost:5000/api/orders";
+const BASE_URL = API_ORDERS;
 
 // ✅ UPDATED: Fetch orders with pagination support
 export const fetchOrders = createAsyncThunk<
@@ -78,19 +79,20 @@ export const fetchOrders = createAsyncThunk<
     orderType?: string;
   } | void,
   { rejectValue: string }
->("orders/fetch", async (params = {}, thunkAPI) => {
+>("orders/fetch", async (params, thunkAPI) => {
   try {
+    const p = params ?? {};
     const queryParams = new URLSearchParams();
-    
-    if (params.page) queryParams.append("page", params.page.toString());
-    if (params.limit) queryParams.append("limit", params.limit.toString());
-    if (params.status) queryParams.append("status", params.status);
-    if (params.orderSource) queryParams.append("orderSource", params.orderSource);
-    if (params.orderType) queryParams.append("orderType", params.orderType);
+
+    if (p.page) queryParams.append("page", p.page.toString());
+    if (p.limit) queryParams.append("limit", p.limit.toString());
+    if (p.status) queryParams.append("status", p.status);
+    if (p.orderSource) queryParams.append("orderSource", p.orderSource);
+    if (p.orderType) queryParams.append("orderType", p.orderType);
 
     const url = `${BASE_URL}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
     const res = await axios.get(url);
-    
+
     return {
       data: res.data.data,
       pagination: res.data.pagination,
@@ -116,7 +118,7 @@ export const loadMoreOrders = createAsyncThunk<
 >("orders/loadMore", async (params, thunkAPI) => {
   try {
     const queryParams = new URLSearchParams();
-    
+
     queryParams.append("page", params.page.toString());
     if (params.limit) queryParams.append("limit", params.limit.toString());
     if (params.status) queryParams.append("status", params.status);
@@ -125,7 +127,7 @@ export const loadMoreOrders = createAsyncThunk<
 
     const url = `${BASE_URL}?${queryParams.toString()}`;
     const res = await axios.get(url);
-    
+
     return {
       data: res.data.data,
       pagination: res.data.pagination,
@@ -158,7 +160,7 @@ export const updateOrderStatus = createAsyncThunk<
   { rejectValue: string }
 >("orders/updateStatus", async ({ id, status, paymentMethod }, thunkAPI) => {
   try {
-    const res = await axios.put(`${BASE_URL}/${id}/status`, { 
+    const res = await axios.put(`${BASE_URL}/${id}/status`, {
       status,
       ...(paymentMethod && { paymentMethod })
     });

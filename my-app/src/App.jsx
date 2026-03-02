@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import "./App.css";
 import { verifyToken, setInitialized } from "./features/AuthSlice";
@@ -6,19 +6,19 @@ import { verifyToken, setInitialized } from "./features/AuthSlice";
 import DashboardLayout from "./components/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
-import DashboardPage from "./pages/Dashboard/Dashboard";
-import CustomerPage from "./pages/Dashboard/Customers";
-import EmployeesPage from "./pages/Dashboard/Employees";
-import ExpensesPage from "./pages/Dashboard/Expenses";
-import FeedbackPage from "./pages/Dashboard/Feedback";
-import PosPage from "./pages/Dashboard/Pos";
-import ProductsPage from "./pages/Dashboard/Products";
-import ReportsPage from "./pages/Dashboard/Reports";
-import SuppliersPage from "./pages/Dashboard/Suppliers";
-import StockmanagementPage from "./pages/Dashboard/Stockmanagement";
-import SalesPage from "./pages/Dashboard/Sales";
-import UsersPage from "./pages/Dashboard/Users";
-import RolesPage from "./pages/Dashboard/Roles";
+const DashboardPage = lazy(() => import("./pages/Dashboard/Dashboard"));
+const CustomerPage = lazy(() => import("./pages/Dashboard/Customers"));
+const EmployeesPage = lazy(() => import("./pages/Dashboard/Employees"));
+const ExpensesPage = lazy(() => import("./pages/Dashboard/Expenses"));
+const FeedbackPage = lazy(() => import("./pages/Dashboard/Feedback"));
+const PosPage = lazy(() => import("./pages/Dashboard/Pos"));
+const ProductsPage = lazy(() => import("./pages/Dashboard/Products"));
+const ReportsPage = lazy(() => import("./pages/Dashboard/Reports"));
+const SuppliersPage = lazy(() => import("./pages/Dashboard/Suppliers"));
+const StockmanagementPage = lazy(() => import("./pages/Dashboard/Stockmanagement"));
+const SalesPage = lazy(() => import("./pages/Dashboard/Sales"));
+const UsersPage = lazy(() => import("./pages/Dashboard/Users"));
+const RolesPage = lazy(() => import("./pages/Dashboard/Roles"));
 
 import Login from "./pages/Login";
 

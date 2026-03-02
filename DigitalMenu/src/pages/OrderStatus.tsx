@@ -116,13 +116,11 @@ export default function OrderStatusPage() {
     <div className="order-page">
       <div className="order-shell">
 
-        {/* ── HEADER ── */}
         <header className={`order-header ${isReady ? "ready-header" : ""}`}>
           <p className="order-label">Order Number</p>
           <p className="order-code">#{displayOrderNumber}</p>
         </header>
 
-        {/* ── READY BANNER (shown inline when status = ready) ── */}
         {isReady && (
           <section className="order-complete-hero order-ready-hero">
             <div className="order-complete-icon-wrap order-ready-icon-wrap">
@@ -137,12 +135,10 @@ export default function OrderStatusPage() {
           </section>
         )}
 
-        {/* ── STATUS TIMELINE ── */}
         <section className="order-card status-card">
           <h2 className="card-title">Order Status</h2>
 
           <div className="status-timeline">
-            {/* Step 0 — Order Placed */}
             <div className={`status-step ${stepIndex >= 0 ? "active" : ""}`}>
               <div
                 className={`status-icon-wrapper ${
@@ -161,7 +157,6 @@ export default function OrderStatusPage() {
 
             <div className="status-connector" />
 
-            {/* Step 1 — Confirmed */}
             <div className={`status-step ${stepIndex >= 1 ? "active" : ""}`}>
               <div
                 className={`status-icon-wrapper ${
@@ -179,7 +174,6 @@ export default function OrderStatusPage() {
 
             <div className="status-connector" />
 
-            {/* Step 2 — Preparing */}
             <div className={`status-step ${stepIndex >= 2 ? "active" : ""}`}>
               <div
                 className={`status-icon-wrapper ${
@@ -197,7 +191,6 @@ export default function OrderStatusPage() {
 
             <div className="status-connector" />
 
-            {/* Step 3 — Ready */}
             <div className={`status-step ${stepIndex >= 3 ? "active" : ""}`}>
               <div
                 className={`status-icon-wrapper ${
@@ -220,7 +213,6 @@ export default function OrderStatusPage() {
           </div>
         </section>
 
-        {/* ── ORDER DETAILS ── */}
         <section className="order-card details-card">
           <h2 className="card-title">Order Details</h2>
 
@@ -253,7 +245,6 @@ export default function OrderStatusPage() {
           </div>
         </section>
 
-        {/* ── NOTE ── */}
         <section className="order-card order-note">
           <p className="order-note-text">
             <Lightbulb

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { API_EXPENSES } from "../config/Api";
 
 
 /* ================= TYPES ================= */
@@ -63,7 +64,7 @@ const initialState: ExpensesState = {
 
 /* ================= API BASE ================= */
 
-const BASE_URL = `http://localhost:5000/api/expenses`; // ✅ CHANGED: point to backend API
+const BASE_URL = API_EXPENSES;
 
 
 /* ================= ASYNC THUNKS ================= */

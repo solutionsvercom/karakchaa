@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
+import { API_EMPLOYEES } from "../config/Api";
 
-const API_URL = `http://localhost:5000/api/employees`;
+const API_URL = API_EMPLOYEES;
 
 /* ================= TYPES ================= */
 

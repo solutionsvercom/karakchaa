@@ -22,9 +22,7 @@ body {
 }
 
 
-/* =========================
-   MOBILE APP VIEWPORT WRAPPER
-   ========================= */
+
 
 .appViewport {
     width: 100%;
@@ -38,9 +36,6 @@ body {
 }
 
 
-/* =========================
-   PAGE LAYOUT
-   ========================= */
 
 .menuPage {
     min-height: 100vh;
@@ -54,9 +49,7 @@ body {
 }
 
 
-/* =========================
-   STICKY HEADER
-   ========================= */
+
 
 .stickyTop {
     position: sticky;
@@ -71,9 +64,7 @@ body {
 }
 
 
-/* =========================
-   HEADER
-   ========================= */
+
 
 .topHeader {
     display: flex;
@@ -99,9 +90,7 @@ body {
 }
 
 
-/* =========================
-   SEARCH
-   ========================= */
+
 
 .searchWrap {
     margin-top: 12px;
@@ -121,9 +110,7 @@ body {
 }
 
 
-/* =========================
-   CATEGORY TABS
-   ========================= */
+
 
 .tabs {
     display: flex;
@@ -131,10 +118,8 @@ body {
     overflow-x: auto;
     overflow-y: hidden;
     padding-bottom: 6px;
-    /* enable smooth swipe */
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
-    /* hide scrollbar (Chrome, Edge, Safari) */
     scrollbar-width: none;
 }
 
@@ -165,14 +150,11 @@ body {
 }
 
 
-/* =========================
-   GRID MOBILE ONLY
-   ========================= */
+
 
 .listGrid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    /* 2 cards per row */
     gap: 14px;
 }
 
@@ -183,9 +165,7 @@ body {
 }
 
 
-/* =========================
-   MENU CARD
-   ========================= */
+
 
 .menuCard {
     border-radius: 16px;
@@ -212,28 +192,23 @@ body {
 .menuCardTitle {
     font-size: 15px;
     font-weight: 600;
-    /* FIX */
     color: #111827;
 }
 
 .menuCardPrice {
     font-weight: 600;
-    /* FIX */
     font-size: 14px;
     color: #6d28d9;
 }
 
 .menuCardSubRow {
     font-weight: 500;
-    /* FIX */
     font-size: 11px;
     color: #6b7280;
 }
 
 
-/* =========================
-   BOTTOM CART BAR
-   ========================= */
+
 
 .bottomCartBar {
     position: fixed;
@@ -260,9 +235,6 @@ body {
 }
 
 
-/* =========================
-   CART BACKDROP
-   ========================= */
 
 .cartBackdrop {
     position: absolute;
@@ -278,9 +250,7 @@ body {
 }
 
 
-/* =========================
-   CART DRAWER MOBILE CENTERED
-   ========================= */
+
 
 .cartDrawer {
     position: absolute;
@@ -299,9 +269,7 @@ body {
 }
 
 
-/* =========================
-   CART HEADER
-   ========================= */
+
 
 .cartHeader {
     padding: 16px;
@@ -310,9 +278,7 @@ body {
 }
 
 
-/* =========================
-   CART BODY
-   ========================= */
+
 
 .cartBodyPro {
     flex: 1;
@@ -321,9 +287,7 @@ body {
 }
 
 
-/* =========================
-   CART FOOTER
-   ========================= */
+
 
 .cartFooterPro {
     padding: 16px;
@@ -365,7 +329,6 @@ body {
 }
 
 
-/* Quantity Control Wrapper */
 
 .qtyControl {
     display: flex;
@@ -377,7 +340,6 @@ body {
 }
 
 
-/* Base button */
 
 .qtyBtn {
     width: 36px;
@@ -390,7 +352,6 @@ body {
 }
 
 
-/* Minus button */
 
 .qtyBtnMinus {
     background: #f3f4f6;
@@ -398,7 +359,6 @@ body {
 }
 
 
-/* Plus button */
 
 .qtyBtnPlus {
     background: linear-gradient(135deg, #403c7d 0%, #634699 50%, #544eaa 100%) !important;
@@ -408,7 +368,6 @@ body {
 }
 
 
-/* Hover states */
 
 .qtyBtnMinus:hover {
     background: #e5e7eb;
@@ -421,7 +380,6 @@ body {
 }
 
 
-/* Quantity number */
 
 .qtyNumber {
     min-width: 38px;
@@ -571,14 +529,12 @@ body {
 }
 
 
-/* Hide checkbox */
 
 .vegToggle input {
     display: none;
 }
 
 
-/* Slider background */
 
 .vegSlider {
     width: 34px;
@@ -590,7 +546,6 @@ body {
 }
 
 
-/* Circle knob */
 
 .vegSlider::after {
     content: "";
@@ -606,7 +561,6 @@ body {
 }
 
 
-/* Active state */
 
 .vegToggle input:checked+.vegSlider {
     background: linear-gradient(135deg, #28d95d, #117e3e);
@@ -617,7 +571,6 @@ body {
 }
 
 
-/* Veg text */
 
 .vegLabel {
     font-size: 13px;
@@ -651,7 +604,6 @@ body {
 }
 
 
-/* header row */
 
 .menuCardHeaderRow {
     display: flex;
@@ -671,8 +623,6 @@ body {
 }
 
 
-/* category */
-
 .menuCardCategory {
     font-size: 12px;
     color: var(--muted);
@@ -680,7 +630,6 @@ body {
 }
 
 
-/* ADD BUTTON */
 
 .addBtn {
     background: linear-gradient(135deg, #403c7d 0%, #634699 50%, #544eaa 100%) !important;
@@ -694,7 +643,6 @@ body {
 }
 
 
-/* QTY CONTROL */
 
 .qtyControl {
     display: flex;
@@ -744,7 +692,6 @@ body {
 }
 
 
-/* BACKDROP */
 
 .cartBackdrop {
     position: fixed;
@@ -762,7 +709,6 @@ body {
 }
 
 
-/* DRAWER */
 
 .cartDrawer {
     position: fixed;
@@ -790,7 +736,6 @@ body {
 }
 
 
-/* HEADER */
 
 .cartHeader {
     padding: 16px;
@@ -817,7 +762,6 @@ body {
 }
 
 
-/* BODY */
 
 .cartBodyPro {
     flex: 1;
@@ -826,7 +770,6 @@ body {
 }
 
 
-/* ITEM */
 
 .orderRow {
     display: flex;
@@ -872,12 +815,10 @@ body {
 .orderRight {
     display: flex;
     align-items: center;
-    /* THIS FIXES VERTICAL ALIGN */
     gap: 8px;
 }
 
 
-/* QTY CONTAINER */
 
 .qtyPillCart {
     display: flex;
@@ -889,7 +830,6 @@ body {
 }
 
 
-/* BUTTONS */
 
 .qtyPillBtn {
     width: 36px;
@@ -908,22 +848,16 @@ body {
 }
 
 
-/* THIS FIXES NUMBER CENTER */
 
 .qtyPillValue {
     width: 36px;
     height: 36px;
     display: flex;
     align-items: center;
-    /* vertical center */
     justify-content: center;
-    /* horizontal center */
     font-weight: 600;
     font-size: 14px;
 }
-
-
-/* TRASH BUTTON */
 
 .trashBtn {
     width: 36px;
@@ -939,7 +873,6 @@ body {
 }
 
 
-/* ORDER TYPE */
 
 .orderTypeGrid {
     display: flex;
@@ -958,7 +891,6 @@ body {
 }
 
 
-/* INPUT */
 
 .formStack {
     display: flex;
@@ -991,7 +923,6 @@ body {
 }
 
 
-/* FOOTER */
 
 .cartFooterPro {
     padding: 16px;
@@ -1014,7 +945,7 @@ body {
 }
 
 
-/* CLEAR CART BUTTON */
+
 
 .clearCartBtn {
     display: inline-flex;
@@ -1032,7 +963,6 @@ body {
 }
 
 
-/* Hover */
 
 .clearCartBtn:hover {
     background: #fef2f2;
@@ -1041,7 +971,6 @@ body {
 }
 
 
-/* Active click */
 
 .clearCartBtn:active {
     transform: translateY(0);
@@ -1061,9 +990,7 @@ body {
     height: 42px;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.95);
-    /* ← change to white */
     color: #6c3cf0;
-    /* icon color purple */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1071,7 +998,6 @@ body {
 }
 
 
-/* FOOTER */
 
 .cartFooterPro {
     padding: 16px;
@@ -1080,7 +1006,6 @@ body {
 }
 
 
-/* SUMMARY CARD */
 
 .orderSummaryCard {
     background: #fafafa;
@@ -1090,7 +1015,6 @@ body {
 }
 
 
-/* TITLE */
 
 .summaryTitle {
     font-size: 16px;
@@ -1100,7 +1024,6 @@ body {
 }
 
 
-/* ROW */
 
 .summaryRow {
     display: flex;
@@ -1111,7 +1034,6 @@ body {
 }
 
 
-/* DIVIDER */
 
 .summaryDivider {
     height: 1px;
@@ -1120,7 +1042,6 @@ body {
 }
 
 
-/* TOTAL ROW */
 
 .totalRow {
     font-size: 16px;
@@ -1129,7 +1050,6 @@ body {
 }
 
 
-/* CHECKOUT BUTTON */
 
 .checkoutBtnPro {
     width: 100%;
@@ -1155,7 +1075,6 @@ body {
 }
 
 
-/* CENTER CONTAINER */
 
 .clearCartWrap {
     display: flex;
@@ -1165,7 +1084,6 @@ body {
 }
 
 
-/* CLEAR CART BUTTON */
 
 .clearCartBtn {
     display: flex;
@@ -1183,8 +1101,6 @@ body {
 }
 
 
-/* HOVER EFFECT */
-
 .clearCartBtn:hover {
     background: #fef2f2;
     transform: translateY(-1px);
@@ -1198,7 +1114,6 @@ body {
 }
 
 
-/* Hide bottom cart bar when drawer open */
 
 .cartDrawerOpen~.bottomCartBar {
     display: none !important;
@@ -1229,7 +1144,6 @@ select {
 
 .categoryBlock {
     margin-bottom: 32px;
-    /* space between categories */
 }
 
 .categoryBlock:not(:first-child) {
@@ -1283,7 +1197,6 @@ select {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    /* space between icon and text */
     padding: 10px 16px;
     border-radius: 999px;
     border: none;
@@ -1293,7 +1206,6 @@ select {
 }
 
 
-/* ICON */
 
 .tabIcon {
     display: flex;
@@ -1302,7 +1214,6 @@ select {
 }
 
 
-/* TEXT */
 
 .tabLabel {
     display: flex;
@@ -1310,7 +1221,6 @@ select {
 }
 
 
-/* ACTIVE */
 
 .tabBtnActive {
     background: linear-gradient(135deg, #7c3aed, #5b21b6);
@@ -1337,16 +1247,13 @@ select {
 }
 
 
-/* =========================
-   MENU CARD UNAVAILABLE OVERLAY
-   ========================= */
+
 
 .menuCardMedia {
     position: relative;
 }
 
 
-/* grey image */
 
 .menuCardImgDisabled {
     filter: grayscale(100%);
@@ -1354,7 +1261,6 @@ select {
 }
 
 
-/* overlay background */
 
 .menuCardUnavailableOverlay {
     position: absolute;
@@ -1365,7 +1271,6 @@ select {
 }
 
 
-/* badge */
 
 .menuCardUnavailableBadge {
     background: rgba(0, 0, 0, 0.75);
@@ -1377,7 +1282,6 @@ select {
 }
 
 
-/* DISABLED BUTTON */
 
 .addCartBtnDisabled {
     background: #e5e7eb !important;
@@ -1387,11 +1291,8 @@ select {
 }
 
 
-/* ===============
-   ODER STATUS 
-   ===============*/
 
-/* ========== OUTER PAGE ========== */
+
 .order-page {
   min-height: 100vh;          
   width: 100%;
@@ -1402,7 +1303,6 @@ select {
   box-sizing: border-box;
 }
 
-/* ========== MAIN COLUMN ========== */
 .order-shell {
   width: 100%;
   max-width: 420px;           
@@ -1411,18 +1311,15 @@ select {
   gap: 6px;                 
 }
 
-/* shared “card” look */
 .order-header,
 .order-card.status-card,
 .order-card.details-card,
 .order-note {
   background: #ffffff;
   border-radius: 18px;
-  /* box-shadow: 0 0 0 rgba(0, 0, 0, 0); */
   border: 1px solid rgba(148, 163, 184, 0.35);
 }
 
-/* ========== HEADER BOX ========== */
 .order-header {
   padding: 8px 14px;
   text-align: center;
@@ -1439,7 +1336,6 @@ select {
   color: #7c3aed;
 }
 
-/* ========== STATUS CARD ========== */
 .order-card.status-card {
   padding: 10px 14px;
 }
@@ -1449,7 +1345,6 @@ select {
   margin-bottom: 4px;
 }
 
-/* TIMELINE */
 .status-timeline {
   display: flex;
   flex-direction: column;
@@ -1503,13 +1398,11 @@ select {
   margin-left: 11px;
 }
 
-/* ========== ORDER DETAILS CARD ========== */
 
 .order-card.details-card {
   padding: 10px 14px;
 }
 
-/* Items list */
 .order-items {
   display: flex;
   flex-direction: column;
@@ -1533,7 +1426,6 @@ select {
   font-weight: 500;
 }
 
-/* divider between items and totals */
 .order-total {
   border-top: 1px solid #f1f1f5;
   padding-top: 4px;
@@ -1542,7 +1434,7 @@ select {
   gap: 4px;
 }
 
-/* Subtotal + GST rows */
+
 .order-total-row {
   display: flex;
   justify-content: space-between;
@@ -1550,7 +1442,7 @@ select {
   color: #6b7280;
 }
 
-/* Total row highlighted */
+
 .order-total-main {
   margin-top: 1px;
   padding-top: 2px;
@@ -1567,14 +1459,14 @@ select {
   color: #7c3aed;
 }
 
-/* ========== NOTE ========== */
+
 .order-note {
   padding: 8px 12px;
   font-size: 11px;
   background: #f5f3ff;
 }
 
-/* ========== ORDER MORE BUTTON ========== */
+
 .order-more-btn {
   width: 100%;
   background: #7c3aed;     
@@ -1604,9 +1496,7 @@ select {
 
 
 
-/* =========================
-   ORDER COMPLETED SCREEN
-   ========================= */
+
 .completed-header {
   border-radius: 16px;
   padding: 10px 16px;
@@ -1615,7 +1505,7 @@ select {
   box-shadow: 0 0 0 rgba(0, 0, 0, 0);
 }
 
-/* pale green hero, more blended */
+
 .order-complete-hero {
   margin-top: 8px;
   background: #dffae8; 
@@ -1629,7 +1519,7 @@ select {
   gap: 1px;
 }
 
-/* white circle behind icon */
+
 .order-complete-icon-wrap {
   width: 52px;
   height: 52px;
@@ -1646,7 +1536,7 @@ select {
   color: #16a34a;
 }
 
-/* hero text */
+
 .order-complete-title {
   margin-top: 6px;
   margin-bottom: 2px;
@@ -1660,7 +1550,7 @@ select {
   color: #4b5563;
 }
 
-/* details card: less pop, more blend */
+
 .completed-details-card {
   margin-top: 8px;
   box-shadow: 0 0 0 rgba(0, 0, 0, 0); 
@@ -1682,14 +1572,14 @@ select {
   color: #7c3aed;
 }
 
-/* note card = soft pill */
+
 .completed-note {
   border-radius: 16px;
   background: #f5f3ff;
   border: 1px rgba(148, 163, 184, 0.2);
 box-shadow: 0 0 0 rgba(0, 0, 0, 0);}
 
-/* order more button: very subtle, blends in */
+
 .order-more-btn-light {
   margin-top: 4px;
   background: #e6e6e9;
@@ -1707,22 +1597,14 @@ box-shadow: 0 0 0 rgba(0, 0, 0, 0);  font-weight: 600;
   stroke: #111827;
 }
 
-/* =============================================
-   PASTE THESE ADDITIONS INTO YOUR App.css
-   =============================================
-
-   These extend the existing order-page styles
-   for the new "ready" and "cancelled" states.
-   ============================================= */
 
 
-/* ── READY STATE — header accent ── */
+
 .ready-header {
   background: linear-gradient(135deg, #27fa74, #77eea3);
-  /* override whatever colour your order-header already uses */
 }
 
-/* ── READY HERO BANNER (inline on OrderStatus) ── */
+
 .order-ready-hero {
   background: linear-gradient(135deg, #dcfce7, #bbf7d0);
   border: 1.5px solid #86efac;
@@ -1733,7 +1615,7 @@ box-shadow: 0 0 0 rgba(0, 0, 0, 0);  font-weight: 600;
 }
 
 .order-ready-icon-wrap {
-  background: #16a34a !important;   /* green, overrides the default colour */
+  background: #16a34a !important;   
   box-shadow: 0 0 0 8px #bbf7d0;
 }
 
@@ -1747,7 +1629,7 @@ box-shadow: 0 0 0 rgba(0, 0, 0, 0);  font-weight: 600;
   color: #15803d !important;
 }
 
-/* Pulse ring on the final timeline step when status = ready */
+
 .ready-pulse {
   animation: readyPulse 1.4s ease-in-out infinite;
 }
@@ -1764,12 +1646,12 @@ box-shadow: 0 0 0 rgba(0, 0, 0, 0);  font-weight: 600;
 }
 
 
-/* ── CANCELLED STATE — header accent ── */
+
 .cancelled-header {
   background: linear-gradient(135deg, #f05353, #f8adad);
 }
 
-/* ── CANCELLED HERO ── */
+
 .order-cancelled-hero {
   background: linear-gradient(135deg, #fee2e2, #fecaca);
   border: 1.5px solid #fca5a5;

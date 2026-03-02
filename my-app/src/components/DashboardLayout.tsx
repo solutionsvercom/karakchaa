@@ -41,7 +41,17 @@ const DashboardLayout: React.FC = () => {
       <div className="kb-main">
         <Navbar pageTitle={pageTitle} onMenuClick={() => setIsSidebarOpen((v) => !v)} />
         <main className="kb-content">
-          <Outlet />
+          <React.Suspense fallback={
+            <div style={{ padding: 40, display: "flex", justifyContent: "center" }}>
+              <div style={{
+                width: 30, height: 30, borderRadius: "50%",
+                border: "3px solid var(--gray-4)", borderTopColor: "var(--accent-9)",
+                animation: "spin 1s linear infinite"
+              }} />
+            </div>
+          }>
+            <Outlet />
+          </React.Suspense>
         </main>
       </div>
     </div>

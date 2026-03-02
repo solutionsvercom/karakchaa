@@ -1,14 +1,4 @@
-/* ============================================================
-   KARAKCHAA — HEADER + FOOTER REDESIGN ONLY
-   Import AFTER your existing PublicMenu.css
-   Only touches: stickyTop header + bottomCartBar footer
-   Everything else unchanged.
-   ============================================================ */
 
-
-/* ============================================================
-   HEADER — glassmorphism dark gradient
-   ============================================================ */
 
 .stickyTop {
     background: linear-gradient(135deg, #403c7d 0%, #634699 50%, #544eaa 100%) !important;
@@ -18,7 +8,6 @@
 }
 
 
-/* animated shimmer line at bottom of header */
 
 .stickyTop::after {
     content: '';
@@ -42,7 +31,6 @@
 }
 
 
-/* brand name — white on dark */
 
 .brandName {
     color: #fff !important;
@@ -54,11 +42,9 @@
 }
 
 
-/* brand sub — soft purple */
 
 .brandSub {
     color: #e8e5ef !important;
-    /* font-style: italic !important; */
     font-size: 10px !important;
     letter-spacing: 0.15em !important;
     text-transform: uppercase;
@@ -66,7 +52,6 @@
 }
 
 
-/* search on dark header */
 
 .searchWrap {
     background: rgba(219, 209, 209, 0.08) !important;
@@ -97,7 +82,6 @@
 }
 
 
-/* tabs on dark header */
 
 .tabBtn {
     background: rgba(213, 201, 201, 0.08) !important;
@@ -124,8 +108,6 @@
 }
 
 
-/* cart icon button on dark header */
-
 .cartIconBtn {
     background: rgba(255, 255, 255, 0.1) !important;
     border: 1px solid rgba(167, 139, 250, 0.3) !important;
@@ -140,7 +122,6 @@
 }
 
 
-/* veg toggle on dark header */
 
 .vegToggle {
     background: rgba(240, 234, 234, 0.08) !important;
@@ -152,9 +133,7 @@
 }
 
 
-/* ============================================================
-   FOOTER HINT — stylish
-   ============================================================ */
+
 
 .footerHint {
     background: linear-gradient(135deg, rgba(109, 40, 217, 0.06), rgba(124, 58, 237, 0.04));

@@ -38,13 +38,11 @@ export default function OrderCancelledPage() {
     <div className="order-page">
       <div className="order-shell">
 
-        {/* ── HEADER ── */}
         <header className="order-header cancelled-header">
           <p className="order-label">Order Number</p>
           <p className="order-code">#{orderNumber}</p>
         </header>
 
-        {/* ── CANCELLATION HERO ── */}
         <section className="order-complete-hero order-cancelled-hero">
           <div className="order-complete-icon-wrap order-cancelled-icon-wrap">
             <XCircle className="order-complete-icon order-cancelled-icon" />
@@ -58,7 +56,6 @@ export default function OrderCancelledPage() {
           </p>
         </section>
 
-        {/* ── ORDER DETAILS ── */}
         <section className="order-card details-card completed-details-card">
           <h2 className="card-title">Order Details</h2>
 
@@ -93,7 +90,6 @@ export default function OrderCancelledPage() {
           </div>
         </section>
 
-        {/* ── NOTE ── */}
         <section className="order-card order-note cancelled-note">
           <p className="order-note-text">
             <Lightbulb
