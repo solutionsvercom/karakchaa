@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_AUTH } from "../../config/Api";
 import { Text, TextField, IconButton, Switch } from "@radix-ui/themes";
 import { EyeOpenIcon, EyeClosedIcon } from "@radix-ui/react-icons";
 import DynamicForm from "../../components/dynamicComponents/DynamicForm/DynamicForm";
@@ -141,7 +142,7 @@ const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps
     setVerifying(true);
     setCurrentPasswordError("");
     try {
-      await axios.post("http://localhost:5000/api/auth/login", {
+      await axios.post(`${API_AUTH}/login`, {
         companyId: initialValues?.companyId,
         password: currentPassword,
       });
@@ -186,7 +187,7 @@ const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps
       if (!currentPasswordOk) {
         setVerifying(true);
         try {
-          await axios.post("http://localhost:5000/api/auth/login", {
+          await axios.post(`${API_AUTH}/login`, {
             companyId: initialValues?.companyId,
             password: currentPassword,
           });
@@ -236,10 +237,10 @@ const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps
 
       if (mode === "create") {
         payload.password = password;
-        await axios.post("http://localhost:5000/api/auth/register", payload, { headers });
+        await axios.post(`${API_AUTH}/register`, payload, { headers });
       } else if (mode === "edit" && userId) {
         if (currentPasswordOk && newPassword) payload.password = newPassword;
-        await axios.put(`http://localhost:5000/api/auth/users/${userId}`, payload, { headers });
+        await axios.put(`${API_AUTH}/users/${userId}`, payload, { headers });
       }
 
       onSuccess();

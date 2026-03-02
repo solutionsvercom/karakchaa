@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 
-/* ================= TYPES ================= */
 
 export interface MenuProduct {
   _id: string;
@@ -10,7 +9,7 @@ export interface MenuProduct {
 image?: string;
   category?: string;
   isAvailable: boolean;
-  isVeg: boolean; 
+  isVeg: boolean;
 }
 
 interface DigitalMenuState {
@@ -19,7 +18,6 @@ interface DigitalMenuState {
   error: string | null;
 }
 
-/* ================= INITIAL STATE ================= */
 
 const initialState: DigitalMenuState = {
   products: [],
@@ -27,11 +25,9 @@ const initialState: DigitalMenuState = {
   error: null,
 };
 
-/* ================= API BASE ================= */
 
 const BASE_URL = "http://localhost:5000/api/digital-menu";
 
-/* ================= ASYNC THUNKS ================= */
 
 export const fetchDigitalMenuProducts = createAsyncThunk<
   MenuProduct[],
@@ -48,7 +44,6 @@ export const fetchDigitalMenuProducts = createAsyncThunk<
   }
 });
 
-/* ================= SLICE ================= */
 
 const digitalMenuSlice = createSlice({
   name: "digitalMenu",
@@ -93,7 +88,6 @@ const digitalMenuSlice = createSlice({
   },
 });
 
-/* ================= EXPORT ================= */
 
 export const { clearMenuError, setMenuError } = digitalMenuSlice.actions;
 export default digitalMenuSlice.reducer;

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Shield, Trash2, Pencil, MoreVertical } from "lucide-react";
 import axios from "axios";
+import { API_ROLES } from "../../config/Api";
 import {
   Flex, Text, DropdownMenu, IconButton, Button, Dialog,
 } from "@radix-ui/themes";
@@ -37,7 +38,7 @@ export default function Roles() {
   const fetchRoles = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/roles", { headers });
+      const res = await axios.get(API_ROLES, { headers });
       setRoles(res.data.roles || []);
     } catch (error) {
       console.error("Error fetching roles:", error);
@@ -64,7 +65,7 @@ export default function Roles() {
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      await axios.delete(`http://localhost:5000/api/roles/${deleteId}`, { headers });
+      await axios.delete(`${API_ROLES}/${deleteId}`, { headers });
       fetchRoles();
       setDeleteId(null);
     } catch (error) {
@@ -172,12 +173,12 @@ export default function Roles() {
           </p>
           <Flex justify="end" gap="3" mt="4">
             <Button
-             variant="soft"
-             color="gray"
-             onClick={() => setDeleteId(null)}
-           >
-             Cancel
-           </Button>
+              variant="soft"
+              color="gray"
+              onClick={() => setDeleteId(null)}
+            >
+              Cancel
+            </Button>
             <Button color="red" onClick={handleDelete}>Delete</Button>
           </Flex>
         </Dialog.Content>

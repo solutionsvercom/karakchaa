@@ -15,7 +15,6 @@ export default function MenuCard({ item }: Props) {
   return (
     <div className="menuCard">
 
-      {/* IMAGE */}
       <div className="menuCardMedia">
 
   <img
@@ -37,10 +36,8 @@ export default function MenuCard({ item }: Props) {
 </div>
 
 
-      {/* BODY */}
       <div className="menuCardBody">
 
-        {/* NAME + PRICE INLINE */}
         <div className="menuCardHeaderRow">
 
           <div className="menuCardTitle">
@@ -53,13 +50,11 @@ export default function MenuCard({ item }: Props) {
 
         </div>
 
-        {/* CATEGORY */}
         <div className="menuCardCategory">
           {item.category}
         </div>
 
 
-        {/* ADD BUTTON OR QTY */}
         {qty === 0 ? (
 
          <button

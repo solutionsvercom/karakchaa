@@ -100,7 +100,6 @@ const dispatch = useAppDispatch();
         phone,
         table,
         notes,
-        // Prefer orderNumber for customer tracking UI, keep _id fallback compatibility.
         backendOrderId: result.orderNumber || result._id,
       },
     });
@@ -114,18 +113,15 @@ const dispatch = useAppDispatch();
 
   return (
     <>
-      {/* BACKDROP */}
       <div
         className={`cartBackdrop ${open ? "cartBackdropOpen" : ""}`}
         onClick={onClose}
       />
 
-      {/* DRAWER */}
       <aside
         className={`cartDrawer ${open ? "cartDrawerOpen" : ""}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* HEADER */}
         <div className="cartHeader">
           <div>
             <div className="cartTitle">Your Order</div>
@@ -137,9 +133,7 @@ const dispatch = useAppDispatch();
           </button>
         </div>
 
-        {/* BODY */}
         <div className="cartBodyPro">
-          {/* ITEMS */}
           <div className="cartSection">
             {list.length === 0 ? (
               <div className="emptyCartPro">
@@ -159,13 +153,11 @@ const dispatch = useAppDispatch();
                       )}
                     </div>
 
-                    {/* INFO */}
                     <div className="orderInfo">
                       <div className="orderName">{item.name}</div>
                       <div className="orderPrice">₹{item.price}</div>
                     </div>
 
-                    {/* QTY */}
                     <div className="orderRight">
                       <div className="qtyPillCart">
                         <button
@@ -187,7 +179,6 @@ const dispatch = useAppDispatch();
                         </button>
                       </div>
 
-                      {/* TRASH BUTTON */}
                       <button
                         className="trashBtn"
                         onClick={() => remove(item.id)}
@@ -202,7 +193,6 @@ const dispatch = useAppDispatch();
             )}
           </div>
 
-          {/* ORDER TYPE */}
           <div className="cartSection">
             <div className="cartSectionTitle">Order Type</div>
 
@@ -229,7 +219,6 @@ const dispatch = useAppDispatch();
             </div>
           </div>
 
-          {/* DETAILS */}
           <div className="cartSection">
             <div className="cartSectionTitle">Your Details</div>
 
@@ -266,7 +255,6 @@ const dispatch = useAppDispatch();
             </div>
           </div>
 
-          {/* NOTES */}
           <div className="cartSection">
             <div className="cartSectionTitle">Special Instructions</div>
 
@@ -278,7 +266,6 @@ const dispatch = useAppDispatch();
             />
           </div>
 
-          {/* CLEAR */}
           {list.length > 0 && (
             <div className="cartSection clearCartWrap">
               <button className="secondaryBtnPro clearCartBtn" onClick={clear}>
@@ -289,9 +276,7 @@ const dispatch = useAppDispatch();
           )}
         </div>
 
-        {/* FOOTER */}
         <div className="cartFooterPro">
-          {/* Order Summary Card */}
           <div className="orderSummaryCard">
             <div className="summaryTitle">Order Summary</div>
 
@@ -313,7 +298,6 @@ const dispatch = useAppDispatch();
             </div>
           </div>
 
-          {/* Checkout Button */}
           <button
             className="checkoutBtnPro"
             disabled={list.length === 0}

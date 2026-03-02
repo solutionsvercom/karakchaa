@@ -109,48 +109,54 @@ export default function Sales() {
     dispatch(fetchSalesSummary());
   }, [dispatch, orderTypeFilter]);
 
-  const mappedSales: SaleTransaction[] = sales.map((s: Sale, index) => ({
-    id: index,
-    invoice: s.invoiceNumber,
-    customer: s.customer?.fullName || s.customerName || "Walk-in",
-    phone: s.customer?.phoneNumber || "",
-    items: s.product?.name || "-",
-    saleItems: (s as any).items?.length
-      ? (s as any).items
-      : [{ name: s.product?.name || "-", price: s.sellingPrice || s.totalAmount, quantity: s.quantity || 1 }],
-    type: s.paymentMethod,
-    orderSource: (s as any).orderSource ||
-      (["online", "digital_menu"].includes((s as any).orderType?.toLowerCase()) ? "DIGITAL" : "POS"),
-    amount: s.totalAmount,
-    payment: (s.paymentStatus?.toLowerCase() as PaymentStatus),
-    dateTime: s.createdAt,
-  }));
+  const mappedSales: SaleTransaction[] = React.useMemo(() => {
+    return sales.map((s: Sale, index) => ({
+      id: index,
+      invoice: s.invoiceNumber,
+      customer: s.customer?.fullName || s.customerName || "Walk-in",
+      phone: s.customer?.phoneNumber || "",
+      items: s.product?.name || "-",
+      saleItems: (s as any).items?.length
+        ? (s as any).items
+        : [{ name: s.product?.name || "-", price: s.sellingPrice || s.totalAmount, quantity: s.quantity || 1 }],
+      type: s.paymentMethod,
+      orderSource: (s as any).orderSource ||
+        (["online", "digital_menu"].includes((s as any).orderType?.toLowerCase()) ? "DIGITAL" : "POS"),
+      amount: s.totalAmount,
+      payment: (s.paymentStatus?.toLowerCase() as PaymentStatus),
+      dateTime: s.createdAt,
+    }));
+  }, [sales]);
 
-  const filteredSales = mappedSales.filter((sale) => {
-    const matchesSearch =
-      sale.invoice.toLowerCase().includes(searchValue.toLowerCase()) ||
-      sale.customer.toLowerCase().includes(searchValue.toLowerCase());
-    const matchesPayment =
-      paymentFilter === "All Payments" ||
-      sale.type.toLowerCase() === paymentFilter.toLowerCase();
+  const filteredSales = React.useMemo(() => {
+    return mappedSales.filter((sale) => {
+      const matchesSearch =
+        sale.invoice.toLowerCase().includes(searchValue.toLowerCase()) ||
+        sale.customer.toLowerCase().includes(searchValue.toLowerCase());
+      const matchesPayment =
+        paymentFilter === "All Payments" ||
+        sale.type.toLowerCase() === paymentFilter.toLowerCase();
 
-    // NOTE: OrderSource matching is now handled mostly by the server,
-    // but the local filter applies too for robustness (and search/payment).
-    let matchesOrderType = true;
-    if (orderTypeFilter === "POS") {
-      matchesOrderType = !sale.orderSource || sale.orderSource.toUpperCase() !== "DIGITAL";
-    } else if (orderTypeFilter === "Digital Menu") {
-      matchesOrderType = sale.orderSource?.toUpperCase() === "DIGITAL";
-    }
+      // NOTE: OrderSource matching is now handled mostly by the server,
+      // but the local filter applies too for robustness (and search/payment).
+      let matchesOrderType = true;
+      if (orderTypeFilter === "POS") {
+        matchesOrderType = !sale.orderSource || sale.orderSource.toUpperCase() !== "DIGITAL";
+      } else if (orderTypeFilter === "Digital Menu") {
+        matchesOrderType = sale.orderSource?.toUpperCase() === "DIGITAL";
+      }
 
-    return matchesSearch && matchesPayment && matchesOrderType;
-  });
+      return matchesSearch && matchesPayment && matchesOrderType;
+    });
+  }, [mappedSales, searchValue, paymentFilter, orderTypeFilter]);
 
-  const { totalRevenue, totalOrders, averageOrder } = summary || {
-    totalRevenue: 0,
-    totalOrders: 0,
-    averageOrder: 0,
-  };
+  const { totalRevenue, totalOrders, averageOrder } = React.useMemo(() => {
+    return summary || {
+      totalRevenue: 0,
+      totalOrders: 0,
+      averageOrder: 0,
+    };
+  }, [summary]);
 
   /*  TABLE COLUMNS  */
 
