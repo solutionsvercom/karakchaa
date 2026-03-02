@@ -21,8 +21,13 @@ import {
 } from "../../features/SalesSlice";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import {
+  IndianRupee,
+  ReceiptText,
+  BarChart3,
+} from "lucide-react";
 
-/* ================= TYPES ================= */
+/*  TYPES  */
 
 type PaymentStatus = "pending" | "completed" | "cancelled";
 
@@ -40,7 +45,7 @@ type SaleTransaction = {
   dateTime: string;
 };
 
-/* ================= HELPERS ================= */
+/*  HELPERS */
 
 const getPaymentColor = (status: PaymentStatus) => {
   switch (status) {
@@ -71,7 +76,7 @@ export const calculateTotals = (data: SaleTransaction[]) => {
   return { totalRevenue, totalOrders, averageOrder };
 };
 
-/* ================= COMPONENT ================= */
+/*  COMPONENT  */
 
 export default function Sales() {
   const dispatch = useDispatch<AppDispatch>();
@@ -153,7 +158,7 @@ export default function Sales() {
     };
   }, [summary]);
 
-  /* ================= TABLE COLUMNS ================= */
+  /*  TABLE COLUMNS  */
 
   const columns: Column<SaleTransaction>[] = [
     { key: "invoice", header: "Invoice", accessor: "invoice" },
@@ -254,7 +259,7 @@ export default function Sales() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-        {/* ================= SUMMARY ================= */}
+        {/*  SUMMARY */}
         <div className="sales-summary-grid">
           <SummaryCard
             title="Total Revenue"
@@ -262,25 +267,27 @@ export default function Sales() {
             subtitle={`${totalOrders} orders`}
             accentColor="#00C853"
             softColor="#E5F9EE"
-            icon="₹"
+            icon={<IndianRupee size={22} strokeWidth={2.2} /> as any}
           />
+
           <SummaryCard
             title="Total Orders"
             value={String(totalOrders)}
             accentColor="#2962FF"
             softColor="#E3F2FD"
-            icon="📦"
+            icon={<ReceiptText size={22} strokeWidth={2.2} /> as any}
           />
+
           <SummaryCard
             title="Average Order"
             value={`₹${averageOrder.toLocaleString()}`}
             accentColor="#FF9100"
             softColor="#FFF3E0"
-            icon="📊"
+            icon={<BarChart3 size={22} strokeWidth={2.2} /> as any}
           />
         </div>
 
-        {/* ================= FILTER BAR ================= */}
+        {/*  FILTER BAR */}
         <Flex align="center" gap="3" className="sales-filter-bar">
           <Flex style={{ flex: 1 }}>
             <Searchbar
@@ -323,7 +330,7 @@ export default function Sales() {
           </DropdownMenu.Root>
         </Flex>
 
-        {/* ================= TABLE ================= */}
+        {/*  TABLE  */}
         <div className="sales-table-wrap">
           <Table<SaleTransaction>
             data={filteredSales}
@@ -336,7 +343,7 @@ export default function Sales() {
           />
         </div>
 
-        {/* ================= SERVER PAGINATION ================= */}
+        {/*  SERVER PAGINATION  */}
         {pagination && (
           <div
             style={{
@@ -468,7 +475,7 @@ export default function Sales() {
 
       </div>
 
-      {/* ===== VIEW INVOICE MODAL ===== */}
+      {/* VIEW INVOICE MODAL */}
       <Dialog.Root open={!!viewSale} onOpenChange={() => setViewSale(null)}>
         <Dialog.Portal>
           <Dialog.Overlay style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000 }} />
@@ -509,7 +516,7 @@ export default function Sales() {
             {viewSale && (
               <div style={{ display: "flex", flexDirection: "column", gap: 0, marginTop: 16 }}>
 
-                {/* ── Info Grid ── */}
+                {/* Info Grid  */}
                 <div style={{
                   display: "grid", gridTemplateColumns: "1fr 1fr",
                   gap: "12px 0",
@@ -527,7 +534,7 @@ export default function Sales() {
                   } />
                 </div>
 
-                {/* ── Items ── */}
+                {/* Items */}
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>Items</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -540,7 +547,7 @@ export default function Sales() {
                   </div>
                 </div>
 
-                {/* ── Totals ── */}
+                {/* Totals */}
                 <div style={{
                   borderTop: "1px solid var(--gray-a4)",
                   paddingTop: 12,
@@ -561,7 +568,7 @@ export default function Sales() {
                   </div>
                 </div>
 
-                {/* ── Action Button ── */}
+                {/* Action Button */}
                 {viewSale.payment === "cancelled" ? (
                   <button
                     disabled={editLoading}
@@ -627,7 +634,7 @@ export default function Sales() {
         </Dialog.Portal>
       </Dialog.Root>
 
-      {/* ===== EDIT STATUS MODAL ===== */}
+      {/*  EDIT STATUS MODAL */}
       <Dialog.Root open={!!editSale} onOpenChange={() => setEditSale(null)}>
         <Dialog.Portal>
           <Dialog.Overlay style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000 }} />
@@ -702,7 +709,7 @@ export default function Sales() {
   );
 }
 
-/* ===== HELPER COMPONENT ===== */
+/* HELPER COMPONENT */
 function InfoCell({ label, value, statusColor }: { label: string; value: string; statusColor?: string }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>

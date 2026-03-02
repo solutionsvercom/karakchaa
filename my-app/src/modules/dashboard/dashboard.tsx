@@ -15,10 +15,18 @@ import {
   TopProductsChart,
 } from "../../components/dynamicComponents/Charts";
 
+import {
+  IndianRupee,
+  TrendingUp,
+  BarChart3,
+  Package,
+  Users,
+} from "lucide-react";
+
 import { LowStockAlert } from "../../components/dynamicComponents/Charts/LowStockAlert";
 import { RecentSales } from "../../components/dynamicComponents/Charts/RecentSales";
 
-/* ================= TYPES ================= */
+/*  TYPES  */
 
 interface DailySalesData {
   date: string;
@@ -31,7 +39,7 @@ interface ProductSalesCount {
   count: number;
 }
 
-/* ================= HELPER FUNCTIONS ================= */
+/*  HELPER FUNCTIONS  */
 
 /**
  * Get sales from last N days
@@ -151,7 +159,7 @@ const getTodaysCustomersCount = (customers: any[]): number => {
   }).length;
 };
 
-/* ================= COMPONENT ================= */
+/*  COMPONENT  */
 
 export default function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
@@ -162,7 +170,7 @@ export default function Dashboard() {
   const { items: stockItems } = useSelector((state: RootState) => state.stock);
   const { sales } = useSelector((state: RootState) => state.sales);
 
-  /* ================= FETCH DATA ================= */
+  /*  FETCH DATA  */
 
   useEffect(() => {
     dispatch(fetchStockItems());
@@ -173,7 +181,7 @@ export default function Dashboard() {
     dispatch(fetchExpenses());
   }, [dispatch]);
 
-  /* ================= PROCESS DATA ================= */
+  /*  PROCESS DATA  */
 
   // Today's data
   const todaysSales = getTodaysSales(sales);
@@ -191,7 +199,7 @@ export default function Dashboard() {
   // Active products count
   const activeProductsCount = products.filter((p) => p.isActive).length;
 
-  /* ================= UI ================= */
+  /*  UI  */
 
   return (
     <>
@@ -264,39 +272,42 @@ export default function Dashboard() {
       `}</style>
 
       <Flex direction="column" gap="4" width="100%">
-        {/* ===== SUMMARY CARDS ===== */}
+        {/*  SUMMARY CARDS */}
         <div className="dash-summary-grid">
           <SummaryCard
             title="Today's Revenue"
             value={`₹${todaysSummary.totalRevenue.toLocaleString()}`}
             accentColor="#00C853"
             softColor="#E5F9EE"
-            icon="₹"
+            icon={<IndianRupee size={22} strokeWidth={2.2} /> as any}
           />
+
           <SummaryCard
             title="Weekly Revenue"
             value={`₹${weeklySummary.totalRevenue.toLocaleString()}`}
             accentColor="#7C4DFF"
             softColor="#F0E9FF"
-            icon="📊"
+            icon={<BarChart3 size={22} strokeWidth={2.2} /> as any}
           />
+
           <SummaryCard
             title="Active Products"
             value={String(activeProductsCount)}
             accentColor="#FF9100"
             softColor="#FFF3E0"
-            icon="📦"
+            icon={<Package size={22} strokeWidth={2.2} /> as any}
           />
+
           <SummaryCard
             title="Today's Customers"
             value={String(todaysCustomers)}
             accentColor="#2962FF"
             softColor="#E3F2FD"
-            icon="👥"
+            icon={<Users size={22} strokeWidth={2.2} /> as any}
           />
         </div>
 
-        {/* ===== CHARTS ROW 1 ===== */}
+        {/*  CHARTS ROW 1  */}
         <div className="dash-charts-row">
           <RevenueTrendChart
             data={revenueTrendData}
@@ -306,7 +317,7 @@ export default function Dashboard() {
           <LowStockAlert products={stockItems} />
         </div>
 
-        {/* ===== CHARTS ROW 2 ===== */}
+        {/* CHARTS ROW 2 */}
         <div className="dash-charts-row">
           <TopProductsChart
             data={topProductsData}

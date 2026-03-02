@@ -46,7 +46,7 @@ const DynamicForm = <T extends string>({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [checking, setChecking] = useState(false);
 
-  // ✅ Only initialise values ONCE when the form first mounts (or when the
+  //    Only initialise values ONCE when the form first mounts (or when the
   //    key prop changes from outside, which fully remounts the component).
   //    We deliberately do NOT re-run this when initialValues changes during
   //    normal interaction — that was what was wiping the user's input.

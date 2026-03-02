@@ -39,7 +39,7 @@ interface StockState {
   error: string | null;
 }
 
-/* ================= INITIAL STATE ================= */
+/*  INITIAL STATE = */
 
 const initialState: StockState = {
   items: [],
@@ -48,11 +48,11 @@ const initialState: StockState = {
   error: null,
 };
 
-/* ================= API BASE ================= */
+/*  API BASE  */
 
 const BASE_URL = API_STOCK;
 
-/* ================= ASYNC THUNKS ================= */
+/*  ASYNC THUNKS  */
 
 /**
  * Fetch all stock items
@@ -200,7 +200,7 @@ export const fetchStockById = createAsyncThunk<
   }
 });
 
-/* ================= SLICE ================= */
+/*  SLICE = */
 
 const stockSlice = createSlice({
   name: "stock",
@@ -214,7 +214,7 @@ const stockSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      /* ===== FETCH STOCK ITEMS ===== */
+      /*  FETCH STOCK ITEMS  */
       .addCase(fetchStockItems.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -239,7 +239,7 @@ const stockSlice = createSlice({
         state.error = action.payload || "Failed to fetch stock items";
       })
 
-      /* ===== FETCH STATS ===== */
+      /*  FETCH STATS  */
       .addCase(fetchStockStats.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -256,7 +256,7 @@ const stockSlice = createSlice({
         state.error = action.payload || "Failed to fetch stats";
       })
 
-      /* ===== CREATE STOCK ITEM ===== */
+      /*  CREATE STOCK ITEM  */
       .addCase(createStockItem.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -278,7 +278,7 @@ const stockSlice = createSlice({
         state.error = action.payload || "Failed to create stock item";
       })
 
-      /* ===== ADD STOCK ===== */
+      /* ADD STOCK */
       .addCase(addStock.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -302,7 +302,7 @@ const stockSlice = createSlice({
         state.error = action.payload || "Failed to add stock";
       })
 
-      /* ===== REMOVE STOCK ===== */
+      /*  REMOVE STOCK  */
       .addCase(removeStock.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -326,7 +326,7 @@ const stockSlice = createSlice({
         state.error = action.payload || "Failed to remove stock";
       })
 
-      /* ===== FETCH STOCK BY ID ===== */
+      /*  FETCH STOCK BY ID  */
       .addCase(fetchStockById.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -352,7 +352,7 @@ const stockSlice = createSlice({
         state.error = action.payload || "Failed to fetch stock item";
       })
 
-      /* ===== FETCH STOCK HISTORY ===== */
+      /*  FETCH STOCK HISTORY  */
       .addCase(fetchStockHistory.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -367,7 +367,7 @@ const stockSlice = createSlice({
   },
 });
 
-/* ================= EXPORT ================= */
+/*  EXPORT  */
 
 export const { clearError } = stockSlice.actions;
 export default stockSlice.reducer;

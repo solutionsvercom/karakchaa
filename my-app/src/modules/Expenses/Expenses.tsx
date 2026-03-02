@@ -14,6 +14,12 @@ import {
   fetchExpenses, fetchExpenseTotals, deleteExpense, type Expense,
 } from "../../features/ExpensesSlice";
 
+import {
+  CalendarDays,
+  IndianRupee,
+  ListChecks
+} from "lucide-react";
+
 const getCategoryLabel = (category: string) => {
   const labels: Record<string, string> = {
     rent: "Rent", salary: "Salary", utilities: "Utilities",
@@ -143,9 +149,29 @@ export default function Expenses() {
         {error && <Text color="red" size="2">{error}</Text>}
 
         <div className="kb-summary-row">
-          <SummaryCard title="This Month" value={`₹${totals?.thisMonthExpenses ?? 0}`} accentColor="#2962FF" softColor="#E3F2FD" icon="📦" />
-          <SummaryCard title="Total Expenses" value={`₹${totals?.totalExpenses ?? 0}`} accentColor="#00C853" softColor="#E5F9EE" icon="✅" />
-          <SummaryCard title="Total Records" value={String(totals?.totalTransactions ?? filteredExpenses.length)} accentColor="#FF9100" softColor="#FFF3E0" icon="⚠️" />
+          <SummaryCard
+            title="This Month"
+            value={`₹${totals?.thisMonthExpenses ?? 0}`}
+            accentColor="#2962FF"
+            softColor="#E3F2FD"
+            icon={<CalendarDays size={22} strokeWidth={2.2} />as any}
+          />
+
+          <SummaryCard
+            title="Total Expenses"
+            value={`₹${totals?.totalExpenses ?? 0}`}
+            accentColor="#00C853"
+            softColor="#E5F9EE"
+            icon={<IndianRupee size={22} strokeWidth={2.2} /> as any}
+          />
+
+          <SummaryCard
+            title="Total Records"
+            value={String(totals?.totalTransactions ?? filteredExpenses.length)}
+            accentColor="#FF9100"
+            softColor="#FFF3E0"
+            icon={<ListChecks size={22} strokeWidth={2.2} />as any}
+          />
         </div>
 
         <Flex align="center" gap="3" width="100%">
@@ -179,7 +205,7 @@ export default function Expenses() {
        />
       </Flex>
 
-      {/* ===== ADD / EDIT DIALOG ===== */}
+      {/*ADD / EDIT DIALOG*/}
       <Dialog.Root
         open={isDialogOpen}
         onOpenChange={(open) => {
@@ -196,7 +222,7 @@ export default function Expenses() {
         </Dialog.Content>
       </Dialog.Root>
 
-      {/* ===== DELETE CONFIRM DIALOG ===== */}
+      {/* DELETE CONFIRM DIALOG */}
       <Dialog.Root open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
         <Dialog.Content maxWidth="380px" aria-describedby={undefined}>
           <Dialog.Title>Delete Expense?</Dialog.Title>

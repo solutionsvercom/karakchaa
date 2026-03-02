@@ -24,7 +24,7 @@ interface AddUserProps {
 
 type UserField = "name" | "companyId" | "email" | "phoneNumber" | "role";
 
-// ─── Password input ───────────────────────────────────────────────────────────
+// Password input 
 function PasswordInput({
   id,
   label,
@@ -105,7 +105,7 @@ function PasswordInput({
   );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// Main 
 const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps) => {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -115,16 +115,16 @@ const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps
   const [formError, setFormError] = useState("");
   const [isActive, setIsActive] = useState<boolean>(initialValues?.isActive ?? true);
 
-  // ── CREATE ──
+  //  CREATE
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
-  // ── EDIT ──
+  //  EDIT
   const [currentPassword, setCurrentPassword] = useState("");
   const [currentPasswordError, setCurrentPasswordError] = useState("");
-  // ✅ Tracks whether current password has been successfully verified
+  // Tracks whether current password has been successfully verified
   const [currentPasswordOk, setCurrentPasswordOk] = useState(false);
   const [verifying, setVerifying] = useState(false);
 
@@ -133,7 +133,7 @@ const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [confirmNewPasswordError, setConfirmNewPasswordError] = useState("");
 
-  /* ── Verify current password on blur ─────────────────────────────────────── */
+  /* Verify current password on blur  */
   const verifyCurrentPassword = async () => {
     if (!currentPassword) {
       setCurrentPasswordOk(false);
@@ -146,7 +146,7 @@ const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps
         companyId: initialValues?.companyId,
         password: currentPassword,
       });
-      setCurrentPasswordOk(true);   // ✅ unlocks new password fields
+      setCurrentPasswordOk(true);   // unlocks new password fields
       setCurrentPasswordError("");
     } catch (err: any) {
       const status = err.response?.status;
@@ -155,7 +155,7 @@ const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps
           ? "Current password is incorrect"
           : "Could not verify — try again"
       );
-      setCurrentPasswordOk(false);  // ✅ keeps new password fields locked
+      setCurrentPasswordOk(false);  // keeps new password fields locked
       // Clear new/confirm so locked fields don't retain stale values
       setNewPassword("");
       setConfirmNewPassword("");
@@ -166,7 +166,7 @@ const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps
     }
   };
 
-  /* ── onBeforeSubmit ───────────────────────────────────────────────────────── */
+  /*  onBeforeSubmit */
   const handleBeforeSubmit = async (_values: Record<UserField, any>): Promise<boolean> => {
     let valid = true;
 
@@ -202,7 +202,7 @@ const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps
           );
           setCurrentPasswordOk(false);
           setVerifying(false);
-          return false; // ✅ block immediately
+          return false; // block immediately
         }
         setVerifying(false);
       }
@@ -222,7 +222,7 @@ const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps
     return valid;
   };
 
-  /* ── Final submit ─────────────────────────────────────────────────────────── */
+  /* Final submit  */
   const handleSubmit = async (data: Record<UserField, any>) => {
     setFormError("");
     try {
@@ -250,7 +250,7 @@ const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps
     }
   };
 
-  /* ── Fields ───────────────────────────────────────────────────────────────── */
+  /*  Fields  */
   const fields: FormField<UserField>[] = [
     { name: "name", label: "Full Name", type: "text", required: true, span: 2, placeholder: "Enter full name" } as FormField<UserField>,
 
@@ -266,7 +266,7 @@ const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps
     } as FormField<UserField>,
   ];
 
-  /* ── Extra content ────────────────────────────────────────────────────────── */
+  /* Extra content  */
   const extraContent = (
     <>
       {mode === "create" ? (
@@ -322,7 +322,7 @@ const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps
             )}
           </div>
 
-          {/* ✅ New password — disabled until current password is verified */}
+          {/* New password — disabled until current password is verified */}
           <PasswordInput
             id="newPassword"
             label="New Password"
@@ -333,7 +333,7 @@ const AddUser = ({ mode, initialValues, userId, roles, onSuccess }: AddUserProps
             error={newPasswordError}
           />
 
-          {/* ✅ Confirm new password — disabled until current password is verified */}
+          {/* Confirm new password — disabled until current password is verified */}
           <PasswordInput
             id="confirmNewPassword"
             label={newPassword && confirmNewPassword && newPassword !== confirmNewPassword ? "Create New Password" : "Confirm New Password"}

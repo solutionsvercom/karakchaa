@@ -6,6 +6,12 @@ import { fetchCustomers, fetchCustomerStats, deleteCustomer, Customer } from "..
 import { RootState, AppDispatch } from "../../store/Store";
 
 import {
+  Users,
+  ShoppingCart,
+  IndianRupee,
+} from "lucide-react";
+
+import {
   Flex,
   Text,
   Avatar,
@@ -24,7 +30,7 @@ import { SummaryCard } from "../../components/dynamicComponents/Cards";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 import AddCustomer from "./AddCustomer";
 
-/* ================= TYPES ================= */
+/*  TYPES  */
 
 type CustomerRow = {
   id: string;
@@ -35,7 +41,7 @@ type CustomerRow = {
   loyaltyPoints: number;
 };
 
-/* ================= COMPONENT ================= */
+/*  COMPONENT  */
 
 export default function Customers() {
   const navigate = useNavigate();
@@ -71,7 +77,7 @@ export default function Customers() {
     loyaltyPoints: c?.points || 0,
   })) || [];
 
-  /* ================= FILTER ================= */
+  /*  FILTER  */
 
   const filteredCustomers = formattedCustomers.filter((c) =>
     `${c.name} ${c.phone}`
@@ -79,7 +85,7 @@ export default function Customers() {
       .includes(search.toLowerCase())
   );
 
-  /* ================= TABLE ================= */
+  /*  TABLE  */
 
   const columns: Column<CustomerRow>[] = [
     {
@@ -154,28 +160,30 @@ export default function Customers() {
     },
   ];
 
-  /* ================= UI ================= */
+  /*  UI  */
 
   return (
     <>
       <Flex direction="column" gap="5" width="100%">
 
-        {/* ===== SUMMARY ===== */}
+        {/*  SUMMARY  */}
         <div className="kb-summary-row">
           <SummaryCard
             title="Total Customers"
             value={(stats?.totalCustomers || 0).toString()}
             accentColor="#2962FF"
             softColor="#E3F2FD"
-            icon="👥"
+            icon={<Users size={20}  /> as any}
           />
+
           <SummaryCard
             title="Total Revenue"
             value={`₹${(stats?.totalRevenue || 0).toLocaleString()}`}
             accentColor="#00C853"
             softColor="#E5F9EE"
-            icon="🛒"
+            icon={<ShoppingCart size={20}  /> as any}
           />
+
           <SummaryCard
             title="Avg per Customer"
             value={`₹${
@@ -185,7 +193,7 @@ export default function Customers() {
             }`}
             accentColor="#FF9100"
             softColor="#FFF3E0"
-            icon="₹"
+            icon={<IndianRupee size={20}  /> as any}
           />
         </div>
 
@@ -206,7 +214,7 @@ export default function Customers() {
           </Button>
         </Flex>
 
-        {/* ===== TABLE ===== */}
+        {/*  TABLE  */}
         <Table
           data={filteredCustomers}
           columns={columns}
@@ -217,7 +225,7 @@ export default function Customers() {
         />
       </Flex>
 
-      {/* ===== ADD / EDIT DIALOG ===== */}
+      {/*  ADD / EDIT DIALOG  */}
       <Dialog.Root
         open={isDialogOpen}
         onOpenChange={(open) => {
@@ -243,7 +251,7 @@ export default function Customers() {
         </Dialog.Content>
       </Dialog.Root>
 
-      {/* ===== DELETE CONFIRM DIALOG ===== */}
+      {/*  DELETE CONFIRM DIALOG */}
       <Dialog.Root
         open={!!deleteId}
         onOpenChange={(open) => {

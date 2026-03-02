@@ -24,9 +24,9 @@ import Login from "./pages/Login";
 
 import { useAppDispatch, useAppSelector } from "./hooks/hooks";
 
-/* ==============================================
+/* 
    MODULE → ROUTE mapping (no TypeScript types)
-============================================== */
+ */
 const MODULE_ROUTES = {
   dashboard:        "/dashboard/home",
   pos:              "/dashboard/pos",
@@ -50,9 +50,9 @@ const MODULE_PRIORITY = [
   "expenses", "reports", "feedback", "users", "roles",
 ];
 
-/* ==============================================
+/*
    SMART REDIRECT
-============================================== */
+ */
 function DashboardRedirect() {
   const { user } = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
@@ -94,9 +94,9 @@ function DashboardRedirect() {
   );
 }
 
-/* ==============================================
+/* 
    NO ACCESS PAGE
-============================================== */
+ */
 function NoAccessPage() {
   const { user } = useAppSelector((state) => state.auth);
 
@@ -122,9 +122,9 @@ function NoAccessPage() {
   );
 }
 
-/* ==============================================
+/* 
    MAIN APP
-============================================== */
+ */
 function App() {
   const dispatch = useAppDispatch();
   const { initializing } = useAppSelector((state) => state.auth);

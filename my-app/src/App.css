@@ -77,9 +77,9 @@
 /* Sidebar */
 
 
-/* =========================
+/* 
    SIDEBAR (ACCENT DRIVEN)
-========================= */
+ */
 
 .kb-sidebar {
     width: 240px;
@@ -582,14 +582,14 @@
     position: relative;
     overflow: hidden;
     transition: box-shadow 0.25s ease, transform 0.25s ease;
-    /* ✅ Force flex layout so image + content always stack correctly.
+    /* Force flex layout so image + content always stack correctly.
        Radix's .rt-reset and .rt-Card override inline styles, so we
        need this in the stylesheet to win the specificity battle. */
     display: flex !important;
     flex-direction: column !important;
 }
 
-/* ✅ Image area — fixed height, never grows */
+/* Image area — fixed height, never grows */
 .product-card-img {
     height: 140px !important;
     flex-shrink: 0 !important;
@@ -600,7 +600,7 @@
     background: linear-gradient(180deg, #f8fafc, #f1f5f9);
 }
 
-/* ✅ Content area — fills remaining space */
+/*  Content area — fills remaining space */
 .product-card-body {
     flex: 1 !important;
     display: flex !important;

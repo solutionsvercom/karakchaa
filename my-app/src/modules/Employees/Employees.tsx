@@ -12,6 +12,12 @@ import Searchbar from "../../components/dynamicComponents/Searchbar";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 import AddEmployee from "./AddEmployee";
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
+import {
+  Users,
+  UserCheck,
+  UserX,
+  IndianRupee
+} from "lucide-react";
 
 const getRoleColor = (role: string): "yellow" | "green" | "orange" | "cyan" | "blue" | "gray" => {
   const map: Record<string, "yellow" | "green" | "orange" | "cyan" | "blue" | "gray"> = {
@@ -165,28 +171,31 @@ export default function Employees() {
             value={String(summary.total)}
             accentColor="#7C4DFF"
             softColor="#F0E9FF"
-            icon="👥"
+            icon={<Users size={22} strokeWidth={2.2} />as any}
           />
+
           <SummaryCard
             title="Active"
             value={String(summary.active)}
             accentColor="#00C853"
             softColor="#E5F9EE"
-            icon="✅"
+            icon={<UserCheck size={22} strokeWidth={2.2} />as any}
           />
+
           <SummaryCard
             title="Inactive"
             value={String(summary.inactive)}
             accentColor="#FF9100"
             softColor="#FFF3E0"
-            icon="⏸️"
+            icon={<UserX size={22} strokeWidth={2.2} />as any}
           />
+
           <SummaryCard
             title="Monthly Salary"
             value={`₹${summary.salary.toLocaleString()}`}
             accentColor="#2962FF"
             softColor="#E3F2FD"
-            icon="₹"
+            icon={<IndianRupee size={22} strokeWidth={2.2} />as any}
           />
         </div>
 

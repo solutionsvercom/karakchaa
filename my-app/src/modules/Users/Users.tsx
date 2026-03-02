@@ -207,7 +207,7 @@ export default function Users() {
         <Table data={filteredUsers} columns={columns} emptyMessage="No users found" hoverable striped />
       </Flex>
 
-      {/* ===== ADD / EDIT DIALOG ===== */}
+      {/*  ADD / EDIT DIALOG */}
       <Dialog.Root open={isDialogOpen} onOpenChange={(open) => { if (!open) navigate("/dashboard/users"); }}>
         <Dialog.Content maxWidth="520px">
           <AddUser
@@ -232,7 +232,7 @@ export default function Users() {
         </Dialog.Content>
       </Dialog.Root>
 
-      {/* ===== DELETE CONFIRM DIALOG ===== */}
+      {/* DELETE CONFIRM DIALOG */}
       <Dialog.Root open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
         <Dialog.Content maxWidth="380px" aria-describedby={undefined}>
           <Dialog.Title>Delete User?</Dialog.Title>

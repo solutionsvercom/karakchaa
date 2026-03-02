@@ -9,7 +9,7 @@ type DynamicAlertDialogProps = {
   actionText?: string;
   onAction?: () => Promise<void> | void;
   color?: "red" | "blue" | "green" | "gray";
-  // ✅ Controlled mode — used by DynamicForm to block opening until validation passes
+  // Controlled mode — used by DynamicForm to block opening until validation passes
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 };
@@ -36,7 +36,7 @@ const DynamicAlertDialog = ({
     }
   };
 
-  // ✅ Use controlled props only when both are provided
+  // Use controlled props only when both are provided
   const controlledProps =
     open !== undefined && onOpenChange !== undefined
       ? { open, onOpenChange }
@@ -44,7 +44,7 @@ const DynamicAlertDialog = ({
 
   return (
     <AlertDialog.Root {...controlledProps}>
-      {/* ✅ No asChild — @radix-ui/themes AlertDialog.Trigger doesn't support it */}
+      {/* No asChild — @radix-ui/themes AlertDialog.Trigger doesn't support it */}
       <AlertDialog.Trigger>
         {children}
       </AlertDialog.Trigger>

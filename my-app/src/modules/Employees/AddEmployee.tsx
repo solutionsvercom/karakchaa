@@ -36,7 +36,7 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
   const [error, setError] = useState<string | null>(null);
   const [roles, setRoles] = useState<any[]>([]);
 
-  /* ================= FETCH ROLES ================= */
+  /*  FETCH ROLES  */
 
   useEffect(() => {
     const fetchRoles = async () => {
@@ -54,7 +54,7 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
     fetchRoles();
   }, []);
 
-  /* ================= VALIDATION ================= */
+  /*  VALIDATION  */
 
   const validate = (data: any) => {
     const name = data.name?.trim();
@@ -65,7 +65,7 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
     const salary = Number(data.salary);
     const joinDate = data.joinDate;
 
-    // 1️⃣ Name
+    // Name
     if (!name)
       return "Full name is required";
     if (name.length < 3)
@@ -73,23 +73,23 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
     if (!/^[a-zA-Z\s.'-]+$/.test(name))
       return "Full name contains invalid characters";
 
-    // 2️⃣ Phone
+    //  Phone
     if (!phone)
       return "Phone number is required";
     if (!/^\d{10}$/.test(phone))
       return "Phone number must be exactly 10 digits";
 
-    // 3️⃣ Email — required
+    // Email — required
     if (!email)
       return "Email is required";
     if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email))
       return "Please enter a valid email address";
 
-    // 4️⃣ Role
+    // Role
     if (!role)
       return "Please select a role";
 
-    // 5️⃣ Salary
+    // Salary
     if (!data.salary || isNaN(salary))
       return "Salary is required";
     if (salary <= 0)
@@ -97,7 +97,7 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
     if (salary > 10_000_000)
       return "Salary amount seems unrealistic";
 
-    // 6️⃣ Join Date — required, no future dates
+    // Join Date — required, no future dates
     if (!joinDate)
       return "Join date is required";
     const selected = new Date(joinDate);
@@ -106,14 +106,14 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
     if (selected > today)
       return "Join date cannot be in the future";
 
-    // 7️⃣ Emergency Contact — optional, 10 digits if provided
+    // Emergency Contact — optional, 10 digits if provided
     if (emergencyContact && !/^\d{10}$/.test(emergencyContact))
       return "Emergency contact must be a 10-digit phone number";
 
     return null;
   };
 
-  /* ================= FIELDS ================= */
+  /*  FIELDS  */
 
   const fields: FormField<EmployeeField>[] = [
     {
@@ -184,7 +184,7 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
     },
   ];
 
-  /* ================= UI ================= */
+  /*  UI  */
 
   return (
     <>

@@ -295,14 +295,6 @@ export function buildLast7DaysTrendWithDate(
 }
 // src/components/charts/chartDataBuilders.ts
 
-/**
- * Smart Revenue Trend Builder - Adapts format based on date range
- */
-// src/components/charts/chartDataBuilders.ts
-
-/**
- * Smart Revenue Trend Builder - Adapts format based on date range
- */
 export function buildRevenueTrendSmart(
   data: { dateTime: string; amount: number }[],
   dateRange: string
@@ -608,4 +600,4 @@ export function buildTopProducts(
     .slice(0, limit);
 }
 
-// ... rest of your functions
+// rest of your functions

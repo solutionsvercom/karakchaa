@@ -2,7 +2,7 @@ import React from "react";
 import { ReactNode } from "react";
 
 
-/* ---------- TYPES ---------- */
+/* TYPES  */
 export type SummaryCardProps = {
   title: string;
   value: ReactNode;
@@ -12,7 +12,7 @@ export type SummaryCardProps = {
   icon: string;
 };
 
-/* ---------- REUSABLE SUMMARY CARD ---------- */
+/*  REUSABLE SUMMARY CARD  */
 export const SummaryCard: React.FC<SummaryCardProps> = ({
   title,
   value,
