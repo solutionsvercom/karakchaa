@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_ROLES } from "../../config/Api";
 import { Flex, Text, Checkbox, Button } from "@radix-ui/themes";
 import { Shield, CheckCheck, X } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -71,9 +72,9 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
       const payload = { name, modules };
 
       if (mode === "edit" && roleId) {
-        await axios.put(`http://localhost:5000/api/roles/${roleId}`, payload, { headers });
+        await axios.put(`${API_ROLES}/${roleId}`, payload, { headers });
       } else {
-        await axios.post("http://localhost:5000/api/roles", payload, { headers });
+        await axios.post(API_ROLES, payload, { headers });
       }
 
       onSuccess();
@@ -91,26 +92,26 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
       {/* ===== TITLE (matches DynamicForm header) ===== */}
       <Flex justify="between" align="center" mb="0">
         <Flex align="center" gap="2">
-          
+
           <Text weight="bold" size="4">
             {mode === "edit" ? "Edit Role" : "Add New Role"}
           </Text>
         </Flex>
-         <Dialog.Close asChild>
-                    <Button variant="ghost" className="dialog-close-icon">
-                      <X size={18} />
-                    </Button>
-                  </Dialog.Close>
+        <Dialog.Close asChild>
+          <Button variant="ghost" className="dialog-close-icon">
+            <X size={18} />
+          </Button>
+        </Dialog.Close>
       </Flex>
 
       {/* ===== ERROR ===== */}
       {error && (
         <div style={{
           padding: "12px",
-         
+
           border: "1px solid #fecaca",
           borderRadius: "8px",
-          
+
           fontSize: "14px",
         }}>
           {error}
@@ -119,40 +120,40 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
 
       {/* ===== ROLE NAME ===== */}
       <div>
-        <Text size="2" weight="medium" style={{ display: "block", marginBottom: 4,  }}>
+        <Text size="2" weight="medium" style={{ display: "block", marginBottom: 4, }}>
           Role Name <Text color="red">*</Text>
         </Text>
-      <input
-  type="text"
-  placeholder="Enter role name (e.g., Manager, Staff)"
-  value={name}
-  onChange={(e) => setName(e.target.value)}
-  disabled={loading}
-  style={{
-    width: "100%",
-    padding: "10px 12px",
-    fontSize: "14px",
+        <input
+          type="text"
+          placeholder="Enter role name (e.g., Manager, Staff)"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: "10px 12px",
+            fontSize: "14px",
 
-    // ✅ match customer form
-    backgroundColor: "transparent",
-    
-    border: "1px solid var(--accent-6)",
-    borderRadius: "8px",
+            // ✅ match customer form
+            backgroundColor: "transparent",
 
-    outline: "none",
-    transition: "border-color 0.2s, box-shadow 0.2s",
-    fontFamily: "inherit",
-    boxSizing: "border-box",
-  }}
-  onFocus={(e) => {
-    e.target.style.borderColor = "var(--accent-9)";
-    e.target.style.boxShadow = "0 0 0 1px var(--accent-9)";
-  }}
-  onBlur={(e) => {
-    e.target.style.borderColor = "var(--accent-6)";
-    e.target.style.boxShadow = "none";
-  }}
-/>
+            border: "1px solid var(--accent-6)",
+            borderRadius: "8px",
+
+            outline: "none",
+            transition: "border-color 0.2s, box-shadow 0.2s",
+            fontFamily: "inherit",
+            boxSizing: "border-box",
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = "var(--accent-9)";
+            e.target.style.boxShadow = "0 0 0 1px var(--accent-9)";
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = "var(--accent-6)";
+            e.target.style.boxShadow = "none";
+          }}
+        />
 
       </div>
 
@@ -190,7 +191,7 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
           maxHeight: "280px",
           overflowY: "auto",
           padding: "12px",
-          
+
           borderRadius: "8px",
           border: "1px solid #e5e7eb",
         }}>
@@ -215,7 +216,7 @@ const AddRole = ({ mode, initialValues, roleId, onSuccess }: AddRoleProps) => {
                   fontSize: "13px",
                   fontWeight: "500",
                   opacity: loading ? 0.6 : 1,
-                 
+
                 }}
               >
                 <Checkbox

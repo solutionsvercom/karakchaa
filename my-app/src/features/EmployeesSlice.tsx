@@ -1,9 +1,10 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
+import { API_EMPLOYEES } from "../config/Api";
 
-const API_URL = `http://localhost:5000/api/employees`;
+const API_URL = API_EMPLOYEES;
 
-/* ================= TYPES ================= */
+/*  TYPES  */
 
 export interface Employee {
   _id?: string;
@@ -39,7 +40,7 @@ const initialState: EmployeesState = {
   stats: null,
 };
 
-/* ================= ASYNC THUNKS ================= */
+/*  ASYNC THUNKS  */
 
 export const fetchEmployees = createAsyncThunk(
   "employees/fetchEmployees",
@@ -106,7 +107,7 @@ export const deleteEmployee = createAsyncThunk(
   }
 );
 
-/* ================= SLICE ================= */
+/*  SLICE  */
 
 const employeesSlice = createSlice({
   name: "employees",

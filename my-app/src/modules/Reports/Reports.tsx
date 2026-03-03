@@ -28,8 +28,9 @@ import {
   Folder
 } from "lucide-react";
 import axios from "axios";
+import { API_REPORTS } from "../../config/Api";
 
-/* ================= HELPER ================= */
+/*  HELPER */
 
 const knownCategories = ["inventory", "supplies", "salary", "utilities", "rent", "maintenance"];
 
@@ -41,7 +42,7 @@ const calculateTotals = (data: any[]) => {
   return { totalRevenue, totalOrders, averageOrder };
 };
 
-/* ================= COMPONENT ================= */
+/*  COMPONENT */
 
 export default function Reports() {
   const dispatch = useDispatch<AppDispatch>();
@@ -62,10 +63,10 @@ export default function Reports() {
     dispatch(fetchSales({ page: 1, limit: 100000 }));
     dispatch(fetchExpenseTotals());
     dispatch(fetchExpenses());
-    dispatch(fetchEmployees("")); // ✅ FIXED HERE
+    dispatch(fetchEmployees("")); 
   }, [dispatch]);
 
-  /* ⭐ MAP SALES → DASHBOARD FORMAT */
+  /* MAP SALES → DASHBOARD FORMAT */
   const dashboardSales = useMemo(
     () =>
       sales.map((s: Sale, index: number) => ({
@@ -86,7 +87,7 @@ export default function Reports() {
   useEffect(() => {
     const loadReports = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/reports", {
+        const res = await axios.get(API_REPORTS, {
           params: { period: category },
         });
         setReportSummary(res.data);
@@ -99,7 +100,7 @@ export default function Reports() {
 
   const salesSummary = calculateTotals(filteredData);
 
-  /* ✅ Calculate Active Employee Salary */
+  /*Calculate Active Employee Salary */
   const totalEmployeeSalary = useMemo(() => {
     return employees
       .filter((e) => e.active !== false)
@@ -108,11 +109,11 @@ export default function Reports() {
 
   const totalExpenses = totals?.totalExpenses ?? 0;
 
-  /* ✅ Net Profit now includes salary */
+  /*Net Profit now includes salary */
   const netProfit =
     salesSummary.totalRevenue - (totalExpenses + totalEmployeeSalary);
 
-  /* ⭐ CATEGORY BREAKDOWN */
+  /*CATEGORY BREAKDOWN */
   const categoryTotals = useMemo(() => {
     const map: Record<string, number> = {};
 
@@ -130,7 +131,7 @@ export default function Reports() {
 
     map["others"] = others;
 
-    /* ✅ Inject Employee Salary into breakdown */
+    /*Inject Employee Salary into breakdown */
     map["salary"] = totalEmployeeSalary;
 
     return map as Record<string, number>;
@@ -163,8 +164,8 @@ export default function Reports() {
           </DropdownMenu.Trigger>
           <DropdownMenu.Content>
             {[
-              "All Time","Today","Yesterday","Last 7 Days","Last 14 Days",
-              "Last 30 Days","Last 3 Months","Last 6 Months","Last 1 Year",
+              "All Time", "Today", "Yesterday", "Last 7 Days", "Last 14 Days",
+              "Last 30 Days", "Last 3 Months", "Last 6 Months", "Last 1 Year",
             ].map((item) => (
               <DropdownMenu.Item key={item} onClick={() => setCategory(item)}>
                 {item}

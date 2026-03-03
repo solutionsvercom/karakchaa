@@ -1,8 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { API_EXPENSES } from "../config/Api";
 
 
-/* ================= TYPES ================= */
+/*  TYPES  */
 
 export type ExpenseCategory =
   | "misc"
@@ -42,7 +43,7 @@ interface ExpensesState {
   expenses: Expense[];
   totals: ExpenseTotals | null;
 
-  // ✅ for edit screen
+  // for edit screen
   selected: Expense | null;
   loadingSelected: boolean;
 
@@ -61,14 +62,14 @@ const initialState: ExpensesState = {
   error: null,
 };
 
-/* ================= API BASE ================= */
+/*  API BASE  */
 
-const BASE_URL = `http://localhost:5000/api/expenses`; // ✅ CHANGED: point to backend API
+const BASE_URL = API_EXPENSES;
 
 
 /* ================= ASYNC THUNKS ================= */
 
-// ✅ GET /api/expenses
+// GET /api/expenses
 export const fetchExpenses = createAsyncThunk(
   "expenses/fetchAll",
   async (_, thunkAPI) => {
@@ -91,7 +92,7 @@ export const fetchExpenses = createAsyncThunk(
   }
 );
 
-// ✅ GET /api/expenses/:id  (IMPORTANT FOR EDIT)
+//GET /api/expenses/:id  (IMPORTANT FOR EDIT)
 export const fetchExpenseById = createAsyncThunk(
   "expenses/fetchById",
   async (id: string, thunkAPI) => {
@@ -106,7 +107,7 @@ export const fetchExpenseById = createAsyncThunk(
   }
 );
 
-// ✅ GET /api/expenses/totals
+// GET /api/expenses/totals
 export const fetchExpenseTotals = createAsyncThunk(
   "expenses/fetchTotals",
   async (_, thunkAPI) => {
@@ -121,7 +122,7 @@ export const fetchExpenseTotals = createAsyncThunk(
   }
 );
 
-// ✅ POST /api/expenses
+// POST /api/expenses
 export const createExpense = createAsyncThunk(
   "expenses/create",
   async (payload: any, thunkAPI) => {
@@ -136,7 +137,7 @@ export const createExpense = createAsyncThunk(
   }
 );
 
-// ✅ PUT /api/expenses/:id
+// PUT /api/expenses/:id
 export const updateExpense = createAsyncThunk(
   "expenses/update",
   async (
@@ -154,7 +155,7 @@ export const updateExpense = createAsyncThunk(
   }
 );
 
-// ✅ DELETE /api/expenses/:id
+// DELETE /api/expenses/:id
 export const deleteExpense = createAsyncThunk(
   "expenses/delete",
   async (id: string, thunkAPI) => {
@@ -169,7 +170,7 @@ export const deleteExpense = createAsyncThunk(
   }
 );
 
-/* ================= SLICE ================= */
+/*  SLICE  */
 
 const expensesSlice = createSlice({
   name: "expenses",
@@ -185,7 +186,7 @@ const expensesSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      /* ===== FETCH EXPENSES ===== */
+      /*  FETCH EXPENSES  */
       .addCase(fetchExpenses.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -199,7 +200,7 @@ const expensesSlice = createSlice({
         state.error = action.payload as string;
       })
 
-      /* ===== FETCH ONE (EDIT) ===== */
+      /* FETCH ONE (EDIT)  */
       .addCase(fetchExpenseById.pending, (state) => {
         state.loadingSelected = true;
         state.error = null;
@@ -217,17 +218,17 @@ const expensesSlice = createSlice({
         state.error = action.payload as string;
       })
 
-      /* ===== TOTALS ===== */
+      /*  TOTALS  */
       .addCase(fetchExpenseTotals.fulfilled, (state, action) => {
         state.totals = action.payload;
       })
 
-      /* ===== CREATE ===== */
+      /* CREATE  */
       .addCase(createExpense.fulfilled, (state, action) => {
         state.expenses.unshift(action.payload);
       })
 
-      /* ===== UPDATE ===== */
+      /*  UPDATE  */
       .addCase(updateExpense.fulfilled, (state, action) => {
         const index = state.expenses.findIndex((e) => e._id === action.payload._id);
         if (index !== -1) state.expenses[index] = action.payload;
@@ -238,7 +239,7 @@ const expensesSlice = createSlice({
         }
       })
 
-      /* ===== DELETE ===== */
+      /* DELETE  */
       .addCase(deleteExpense.fulfilled, (state, action) => {
         state.expenses = state.expenses.filter((e) => e._id !== action.payload);
         if (state.selected?._id === action.payload) state.selected = null;

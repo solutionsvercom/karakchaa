@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { API_PRODUCTS } from "../config/Api";
 
-/* ================= TYPES ================= */
+/*  TYPES  */
 
 export interface Product {
   _id: string;
@@ -16,7 +17,7 @@ export interface Product {
   isActive: boolean;
   isVeg: boolean;
   image?: {
-    url: string; // ✅ public_id removed
+    url: string; // public_id removed
   };
 }
 
@@ -34,9 +35,9 @@ const initialState: ProductState = {
   error: null,
 };
 
-const BASE_URL = `http://localhost:5000/api/products`;
+const BASE_URL = API_PRODUCTS;
 
-/* ================= ASYNC THUNKS ================= */
+/* ASYNC THUNKS */
 
 // 🔹 Fetch all products
 export const fetchProducts = createAsyncThunk(
@@ -144,7 +145,7 @@ export const deleteProduct = createAsyncThunk(
   }
 );
 
-/* ================= SLICE ================= */
+/*  SLICE  */
 
 const productSlice = createSlice({
   name: "product",

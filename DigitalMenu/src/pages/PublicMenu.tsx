@@ -26,11 +26,7 @@ import {
 } from "lucide-react";
 
 
-/*
-=====================================
-CATEGORY ICONS (UNCHANGED)
-=====================================
-*/
+
 const categoryIcons: Record<string, JSX.Element> = {
   Drinks: <Wine size={20} />,
   Beverages: <Wine size={20} />,
@@ -46,12 +42,7 @@ const categoryIcons: Record<string, JSX.Element> = {
 
 export default function PublicMenu() {
 
-  /*
-  =====================================
-  REDUX CONNECTION (NEW)
-  =====================================
-  */
-
+ 
   const dispatch = useAppDispatch();
 
   const backendProducts = useAppSelector(
@@ -63,12 +54,7 @@ export default function PublicMenu() {
   }, [dispatch]);
 
 
-  /*
-  =====================================
-  CONVERT BACKEND → UI FORMAT (NEW)
-  This replaces SampleMenu dummy data
-  =====================================
-  */
+ 
 
  type MenuItemType = {
   id: string;
@@ -100,7 +86,7 @@ const MENU: MenuItemType[] = useMemo(() => {
 
     description: "",
 
-    veg: product.isVeg ?? true, // ✅ NOW COMES FROM BACKEND
+    veg: product.isVeg ?? true, 
 
     available: product.isAvailable ?? true,
 
@@ -111,11 +97,7 @@ const MENU: MenuItemType[] = useMemo(() => {
 const searchItems = useMemo(() => {
   return MENU.map(item => item.name);
 }, [MENU]);
-  /*
-  =====================================
-  EXISTING STATE (UNCHANGED)
-  =====================================
-  */
+ 
 
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState("All");
@@ -151,11 +133,6 @@ useEffect(() => {
   const { totalQty, subtotal } = useCart();
 
 
-  /*
-  =====================================
-  Get Categories (UNCHANGED)
-  =====================================
-  */
 
   const categories = useMemo(() => {
 
@@ -168,12 +145,7 @@ useEffect(() => {
   }, [MENU]);
 
 
-  /*
-  =====================================
-  FILTER (UNCHANGED)
-  =====================================
-  */
-
+ 
   const filtered = useMemo(() => {
 
     const q = query.trim().toLowerCase();
@@ -205,11 +177,7 @@ useEffect(() => {
   }, [MENU, query, activeCat, vegOnly]);
 
 
-  /*
-  =====================================
-  UI (100% UNCHANGED)
-  =====================================
-  */
+
 
   return (
 
@@ -225,7 +193,6 @@ useEffect(() => {
   <div className="menuPage">
 
 
-    {/* HEADER */}
 
     <div className="stickyTop">
 
@@ -282,7 +249,6 @@ useEffect(() => {
         </header>
 
 
-        {/* SEARCH */}
 
         <div className="searchWrap">
 
@@ -304,7 +270,6 @@ useEffect(() => {
         </div>
 
 
-        {/* CATEGORY TABS */}
 
         <CategoryTabs
           categories={categories}
@@ -318,7 +283,6 @@ useEffect(() => {
 
 
 
-    {/* MENU */}
 
     <div className="menuScrollArea">
 
@@ -422,7 +386,6 @@ useEffect(() => {
 
 
 
-    {/* CART BAR */}
 
     {!cartOpen && (
 

@@ -48,7 +48,7 @@ export const CheckoutDialog = ({
   const handleCompleteOrder = async () => {
     if (!items.length) return;
 
-    // ✅ Required field validation — show inline error, don't submit
+    //Required field validation — show inline error, don't submit
     if (!customerName.trim()) {
       setError("Customer name is required.");
       return;
@@ -157,7 +157,7 @@ export const CheckoutDialog = ({
               borderRadius: 16,
             }}
           >
-            {/* ===== HEADER ===== */}
+            {/* HEADER */}
             <Flex justify="between" align="center" mb="4">
               <Dialog.Title asChild>
                 <Text size="6" weight="bold">
@@ -176,7 +176,7 @@ export const CheckoutDialog = ({
               </Dialog.Close>
             </Flex>
 
-            {/* ===== ERROR BANNER ===== */}
+            {/* ERROR BANNER */}
             {error && (
               <div
                 style={{
@@ -192,7 +192,7 @@ export const CheckoutDialog = ({
               </div>
             )}
 
-            {/* ===== ORDER SUMMARY ===== */}
+            {/* ORDER SUMMARY */}
             <div
               style={{
                 background: "var(--gray-a2)",
@@ -248,7 +248,7 @@ export const CheckoutDialog = ({
               </Flex>
             </div>
 
-            {/* ===== CUSTOMER FIELDS ===== */}
+            {/* CUSTOMER FIELDS */}
             <Flex gap="3" mb="3" wrap="wrap">
               <div style={{ flex: 1 }}>
                 <Text
@@ -306,7 +306,7 @@ export const CheckoutDialog = ({
               </div>
             </Flex>
 
-            {/* ===== ORDER TYPE ===== */}
+            {/* ORDER TYPE */}
             <div style={{ marginBottom: 20 }}>
               <Text
                 size="2"
@@ -342,7 +342,7 @@ export const CheckoutDialog = ({
               </Flex>
             </div>
 
-            {/* ===== PAYMENT METHOD ===== */}
+            {/* PAYMENT METHOD */}
             <div style={{ marginBottom: 20 }}>
               <Text
                 size="2"
@@ -386,7 +386,7 @@ export const CheckoutDialog = ({
               </div>
             </div>
 
-            {/* ===== NOTES ===== */}
+            {/*  NOTES */}
             <div style={{ marginBottom: 20 }}>
               <Text
                 size="2"
@@ -414,7 +414,7 @@ export const CheckoutDialog = ({
               />
             </div>
 
-            {/* ===== ACTIONS ===== */}
+            {/*  ACTIONS */}
             <Flex gap="3">
               <Dialog.Close asChild>
                 <Button
@@ -445,7 +445,7 @@ export const CheckoutDialog = ({
         </Dialog.Portal>
       </Dialog.Root>
 
-      {/* ===== CUSTOM TOAST NOTIFICATIONS ===== */}
+      {/* CUSTOM TOAST NOTIFICATIONS */}
       <Toast
         open={toastOpen}
         onOpenChange={setToastOpen}

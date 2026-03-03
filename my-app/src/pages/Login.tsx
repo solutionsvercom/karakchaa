@@ -28,7 +28,7 @@ const Login = () => {
   )
 
   const [showPassword, setShowPassword] = useState(false)
-  // ✅ CHANGED: companyId instead of email
+  // CHANGED: companyId instead of email
   const [companyId, setCompanyId] = useState('')
   const [password, setPassword] = useState('')
   const [companyIdFocused, setCompanyIdFocused] = useState(false)
@@ -70,7 +70,7 @@ const Login = () => {
     dispatch(clearError())
     
     try {
-      // ✅ CHANGED: send companyId instead of email
+      // CHANGED: send companyId instead of email
       await dispatch(login({ companyId, password })).unwrap()
     } catch (error) {
       console.error('Login failed:', error)

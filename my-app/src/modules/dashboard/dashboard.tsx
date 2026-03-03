@@ -26,7 +26,7 @@ import {
 import { LowStockAlert } from "../../components/dynamicComponents/Charts/LowStockAlert";
 import { RecentSales } from "../../components/dynamicComponents/Charts/RecentSales";
 
-/* ================= TYPES ================= */
+/*  TYPES  */
 
 interface DailySalesData {
   date: string;
@@ -39,7 +39,7 @@ interface ProductSalesCount {
   count: number;
 }
 
-/* ================= HELPER FUNCTIONS ================= */
+/*  HELPER FUNCTIONS  */
 
 /**
  * Get sales from last N days
@@ -159,7 +159,7 @@ const getTodaysCustomersCount = (customers: any[]): number => {
   }).length;
 };
 
-/* ================= COMPONENT ================= */
+/*  COMPONENT  */
 
 export default function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
@@ -170,7 +170,7 @@ export default function Dashboard() {
   const { items: stockItems } = useSelector((state: RootState) => state.stock);
   const { sales } = useSelector((state: RootState) => state.sales);
 
-  /* ================= FETCH DATA ================= */
+  /*  FETCH DATA  */
 
   useEffect(() => {
     dispatch(fetchStockItems());
@@ -181,7 +181,7 @@ export default function Dashboard() {
     dispatch(fetchExpenses());
   }, [dispatch]);
 
-  /* ================= PROCESS DATA ================= */
+  /*  PROCESS DATA  */
 
   // Today's data
   const todaysSales = getTodaysSales(sales);
@@ -199,7 +199,7 @@ export default function Dashboard() {
   // Active products count
   const activeProductsCount = products.filter((p) => p.isActive).length;
 
-  /* ================= UI ================= */
+  /*  UI  */
 
   return (
     <>
@@ -272,7 +272,7 @@ export default function Dashboard() {
       `}</style>
 
       <Flex direction="column" gap="4" width="100%">
-        {/* ===== SUMMARY CARDS ===== */}
+        {/*  SUMMARY CARDS */}
         <div className="dash-summary-grid">
           <SummaryCard
             title="Today's Revenue"
@@ -307,7 +307,7 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* ===== CHARTS ROW 1 ===== */}
+        {/*  CHARTS ROW 1  */}
         <div className="dash-charts-row">
           <RevenueTrendChart
             data={revenueTrendData}
@@ -317,7 +317,7 @@ export default function Dashboard() {
           <LowStockAlert products={stockItems} />
         </div>
 
-        {/* ===== CHARTS ROW 2 ===== */}
+        {/* CHARTS ROW 2 */}
         <div className="dash-charts-row">
           <TopProductsChart
             data={topProductsData}

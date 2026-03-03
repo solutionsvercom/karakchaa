@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
   requiredModule?: string;
 }
 
-// ✅ Normalize module keys - handles 'customers' vs 'customer' etc
+// Normalize module keys - handles 'customers' vs 'customer' etc
 const normalizeModule = (module: string): string => {
   const map: Record<string, string> = {
     "customers":      "customer",
@@ -91,7 +91,7 @@ export default function ProtectedRoute({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // ✅ ROLE-BASED CHECK
+  // ROLE-BASED CHECK
   if (allowedRoles && allowedRoles.length > 0) {
     if (!allowedRoles.includes(user.role)) {
       return (
@@ -125,7 +125,7 @@ export default function ProtectedRoute({
     }
   }
 
-  // ✅ MODULE-BASED CHECK (with normalization)
+  // MODULE-BASED CHECK (with normalization)
   if (requiredModule) {
     if (user.role !== "admin") {
       const normalizedRequired = normalizeModule(requiredModule);

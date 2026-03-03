@@ -27,7 +27,7 @@ import {
   BarChart3,
 } from "lucide-react";
 
-/* ================= TYPES ================= */
+/*  TYPES  */
 
 type PaymentStatus = "pending" | "completed" | "cancelled";
 
@@ -45,7 +45,7 @@ type SaleTransaction = {
   dateTime: string;
 };
 
-/* ================= HELPERS ================= */
+/*  HELPERS */
 
 const getPaymentColor = (status: PaymentStatus) => {
   switch (status) {
@@ -76,7 +76,7 @@ export const calculateTotals = (data: SaleTransaction[]) => {
   return { totalRevenue, totalOrders, averageOrder };
 };
 
-/* ================= COMPONENT ================= */
+/*  COMPONENT  */
 
 export default function Sales() {
   const dispatch = useDispatch<AppDispatch>();
@@ -109,50 +109,56 @@ export default function Sales() {
     dispatch(fetchSalesSummary());
   }, [dispatch, orderTypeFilter]);
 
-  const mappedSales: SaleTransaction[] = sales.map((s: Sale, index) => ({
-    id: index,
-    invoice: s.invoiceNumber,
-    customer: s.customer?.fullName || s.customerName || "Walk-in",
-    phone: s.customer?.phoneNumber || "",
-    items: s.product?.name || "-",
-    saleItems: (s as any).items?.length
-      ? (s as any).items
-      : [{ name: s.product?.name || "-", price: s.sellingPrice || s.totalAmount, quantity: s.quantity || 1 }],
-    type: s.paymentMethod,
-    orderSource: (s as any).orderSource ||
-      (["online", "digital_menu"].includes((s as any).orderType?.toLowerCase()) ? "DIGITAL" : "POS"),
-    amount: s.totalAmount,
-    payment: (s.paymentStatus?.toLowerCase() as PaymentStatus),
-    dateTime: s.createdAt,
-  }));
+  const mappedSales: SaleTransaction[] = React.useMemo(() => {
+    return sales.map((s: Sale, index) => ({
+      id: index,
+      invoice: s.invoiceNumber,
+      customer: s.customer?.fullName || s.customerName || "Walk-in",
+      phone: s.customer?.phoneNumber || "",
+      items: s.product?.name || "-",
+      saleItems: (s as any).items?.length
+        ? (s as any).items
+        : [{ name: s.product?.name || "-", price: s.sellingPrice || s.totalAmount, quantity: s.quantity || 1 }],
+      type: s.paymentMethod,
+      orderSource: (s as any).orderSource ||
+        (["online", "digital_menu"].includes((s as any).orderType?.toLowerCase()) ? "DIGITAL" : "POS"),
+      amount: s.totalAmount,
+      payment: (s.paymentStatus?.toLowerCase() as PaymentStatus),
+      dateTime: s.createdAt,
+    }));
+  }, [sales]);
 
-  const filteredSales = mappedSales.filter((sale) => {
-    const matchesSearch =
-      sale.invoice.toLowerCase().includes(searchValue.toLowerCase()) ||
-      sale.customer.toLowerCase().includes(searchValue.toLowerCase());
-    const matchesPayment =
-      paymentFilter === "All Payments" ||
-      sale.type.toLowerCase() === paymentFilter.toLowerCase();
+  const filteredSales = React.useMemo(() => {
+    return mappedSales.filter((sale) => {
+      const matchesSearch =
+        sale.invoice.toLowerCase().includes(searchValue.toLowerCase()) ||
+        sale.customer.toLowerCase().includes(searchValue.toLowerCase());
+      const matchesPayment =
+        paymentFilter === "All Payments" ||
+        sale.type.toLowerCase() === paymentFilter.toLowerCase();
 
-    // NOTE: OrderSource matching is now handled mostly by the server,
-    // but the local filter applies too for robustness (and search/payment).
-    let matchesOrderType = true;
-    if (orderTypeFilter === "POS") {
-      matchesOrderType = !sale.orderSource || sale.orderSource.toUpperCase() !== "DIGITAL";
-    } else if (orderTypeFilter === "Digital Menu") {
-      matchesOrderType = sale.orderSource?.toUpperCase() === "DIGITAL";
-    }
+      // NOTE: OrderSource matching is now handled mostly by the server,
+      // but the local filter applies too for robustness (and search/payment).
+      let matchesOrderType = true;
+      if (orderTypeFilter === "POS") {
+        matchesOrderType = !sale.orderSource || sale.orderSource.toUpperCase() !== "DIGITAL";
+      } else if (orderTypeFilter === "Digital Menu") {
+        matchesOrderType = sale.orderSource?.toUpperCase() === "DIGITAL";
+      }
 
-    return matchesSearch && matchesPayment && matchesOrderType;
-  });
+      return matchesSearch && matchesPayment && matchesOrderType;
+    });
+  }, [mappedSales, searchValue, paymentFilter, orderTypeFilter]);
 
-  const { totalRevenue, totalOrders, averageOrder } = summary || {
-    totalRevenue: 0,
-    totalOrders: 0,
-    averageOrder: 0,
-  };
+  const { totalRevenue, totalOrders, averageOrder } = React.useMemo(() => {
+    return summary || {
+      totalRevenue: 0,
+      totalOrders: 0,
+      averageOrder: 0,
+    };
+  }, [summary]);
 
-  /* ================= TABLE COLUMNS ================= */
+  /*  TABLE COLUMNS  */
 
   const columns: Column<SaleTransaction>[] = [
     { key: "invoice", header: "Invoice", accessor: "invoice" },
@@ -253,7 +259,7 @@ export default function Sales() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-        {/* ================= SUMMARY ================= */}
+        {/*  SUMMARY */}
         <div className="sales-summary-grid">
           <SummaryCard
             title="Total Revenue"
@@ -281,7 +287,7 @@ export default function Sales() {
           />
         </div>
 
-        {/* ================= FILTER BAR ================= */}
+        {/*  FILTER BAR */}
         <Flex align="center" gap="3" className="sales-filter-bar">
           <Flex style={{ flex: 1 }}>
             <Searchbar
@@ -324,7 +330,7 @@ export default function Sales() {
           </DropdownMenu.Root>
         </Flex>
 
-        {/* ================= TABLE ================= */}
+        {/*  TABLE  */}
         <div className="sales-table-wrap">
           <Table<SaleTransaction>
             data={filteredSales}
@@ -337,7 +343,7 @@ export default function Sales() {
           />
         </div>
 
-        {/* ================= SERVER PAGINATION ================= */}
+        {/*  SERVER PAGINATION  */}
         {pagination && (
           <div
             style={{
@@ -469,7 +475,7 @@ export default function Sales() {
 
       </div>
 
-      {/* ===== VIEW INVOICE MODAL ===== */}
+      {/* VIEW INVOICE MODAL */}
       <Dialog.Root open={!!viewSale} onOpenChange={() => setViewSale(null)}>
         <Dialog.Portal>
           <Dialog.Overlay style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000 }} />
@@ -510,7 +516,7 @@ export default function Sales() {
             {viewSale && (
               <div style={{ display: "flex", flexDirection: "column", gap: 0, marginTop: 16 }}>
 
-                {/* ── Info Grid ── */}
+                {/* Info Grid  */}
                 <div style={{
                   display: "grid", gridTemplateColumns: "1fr 1fr",
                   gap: "12px 0",
@@ -528,7 +534,7 @@ export default function Sales() {
                   } />
                 </div>
 
-                {/* ── Items ── */}
+                {/* Items */}
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10 }}>Items</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -541,7 +547,7 @@ export default function Sales() {
                   </div>
                 </div>
 
-                {/* ── Totals ── */}
+                {/* Totals */}
                 <div style={{
                   borderTop: "1px solid var(--gray-a4)",
                   paddingTop: 12,
@@ -562,7 +568,7 @@ export default function Sales() {
                   </div>
                 </div>
 
-                {/* ── Action Button ── */}
+                {/* Action Button */}
                 {viewSale.payment === "cancelled" ? (
                   <button
                     disabled={editLoading}
@@ -628,7 +634,7 @@ export default function Sales() {
         </Dialog.Portal>
       </Dialog.Root>
 
-      {/* ===== EDIT STATUS MODAL ===== */}
+      {/*  EDIT STATUS MODAL */}
       <Dialog.Root open={!!editSale} onOpenChange={() => setEditSale(null)}>
         <Dialog.Portal>
           <Dialog.Overlay style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000 }} />
@@ -703,7 +709,7 @@ export default function Sales() {
   );
 }
 
-/* ===== HELPER COMPONENT ===== */
+/* HELPER COMPONENT */
 function InfoCell({ label, value, statusColor }: { label: string; value: string; statusColor?: string }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>

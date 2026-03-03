@@ -16,7 +16,7 @@ import { FormField } from "../../components/dynamicComponents/DynamicForm/types"
 import { X } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 
-/* ---------------- TYPES ---------------- */
+/*  TYPES  */
 
 type StockFormField =
   | "quantity"
@@ -38,14 +38,14 @@ interface AddStockProps {
   };
 }
 
-/* ---------------- COMPONENT ---------------- */
+/*  COMPONENT  */
 
 export default function AddStock({ mode, productId, product }: AddStockProps) {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const [selectedReason, setSelectedReason] = useState<string>("");
 
-  // ✅ Local validation error (shown when reason is missing)
+  // Local validation error (shown when reason is missing)
   const [validationError, setValidationError] = useState<string | null>(null);
 
   // Get error from Redux state
@@ -140,7 +140,7 @@ export default function AddStock({ mode, productId, product }: AddStockProps) {
 
   return (
     <Flex direction="column" gap="4">
-      {/* ===== TITLE ===== */}
+      {/* TITLE  */}
       <Flex justify="between" align="center" mb="4">
         <h3 style={{ margin: 0 }}>
           {mode === "add" ? "Add Stock Details" : "Remove Stock Details"}
@@ -152,21 +152,21 @@ export default function AddStock({ mode, productId, product }: AddStockProps) {
         </Dialog.Close>
       </Flex>
 
-      {/* ===== VALIDATION ERROR (missing reason) ===== */}
+      {/*  VALIDATION ERROR (missing reason)  */}
       {validationError && (
         <Callout.Root color="orange" style={{ marginBottom: "8px" }}>
           <Callout.Text>{validationError}</Callout.Text>
         </Callout.Root>
       )}
 
-      {/* ===== REDUX ERROR (server error) ===== */}
+      {/*  REDUX ERROR (server error)  */}
       {error && (
         <Callout.Root color="red" style={{ marginBottom: "8px" }}>
           <Callout.Text>{error}</Callout.Text>
         </Callout.Root>
       )}
 
-      {/* ===== PRODUCT INFO CARD ===== */}
+      {/* PRODUCT INFO CARD  */}
       <div
         style={{
           display: "inline-block",
@@ -182,7 +182,7 @@ export default function AddStock({ mode, productId, product }: AddStockProps) {
         </div>
       </div>
 
-      {/* ===== FORM ===== */}
+      {/*  FORM */}
       <DynamicForm
         fields={getFields()}
         submitText={mode === "add" ? "Add Stock" : "Remove Stock"}
@@ -205,7 +205,7 @@ export default function AddStock({ mode, productId, product }: AddStockProps) {
           cancelText: "Cancel",
         }}
         onSubmit={async (data) => {
-          // ✅ FRONTEND VALIDATION: block submit if reason not selected
+          //FRONTEND VALIDATION: block submit if reason not selected
           if (!data.reason || data.reason === "") {
             setValidationError("Please select a reason before submitting.");
             return; // stop — don't call API
@@ -237,7 +237,7 @@ export default function AddStock({ mode, productId, product }: AddStockProps) {
 
             await dispatch(fetchStockItems());
             await dispatch(fetchStockStats());
-            await dispatch(fetchProducts()); // ✅ refresh Products page stock numbers
+            await dispatch(fetchProducts()); //refresh Products page stock numbers
 
             navigate("/dashboard/stockmanagement");
           } catch (error) {
@@ -247,7 +247,7 @@ export default function AddStock({ mode, productId, product }: AddStockProps) {
         onFieldChange={(fieldName, value) => {
           if (fieldName === "reason") {
             setSelectedReason(value as string);
-            // ✅ Clear validation error as soon as user selects a reason
+            // Clear validation error as soon as user selects a reason
             if (value) setValidationError(null);
           }
         }}

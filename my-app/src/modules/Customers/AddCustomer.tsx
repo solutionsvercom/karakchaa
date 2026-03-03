@@ -7,7 +7,7 @@ import {
   fetchCustomers,
   fetchCustomerStats,
   clearError,
-  setError, // ✅ Import setError
+  setError, // Import setError
 } from "../../features/CustomersSlice";
 import { AppDispatch, RootState } from "../../store/Store";
 import { useNavigate } from "react-router-dom";
@@ -105,7 +105,7 @@ const AddCustomer = ({ mode, initialValues, customerId }: AddCustomerProps) => {
           try {
             dispatch(clearError());
 
-            // ✅ Phone number validation — must be exactly 10 digits
+            // Phone number validation — must be exactly 10 digits
             const digits = data.phone.replace(/\D/g, "");
             if (digits.length !== 10) {
               dispatch(
@@ -115,7 +115,7 @@ const AddCustomer = ({ mode, initialValues, customerId }: AddCustomerProps) => {
                     : `Phone number is too long (${digits.length}/10 digits)`
                 )
               );
-              return; // ✅ Stop submission
+              return; // Stop submission
             }
 
             const payload = {

@@ -15,11 +15,11 @@ type Props<T extends string> = {
   disabled?: boolean;
 };
 
-/* ─────────────────────────────────────────────
+/* 
    HELPER: compress image before upload
    Resizes to max 800px wide, 80% JPEG quality
    Typical reduction: 2MB photo → ~150KB
-───────────────────────────────────────────── */
+ */
 function compressImage(file: File): Promise<File> {
   return new Promise((resolve) => {
     const canvas = document.createElement("canvas");
@@ -237,7 +237,7 @@ const FieldRenderer = <T extends string>({
           ? URL.createObjectURL(value)
           : null;
 
-      // ✅ Shared hidden file input with compression on change
+      // Shared hidden file input with compression on change
       const fileInput = (
         <input
           id={id}
@@ -248,13 +248,13 @@ const FieldRenderer = <T extends string>({
           onChange={async (e) => {
             const file = e.currentTarget.files?.[0];
             if (!file) return;
-            const compressed = await compressImage(file); // ✅ compress before storing
+            const compressed = await compressImage(file); // compress before storing
             onChange(compressed);
           }}
         />
       );
 
-      // ── NO IMAGE: clickable upload box ──────────────────────────────────────
+      // NO IMAGE: clickable upload box 
       if (!imageUrl) {
         return (
           <>
@@ -293,7 +293,7 @@ const FieldRenderer = <T extends string>({
         );
       }
 
-      // ── HAS IMAGE: thumbnail + Change / View / Remove beside it ────────────
+      //  HAS IMAGE: thumbnail + Change / View / Remove beside it 
       return (
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
           {fileInput}

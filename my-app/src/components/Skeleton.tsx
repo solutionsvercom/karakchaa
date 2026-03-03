@@ -7,11 +7,11 @@ interface SkeletonProps {
   count?: number;
 }
 
-export function Skeleton({ 
-  variant = 'text', 
-  width = '100%', 
+export function Skeleton({
+  variant = 'text',
+  width = '100%',
   height,
-  count = 1 
+  count = 1
 }: SkeletonProps) {
   const getHeight = () => {
     if (height) return height;
@@ -45,13 +45,6 @@ export function Skeleton({
 
   return (
     <>
-      <style>{`
-        @keyframes shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-      `}</style>
-      
       {Array.from({ length: count }).map((_, index) => (
         <div key={index} style={skeletonStyle} />
       ))}

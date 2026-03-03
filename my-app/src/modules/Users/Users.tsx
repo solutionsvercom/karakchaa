@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Users as UsersIcon, Trash2, Pencil, Shield, MoreVertical } from "lucide-react";
 import axios from "axios";
+import { API_USERS, API_ROLES } from "../../config/Api";
 import {
   Flex, Text, DropdownMenu, IconButton, Button, Dialog, Avatar,
 } from "@radix-ui/themes";
@@ -42,7 +43,7 @@ export default function Users() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/auth/users", { headers });
+      const res = await axios.get(API_USERS, { headers });
       setUsers(res.data.data || []);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -53,7 +54,7 @@ export default function Users() {
 
   const fetchRoles = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/roles", { headers });
+      const res = await axios.get(API_ROLES, { headers });
       setRoles(res.data.roles || []);
     } catch (error) {
       console.error("Error fetching roles:", error);
@@ -99,7 +100,7 @@ export default function Users() {
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      await axios.delete(`http://localhost:5000/api/auth/users/${deleteId}`, { headers });
+      await axios.delete(`${API_USERS}/${deleteId}`, { headers });
       fetchUsers();
       setDeleteId(null);
     } catch (error) {
@@ -206,7 +207,7 @@ export default function Users() {
         <Table data={filteredUsers} columns={columns} emptyMessage="No users found" hoverable striped />
       </Flex>
 
-      {/* ===== ADD / EDIT DIALOG ===== */}
+      {/*  ADD / EDIT DIALOG */}
       <Dialog.Root open={isDialogOpen} onOpenChange={(open) => { if (!open) navigate("/dashboard/users"); }}>
         <Dialog.Content maxWidth="520px">
           <AddUser
@@ -216,13 +217,13 @@ export default function Users() {
             initialValues={
               userToEdit
                 ? {
-                    name: userToEdit.name,
-                    companyId: userToEdit.companyId || "",
-                    email: userToEdit.email || "",
-                    role: typeof userToEdit.role === "object" ? userToEdit.role._id : userToEdit.role,
-                    phoneNumber: userToEdit.phoneNumber || "",
-                    isActive: userToEdit.isActive ?? true,
-                  }
+                  name: userToEdit.name,
+                  companyId: userToEdit.companyId || "",
+                  email: userToEdit.email || "",
+                  role: typeof userToEdit.role === "object" ? userToEdit.role._id : userToEdit.role,
+                  phoneNumber: userToEdit.phoneNumber || "",
+                  isActive: userToEdit.isActive ?? true,
+                }
                 : undefined
             }
             roles={roles}
@@ -231,7 +232,7 @@ export default function Users() {
         </Dialog.Content>
       </Dialog.Root>
 
-      {/* ===== DELETE CONFIRM DIALOG ===== */}
+      {/* DELETE CONFIRM DIALOG */}
       <Dialog.Root open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
         <Dialog.Content maxWidth="380px" aria-describedby={undefined}>
           <Dialog.Title>Delete User?</Dialog.Title>
@@ -239,13 +240,13 @@ export default function Users() {
             Are you sure you want to delete <strong>{deleteName}</strong>? This action cannot be undone.
           </p>
           <Flex justify="end" gap="3" mt="4">
-           <Button
-            variant="soft"
-            color="gray"
-            onClick={() => setDeleteId(null)}
-          >
-            Cancel
-          </Button>
+            <Button
+              variant="soft"
+              color="gray"
+              onClick={() => setDeleteId(null)}
+            >
+              Cancel
+            </Button>
             <Button color="red" onClick={handleDelete}>Delete</Button>
           </Flex>
         </Dialog.Content>
