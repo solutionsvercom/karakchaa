@@ -7,7 +7,7 @@ const ExcelJS = require("exceljs");
 
 // ✅ Your MongoDB Models
 const Customer = require("../models/Customers/CustomerSchema");
-const Sale = require("../models/Sale");
+const Sale = require("../models/Sales/SaleSchema");
 
 // 🔧 Helper to safely format dates (handles Date, string, null, invalid)
 function formatDate(value) {
