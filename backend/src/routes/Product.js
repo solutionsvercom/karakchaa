@@ -9,7 +9,7 @@ router.post("/", upload.single("image"), productController.createProduct);
 // Sync Products → Stock Management
 router.post("/sync-stock", productController.syncStock);
 
-// ✅ Sync Stock Management → Products (fixes minStock + stockQty drift)
+// Sync Stock Management → Products (fixes minStock + stockQty drift)
 router.post("/sync-from-stock", productController.syncStockToProducts);
 
 // Low stock products

@@ -8,8 +8,6 @@ const userSchema = new mongoose.Schema({
         trim: true
     },
 
-    // ✅ CHANGED: companyId replaces email as login credential
-    // Accepts any format: "john123", "EMP-001", "1001", "john.doe"
     companyId: {
         type: String,
         required: true,
@@ -17,7 +15,6 @@ const userSchema = new mongoose.Schema({
         trim: true
     },
 
-    // ✅ CHANGED: email is now optional — contact use only, not for login
     email: {
         type: String,
         required: false,
@@ -61,7 +58,6 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-// Only hash if password is modified AND not already hashed
 userSchema.pre('save', async function() {
     if (!this.isModified('password')) return;
     if (this.password.startsWith('$2a$') || this.password.startsWith('$2b$')) return;

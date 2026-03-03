@@ -2,10 +2,6 @@ const productService = require("../services/ProductService");
 const cloudinary = require("../../config/cloudinary");
 const streamifier = require("streamifier");
 
-/* ─────────────────────────────────────────────
-   HELPER: stream buffer directly to Cloudinary
-   No base64 conversion — much faster
-───────────────────────────────────────────── */
 function uploadToCloudinary(buffer) {
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream({ folder: "restaurant/products" },
@@ -18,11 +14,6 @@ function uploadToCloudinary(buffer) {
     });
 }
 
-/* ─────────────────────────────────────────────
-   HELPER: extract public_id from Cloudinary URL
-   e.g. ".../upload/v1234/restaurant/products/abc123.jpg"
-   → "restaurant/products/abc123"
-───────────────────────────────────────────── */
 function getPublicIdFromUrl(url) {
     if (!url) return null;
     const matches = url.match(/\/upload\/(?:v\d+\/)?(.+?)(\.[^.]+)?$/);
@@ -38,7 +29,7 @@ class ProductController {
             if (req.file) {
                 const result = await uploadToCloudinary(req.file.buffer);
                 imageData = {
-                    url: result.secure_url, // ✅ only store URL, no public_id
+                    url: result.secure_url, 
                 };
             }
 
@@ -87,10 +78,9 @@ class ProductController {
         try {
             const existingProduct = await productService.getProductById(req.params.id);
 
-            let imageData = existingProduct.image; // default: keep existing
+            let imageData = existingProduct.image; 
 
             if (req.file) {
-                // ✅ Delete old image from Cloudinary using URL extraction
                 const existingImageUrl = existingProduct.image ? existingProduct.image.url : null;
                 const oldPublicId = getPublicIdFromUrl(existingImageUrl);
                 if (oldPublicId) {
@@ -99,11 +89,10 @@ class ProductController {
 
                 const result = await uploadToCloudinary(req.file.buffer);
                 imageData = {
-                    url: result.secure_url, // ✅ only store URL, no public_id
+                    url: result.secure_url, 
                 };
 
             } else if (req.body.removeImage === "true") {
-                // ✅ Delete old image from Cloudinary using URL extraction
                 const existingImageUrl = existingProduct.image ? existingProduct.image.url : null;
                 const oldPublicId = getPublicIdFromUrl(existingImageUrl);
                 if (oldPublicId) {
@@ -111,7 +100,6 @@ class ProductController {
                 }
                 imageData = null;
             }
-            // else: no file, no removeImage — image unchanged
 
             const payload = {
                 ...req.body,
@@ -153,7 +141,6 @@ class ProductController {
         try {
             const existingProduct = await productService.getProductById(req.params.id);
 
-            // ✅ Delete image from Cloudinary using URL extraction
             const existingImageUrl = existingProduct.image ? existingProduct.image.url : null;
             const publicId = getPublicIdFromUrl(existingImageUrl);
             if (publicId) {

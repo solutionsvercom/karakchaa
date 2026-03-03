@@ -18,7 +18,6 @@ const ReportsSchema = new mongoose.Schema(
       required: true,
     },
 
-    /* ===== SALES SUMMARY ===== */
     totalRevenue: {
       type: Number,
       required: true,
@@ -31,7 +30,6 @@ const ReportsSchema = new mongoose.Schema(
       default: 0,
     },
 
-    /* ===== EXPENSE SUMMARY ===== */
     totalExpenses: {
       type: Number,
       required: true,
@@ -44,7 +42,6 @@ const ReportsSchema = new mongoose.Schema(
       default: 0,
     },
 
-    /* ===== EXPENSE BREAKDOWN ===== */
     expenseBreakdown: {
       inventory: { type: Number, default: 0 },
       supplies: { type: Number, default: 0 },
@@ -55,10 +52,9 @@ const ReportsSchema = new mongoose.Schema(
       others: { type: Number, default: 0 },
     },
 
-    /* ===== CHART DATA ===== */
     revenueTrend: [
       {
-        label: String, // e.g. Jan, Feb, Week 1
+        label: String, 
         revenue: Number,
       },
     ],

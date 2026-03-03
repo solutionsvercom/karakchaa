@@ -10,7 +10,7 @@ router.post('/refresh-token', AuthController.refreshToken);
 /* PROTECTED ROUTES */
 router.get('/me', AuthMiddleware, AuthController.getCurrentUser);
 router.post('/change-password', AuthMiddleware, AuthController.changePassword);
-// ✅ NEW: verify current password before allowing password change in edit form
+// verify current password before allowing password change in edit form
 router.post('/verify-password', AuthMiddleware, AuthController.verifyPassword);
 
 /* ADMIN ONLY ROUTES */

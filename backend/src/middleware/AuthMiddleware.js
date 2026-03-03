@@ -3,9 +3,7 @@ const User = require('../models/Users/UserSchema');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production';
 
-/* =========================
-   AUTH MIDDLEWARE
-========================= */
+/* AUTH MIDDLEWARE */
 const AuthMiddleware = async(req, res, next) => {
     try {
         const authHeader = req.header('Authorization');
@@ -58,7 +56,6 @@ const AuthMiddleware = async(req, res, next) => {
             });
         }
 
-        // ✅ CHANGED: companyId instead of email
         req.user = {
             userId: decoded.userId,
             companyId: decoded.companyId,
@@ -77,9 +74,6 @@ const AuthMiddleware = async(req, res, next) => {
     }
 };
 
-/* =========================
-   ROLE MIDDLEWARE
-========================= */
 const RoleMiddleware = (...allowedRoles) => {
     return async(req, res, next) => {
         try {
@@ -113,9 +107,6 @@ const RoleMiddleware = (...allowedRoles) => {
     };
 };
 
-/* =========================
-   MODULE MIDDLEWARE
-========================= */
 const ModuleMiddleware = (requiredModule) => {
     return async(req, res, next) => {
         try {
@@ -161,9 +152,6 @@ const ModuleMiddleware = (requiredModule) => {
     };
 };
 
-/* =========================
-   RATE LIMIT MIDDLEWARE
-========================= */
 const loginAttempts = new Map();
 
 const RateLimitMiddleware = (maxAttempts = 5, windowMs = 15 * 60 * 1000) => {
@@ -193,9 +181,6 @@ const RateLimitMiddleware = (maxAttempts = 5, windowMs = 15 * 60 * 1000) => {
     };
 };
 
-/* =========================
-   SANITIZE INPUT MIDDLEWARE
-========================= */
 const SanitizeInputMiddleware = (req, res, next) => {
     const sanitize = (obj) => {
         if (typeof obj === 'string') return obj.replace(/[<>]/g, '').trim();

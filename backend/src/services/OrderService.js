@@ -28,8 +28,6 @@ async function generateOrderNumber() {
   return `ORD-${String(counter.seq).padStart(5, "0")}`;
 }
 
-/* ================= CREATE ORDER ================= */
-
 async function createOrder(data) {
   const {
     items,
@@ -55,12 +53,10 @@ async function createOrder(data) {
     quantity: item.quantity,
   }));
 
-  // ✅ STAFF-LEVEL: Centralized orderSource assignment (single source of truth)
+  // Centralized orderSource assignment (single source of truth)
   const finalOrderType = orderType || "online";
   const orderSource = finalOrderType === "online" ? "DIGITAL" : "POS";
 
-  // ✅ BUG FIX: POS orders should be "Completed" by default, not "Pending"
-  // Digital Menu orders start as "Pending" and progress through workflow
   const initialStatus = orderSource === "POS" ? "Completed" : "Pending";
 
   const order = await Order.create({
@@ -70,16 +66,13 @@ async function createOrder(data) {
     phone,
     tableNumber,
     orderType: finalOrderType,
-    orderSource, // ✅ NEW: Explicit source
-    status: initialStatus, // ✅ BUG FIX: POS = Completed, Digital = Pending
+    orderSource, 
+    status: initialStatus, 
     paymentMethod: paymentMethod || "Cash",
     totalAmount,
     notes,
   });
 
-  /* ================= POS INSTANT SALE ================= */
-  // POS orders (dine-in, takeaway, delivery) → sale created immediately
-  // Digital Menu orders → sale created when status reaches "Completed"
   if (orderSource === "POS") {
     await SaleService.createSaleFromOrder(order, paymentMethod);
   }
@@ -87,12 +80,10 @@ async function createOrder(data) {
   return order;
 }
 
-/* ================= GET ALL ORDERS (WITH PAGINATION) ================= */
-
 async function getOrders(options = {}) {
   const {
     page = 1,
-    limit = 50, // Staff-level default: reasonable page size
+    limit = 50, 
     status,
     orderSource,
     orderType,
@@ -100,7 +91,6 @@ async function getOrders(options = {}) {
     sortOrder = "desc",
   } = options;
 
-  // ✅ STAFF-LEVEL: Build query dynamically
   const query = {};
   if (status) query.status = status;
   if (orderSource) query.orderSource = orderSource;
@@ -109,14 +99,13 @@ async function getOrders(options = {}) {
   const skip = (page - 1) * limit;
   const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
 
-  // ✅ PERFORMANCE: Use lean() for read-only operations + limit populate fields
   const [orders, total] = await Promise.all([
     Order.find(query)
-      .populate("items.product", "name sku") // Only fetch needed fields
+      .populate("items.product", "name sku") 
       .sort(sort)
       .skip(skip)
       .limit(limit)
-      .lean(), // ✅ Faster - returns plain JS objects
+      .lean(), 
     Order.countDocuments(query),
   ]);
 
@@ -131,8 +120,6 @@ async function getOrders(options = {}) {
     },
   };
 }
-
-/* ================= UPDATE ORDER STATUS ================= */
 
 async function updateOrderStatus(id, status, paymentMethod) {
   const allowedStatuses = [
@@ -151,7 +138,6 @@ async function updateOrderStatus(id, status, paymentMethod) {
   const orderBefore = await Order.findById(id);
   if (!orderBefore) throw new Error("Order not found");
 
-  // ✅ DEFENSIVE: Prevent POS orders from being set to "Pending"
   if (orderBefore.orderSource === "POS" && status === "Pending") {
     throw new Error("POS orders cannot be moved to Pending status");
   }
@@ -170,12 +156,10 @@ async function updateOrderStatus(id, status, paymentMethod) {
 
   if (!order) throw new Error("Order not found");
 
-  /* ================= DIGITAL MENU: create sale when Completed ================= */
   if (order.orderSource === "DIGITAL" && status === "Completed") {
     await SaleService.createSaleFromOrder(order, order.paymentMethod);
   }
 
-  /* ================= ANY ORDER TYPE: reverse sale when Cancelled ================= */
   if (status === "Cancelled") {
     await SaleService.reverseSaleFromOrder(orderBefore);
   }

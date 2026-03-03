@@ -11,7 +11,7 @@ const Sale = require("../models/Sales/SaleSchema");
 function formatDate(value) {
   if (!value) return "";
   const d = value instanceof Date ? value : new Date(value);
-  if (isNaN(d.getTime())) return ""; // invalid date
+  if (isNaN(d.getTime())) return ""; 
   return d.toISOString();
 }
 
@@ -133,7 +133,6 @@ async function uploadToGoogleDrive(filePath, fileName) {
   try {
     const fileMetadata = {
       name: fileName,
-      // parents: ["<GOOGLE_DRIVE_FOLDER_ID>"], // Optional: target a specific folder
     };
 
     const media = {

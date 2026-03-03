@@ -25,7 +25,6 @@ const createUsers = async() => {
         for (const userData of users) {
             const roleDoc = roleMap[userData.roleKey];
 
-            // ✅ CHANGED: look up by companyId instead of email
             const existingUser = await User.findOne({ companyId: userData.companyId });
 
             if (existingUser) {
