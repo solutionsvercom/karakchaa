@@ -10,11 +10,11 @@ const {
 
 const router = express.Router();
 
-router.post("/", createEmployee);          // POST /api/employees
-router.get("/", getEmployees);             // GET  /api/employees
-router.get("/stats", getEmployeeStats);    // GET  /api/employees/stats
-router.get("/:id", getEmployeeById);       // GET  /api/employees/:id
-router.put("/:id", updateEmployee);        // PUT  /api/employees/:id
-router.delete("/:id", deleteEmployee);     // DELETE /api/employees/:id
+router.post("/", createEmployee);          
+router.get("/", getEmployees);             
+router.get("/stats", getEmployeeStats);    
+router.get("/:id", getEmployeeById);       
+router.put("/:id", updateEmployee);        
+router.delete("/:id", deleteEmployee);     
 
 module.exports = router;

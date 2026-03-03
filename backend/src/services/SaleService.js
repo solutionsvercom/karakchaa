@@ -5,8 +5,6 @@ const Counter = require("../models/System/CounterSchema");
 const Customer = require("../models/Customers/CustomerSchema");
 const Stockmanagement = require("../models/Stockmanagement/StockmanagementSchema");
 
-/* ================= INVOICE ================= */
-
 async function generateInvoiceNumber() {
   const counterKey = "invoice_number";
 
@@ -32,8 +30,6 @@ async function generateInvoiceNumber() {
 
   return `INV-${String(counter.seq).padStart(4, "0")}`;
 }
-
-/* ================= ORDER NUMBER ================= */
 
 async function generateOrderNumber() {
   const counterKey = "order_number";
@@ -61,8 +57,6 @@ async function generateOrderNumber() {
   return `ORD-${String(counter.seq).padStart(5, "0")}`;
 }
 
-/* ================= FIND OR CREATE CUSTOMER ================= */
-
 async function findOrCreateCustomer(fullName, phoneNumber) {
   if (!phoneNumber) return null;
 
@@ -78,8 +72,6 @@ async function findOrCreateCustomer(fullName, phoneNumber) {
   return customer._id;
 }
 
-/* ================= UPDATE CUSTOMER STATS ================= */
-// direction: "increment" when sale created, "decrement" when sale cancelled
 
 async function updateCustomerStats(customerId, totalAmount, direction) {
   if (!customerId) return;
@@ -94,16 +86,12 @@ async function updateCustomerStats(customerId, totalAmount, direction) {
   });
 }
 
-/* ================= SYNC STOCKMANAGEMENT COLLECTION ================= */
-// Finds the matching Stockmanagement record by SKU and adjusts it.
-// action: "remove" when sale created, "add" when sale cancelled
 
 async function syncStockmanagement(productDoc, quantity, action, invoiceNumber) {
   const stockItem = await Stockmanagement.findOne({ sku: productDoc.sku });
 
   if (!stockItem) {
-    // Stock management record doesn't exist for this product — skip silently.
-    // (Not every product needs to be in Stockmanagement)
+   
     return;
   }
 
@@ -136,8 +124,6 @@ async function syncStockmanagement(productDoc, quantity, action, invoiceNumber) 
 
   await stockItem.save();
 }
-
-/* ================= CREATE SALE (LEGACY DIRECT FLOW) ================= */
 
 async function createSale(data) {
   const {
@@ -210,10 +196,9 @@ async function createSale(data) {
       paymentMethod,
       paymentStatus,
       soldBy,
-      orderSource: orderType || "POS", // Map the orderType from the payload to orderSource
+      orderSource: orderType || "POS", 
     });
 
-    // ✅ Sync Stockmanagement
     if (productDoc) {
       await syncStockmanagement(productDoc, item.quantity, "remove", invoiceNumber);
     }
@@ -221,7 +206,6 @@ async function createSale(data) {
     createdSales.push(sale);
   }
 
-  // ✅ Update customer stats
   if (customerId) {
     await updateCustomerStats(customerId, totalAmount, "increment");
   }
@@ -229,14 +213,11 @@ async function createSale(data) {
   return { order, sales: createdSales };
 }
 
-/* ================= ⭐ ATOMIC CREATE SALE FROM ORDER ================= */
-
 async function createSaleFromOrder(order, paymentMethod = "Cash") {
   if (!order || !order.items?.length) {
     throw new Error("Invalid order for sale conversion");
   }
 
-  /* 🚨 ATOMIC LOCK — prevents duplicate sale creation */
   const lockedOrder = await Order.findOneAndUpdate(
     { _id: order._id, saleCreated: false },
     { $set: { saleCreated: true } },
@@ -254,7 +235,6 @@ async function createSaleFromOrder(order, paymentMethod = "Cash") {
 
   const invoiceNumber = await generateInvoiceNumber();
 
-  // ✅ STEP 1: Validate ALL items before touching any stock
   for (const item of lockedOrder.items) {
     const productDoc = await Product.findById(item.product);
     if (!productDoc) throw new Error(`Product not found: ${item.name}`);
@@ -267,7 +247,6 @@ async function createSaleFromOrder(order, paymentMethod = "Cash") {
     }
   }
 
-  // ✅ STEP 2: Deduct stock, build items list for invoice
   let totalAmount = 0;
   let firstProductId = null;
   let totalQuantity = 0;
@@ -299,7 +278,6 @@ async function createSaleFromOrder(order, paymentMethod = "Cash") {
     return match || "Cash";
   };
 
-  // ✅ ONE sale per order with ALL items stored — fixes invoice showing only first product
   const sale = await Sale.create({
     invoiceNumber,
     items: saleItems,
@@ -320,18 +298,11 @@ async function createSaleFromOrder(order, paymentMethod = "Cash") {
   return [sale];
 }
 
-/* ================= ⭐ REVERSE SALE ON CANCELLATION ================= */
-
 async function reverseSaleFromOrder(order) {
   if (!order || !order.items?.length) return;
 
-  // Only reverse if a sale was actually created
   if (!order.saleCreated) return;
 
-  // Find all sales linked to this order's invoice number range
-  // We match by product + customer + approximate time window
-  // Best approach: store orderId on Sale (see note below)
-  // For now we reverse stock and customer stats directly
 
   const customerId = order.customer ||
     (order.phone
@@ -343,11 +314,10 @@ async function reverseSaleFromOrder(order) {
 
     if (!productDoc) continue;
 
-    // ✅ Restore Product.stockQty
     productDoc.stockQty += item.quantity;
     await productDoc.save();
 
-    // ✅ Restore Stockmanagement collection
+    // Restore Stockmanagement collection
     await syncStockmanagement(
       productDoc,
       item.quantity,
@@ -356,14 +326,12 @@ async function reverseSaleFromOrder(order) {
     );
   }
 
-  // ✅ Reverse customer stats
+  // Reverse customer stats
   if (customerId) {
     await updateCustomerStats(customerId, order.totalAmount, "decrement");
   }
 
-  // ✅ Mark related sales as Cancelled
-  // We find sales by customer + products within a short time window
-  // Ideal fix: add orderId field to Sale schema (recommended — see comments)
+  
   const saleUpdatePromises = order.items.map((item) =>
     Sale.findOneAndUpdate(
       {
@@ -378,8 +346,6 @@ async function reverseSaleFromOrder(order) {
 
   await Promise.all(saleUpdatePromises);
 }
-
-/* ================= GET SALES ================= */
 
 async function getAllSales(filters = {}) {
   const query = {};
@@ -396,8 +362,7 @@ async function getAllSales(filters = {}) {
 
   if (filters.orderSource) {
     if (filters.orderSource === "POS") {
-      // Because older POS orders might not have an orderSource field at all, 
-      // we match records where orderSource is either "POS" or doesn't exist.
+     
       query.$or = [
         { orderSource: "POS" },
         { orderSource: { $exists: false } }
@@ -435,7 +400,6 @@ async function getAllSales(filters = {}) {
   };
 }
 
-/* ================= SUMMARY (AGGREGATED) ================= */
 
 async function getSalesSummary() {
   const result = await Sale.aggregate([

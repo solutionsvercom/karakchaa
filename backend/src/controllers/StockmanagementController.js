@@ -1,10 +1,8 @@
 const mongoose = require('mongoose');
 const Stockmanagement = require('../models/Stockmanagement/StockmanagementSchema');
-const Product = require('../models/Product/ProductSchema'); // ✅ Added to sync stockQty back to Product
+const Product = require('../models/Product/ProductSchema'); 
 
-/* =========================
-   CREATE PRODUCT
-========================= */
+/* CREATE PRODUCT*/
 exports.createStockItem = async (req, res) => {
     try {
         const { productName, sku, category, currentStock, minStockLevel, unit } = req.body;
@@ -41,9 +39,7 @@ exports.createStockItem = async (req, res) => {
     }
 };
 
-/* =========================
-   GET ALL STOCK ITEMS
-========================= */
+/* GET ALL STOCK ITEMS */
 exports.getAllStock = async (req, res) => {
     try {
         const items = await Stockmanagement.find().sort({ createdAt: -1 });
@@ -62,9 +58,7 @@ exports.getAllStock = async (req, res) => {
     }
 };
 
-/* =========================
-   GET SINGLE STOCK BY ID
-========================= */
+/* GET SINGLE STOCK BY ID */
 exports.getStockById = async (req, res) => {
     try {
         const id = req.params.id.trim();
@@ -98,10 +92,6 @@ exports.getStockById = async (req, res) => {
     }
 };
 
-/* =========================
-   ADD STOCK
-   ✅ Syncs updated quantity back to Product.stockQty
-========================= */
 exports.addStock = async (req, res) => {
     try {
         const { quantity, reason, referenceNo, notes } = req.body;
@@ -115,7 +105,6 @@ exports.addStock = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Quantity must be greater than zero' });
         }
 
-        // ✅ Reason validation
         if (!reason || reason.trim() === '') {
             return res.status(400).json({ success: false, message: 'Reason is required' });
         }
@@ -145,7 +134,6 @@ exports.addStock = async (req, res) => {
 
         await stockItem.save();
 
-        // ✅ Mirror quantity AND minStock to Product collection (matched by SKU)
         await Product.findOneAndUpdate(
             { sku: stockItem.sku },
             { $set: { stockQty: stockItem.currentStock, minStock: stockItem.minStockLevel } }
@@ -165,10 +153,6 @@ exports.addStock = async (req, res) => {
     }
 };
 
-/* =========================
-   REMOVE STOCK
-   ✅ Syncs updated quantity back to Product.stockQty
-========================= */
 exports.removeStock = async (req, res) => {
     try {
         const { quantity, reason, referenceNo, notes } = req.body;
@@ -182,7 +166,6 @@ exports.removeStock = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Quantity must be greater than zero' });
         }
 
-        // ✅ Reason validation
         if (!reason || reason.trim() === '') {
             return res.status(400).json({ success: false, message: 'Reason is required' });
         }
@@ -216,7 +199,6 @@ exports.removeStock = async (req, res) => {
 
         await stockItem.save();
 
-        // ✅ Mirror quantity AND minStock to Product collection (matched by SKU)
         await Product.findOneAndUpdate(
             { sku: stockItem.sku },
             { $set: { stockQty: stockItem.currentStock, minStock: stockItem.minStockLevel } }
@@ -236,9 +218,6 @@ exports.removeStock = async (req, res) => {
     }
 };
 
-/* =========================
-   STOCK HISTORY
-========================= */
 exports.getStockHistory = async (req, res) => {
     try {
         const { id } = req.params;
@@ -266,9 +245,6 @@ exports.getStockHistory = async (req, res) => {
     }
 };
 
-/* =========================
-   STOCK DASHBOARD STATS
-========================= */
 exports.getStockStats = async (req, res) => {
     try {
         const totalProducts = await Stockmanagement.countDocuments();

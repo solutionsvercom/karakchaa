@@ -1,9 +1,6 @@
 const Sale = require("../models/Sales/SaleSchema");
 const Expense = require("../models/Expenses/ExpenseSchema");
 
-/* ======================================================
-   HELPER: Convert period to date range
-====================================================== */
 const getDateRange = (period) => {
   let startDate = null;
   let endDate = new Date();
@@ -59,9 +56,6 @@ const getDateRange = (period) => {
   return { startDate, endDate };
 };
 
-/* ======================================================
-   MAIN SERVICE
-====================================================== */
 const buildReports = async (period = "All Time") => {
   const { startDate, endDate } = getDateRange(period);
 

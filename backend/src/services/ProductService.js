@@ -1,19 +1,12 @@
 const Product = require("../models/Product/ProductSchema");
 const Stockmanagement = require("../models/Stockmanagement/StockmanagementSchema");
 
-/* =============================================================
-   HELPER: compute stock status
-============================================================= */
 function computeStatus(currentStock, minStockLevel) {
   if (currentStock === 0) return "Out of Stock";
   if (currentStock <= minStockLevel) return "Low Stock";
   return "In Stock";
 }
 
-/* =============================================================
-   CREATE PRODUCT
-   → Auto-creates matching Stockmanagement record
-============================================================= */
 async function createProduct(data) {
   const existing = await Product.findOne({ sku: data.sku });
   if (existing) {
@@ -42,16 +35,10 @@ async function createProduct(data) {
   return product;
 }
 
-/* =============================================================
-   GET ALL PRODUCTS
-============================================================= */
 async function getAllProducts() {
   return await Product.find().sort({ createdAt: -1 });
 }
 
-/* =============================================================
-   GET SINGLE PRODUCT BY ID
-============================================================= */
 async function getProductById(id) {
   const product = await Product.findById(id);
   if (!product) {
@@ -62,11 +49,6 @@ async function getProductById(id) {
   return product;
 }
 
-/* =============================================================
-   UPDATE PRODUCT
-   → Syncs name, category, unit, minStock to Stockmanagement
-   → Does NOT overwrite currentStock
-============================================================= */
 async function updateProduct(id, data) {
   const product = await Product.findById(id);
   if (!product) {
@@ -93,7 +75,6 @@ async function updateProduct(id, data) {
     { new: true }
   );
 
-  // ✅ If stockmanagement record exists, recalculate status and pull currentStock back into Product
   if (stockItem) {
     // Recalculate status based on the NEW minStockLevel vs existing currentStock
     stockItem.status = computeStatus(stockItem.currentStock, stockItem.minStockLevel);
@@ -106,9 +87,6 @@ async function updateProduct(id, data) {
   return updated;
 }
 
-/* =============================================================
-   TOGGLE PRODUCT STATUS
-============================================================= */
 async function toggleProductStatus(id, isActive) {
   const product = await Product.findById(id);
   if (!product) {
@@ -121,10 +99,6 @@ async function toggleProductStatus(id, isActive) {
   return await product.save();
 }
 
-/* =============================================================
-   DELETE PRODUCT
-   → Also removes the matching Stockmanagement record
-============================================================= */
 const deleteProduct = async (id) => {
   const product = await Product.findByIdAndDelete(id);
   if (!product) {
@@ -136,9 +110,6 @@ const deleteProduct = async (id) => {
   return product;
 };
 
-/* =============================================================
-   GET LOW STOCK PRODUCTS
-============================================================= */
 async function getLowStockProducts() {
   return await Product.find({
     isActive: true,
@@ -146,14 +117,6 @@ async function getLowStockProducts() {
   }).sort({ stockQty: 1 });
 }
 
-/* =============================================================
-   ONE-TIME BULK SYNC — safe to run multiple times
-
-   RULES:
-   - Product NOT in Stock Management → CREATE with Product.stockQty
-   - Product ALREADY in Stock Management → only update name/category/unit/minLevel
-   - NEVER overwrites currentStock on existing records
-============================================================= */
 async function syncAllProductsToStock() {
   const products = await Product.find();
   let created = 0;
@@ -211,10 +174,6 @@ async function syncAllProductsToStock() {
   };
 }
 
-/* =============================================================
-   SYNC STOCK MANAGEMENT → PRODUCTS
-   Pulls currentStock + minStockLevel back into Product collection
-============================================================= */
 async function syncStockToProducts() {
   const stockItems = await Stockmanagement.find();
   let updated = 0;
