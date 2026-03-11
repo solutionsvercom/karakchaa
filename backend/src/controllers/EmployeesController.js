@@ -7,21 +7,19 @@ const {
   getEmployeeStats,
 } = require("../services/EmployeesService");
 
-/* ================= CREATE ================= */
+/* CREATE */
 exports.createEmployee = async (req, res) => {
   try {
     const employee = await createEmployee(req.body);
     res.status(201).json(employee);
   } catch (error) {
 
-  // 🔥 Handle duplicate phone number
   if (error.code === 11000 && error.keyPattern?.phone) {
     return res.status(400).json({
       message: "Phone number already exists",
     });
   }
 
-  // 🔥 Handle validation errors
   if (error.name === "ValidationError") {
     return res.status(400).json({
       message: "Please fill all required fields correctly",
@@ -33,7 +31,7 @@ exports.createEmployee = async (req, res) => {
 
 };
 
-/* ================= GET ALL ================= */
+/* GET ALL */
 exports.getEmployees = async (req, res) => {
   try {
     const { search = "" } = req.query;
@@ -44,7 +42,6 @@ exports.getEmployees = async (req, res) => {
   }
 };
 
-/* ================= STATS ================= */
 exports.getEmployeeStats = async (req, res) => {
   try {
     const stats = await getEmployeeStats();
@@ -54,7 +51,6 @@ exports.getEmployeeStats = async (req, res) => {
   }
 };
 
-/* ================= GET ONE ================= */
 exports.getEmployeeById = async (req, res) => {
   try {
     const employee = await getEmployeeById(req.params.id);
@@ -67,7 +63,6 @@ exports.getEmployeeById = async (req, res) => {
   }
 };
 
-/* ================= UPDATE ================= */
 exports.updateEmployee = async (req, res) => {
   try {
     const employee = await updateEmployee(req.params.id, req.body);
@@ -85,7 +80,6 @@ exports.updateEmployee = async (req, res) => {
 
 };
 
-/* ================= DELETE ================= */
 exports.deleteEmployee = async (req, res) => {
   try {
     await deleteEmployee(req.params.id);

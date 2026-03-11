@@ -2,12 +2,11 @@ import React from "react";
 import { Flex, Button, Dialog, Text } from "@radix-ui/themes";
 import { Plus } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { API_SUPPLIERS } from "../../config/Api";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import AddSupplier, { SupplierFormValues } from "./AddSupplier";
 import { SupplierCard } from "../../components/dynamicComponents/SupplierCard";
 
-const API_BASE = "http://localhost:5000";
-const SUPPLIERS_API = `${API_BASE}/api/suppliers`;
 
 type SupplierUI = {
   _id: string;
@@ -34,7 +33,7 @@ export default function Suppliers() {
 
   const fetchSuppliers = async () => {
     try {
-      const res = await fetch(SUPPLIERS_API);
+      const res = await fetch(API_SUPPLIERS);
       const json = await res.json();
       const items = json?.items || json?.data || json || [];
       setSuppliers(Array.isArray(items) ? items : []);
@@ -54,7 +53,7 @@ export default function Suppliers() {
   const handleDelete = async () => {
     if (!deleteId) return;
     try {
-      await fetch(`${SUPPLIERS_API}/${deleteId}`, { method: "DELETE" });
+      await fetch(`${API_SUPPLIERS}/${deleteId}`, { method: "DELETE" });
       setSuppliers((prev) => prev.filter((s) => s._id !== deleteId));
       if (editingSupplier?._id === deleteId) setEditingSupplier(null);
       setDeleteId(null);
@@ -78,7 +77,7 @@ export default function Suppliers() {
 
     try {
       if (editingSupplier) {
-        const res = await fetch(`${SUPPLIERS_API}/${editingSupplier._id}`, {
+        const res = await fetch(`${API_SUPPLIERS}/${editingSupplier._id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -91,7 +90,7 @@ export default function Suppliers() {
         return;
       }
 
-      const res = await fetch(SUPPLIERS_API, {
+      const res = await fetch(API_SUPPLIERS, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -122,39 +121,39 @@ export default function Suppliers() {
         <Searchbar searchValue={searchValue} onSearchChange={setSearchValue} placeholder="Search suppliers..." />
       </div>
 
-     <Flex wrap="wrap" gap="4">
-  {filteredSuppliers.length === 0 ? (
-    <Flex
-      width="100%"
-      align="center"
-      justify="center"
-      style={{ padding: "60px 0", color: "#9ca3af", fontSize: 16 }}
-    >
-      No suppliers found
-    </Flex>
-  ) : (
-    filteredSuppliers.map((s) => (
-      <SupplierCard
-        key={s._id}
-        name={s.companyName}
-        contactPerson={s.contactPerson}
-        phone={s.phone}
-        email={s.email}
-        address={s.address ?? ""}
-        products={s.productsSupplied ?? ""}
-        gst={s.gst}
-        status={s.active ? "Active" : "Inactive"}
-        accentColor=""
-        softColor="rgba(124,92,255,0.15)"
-        onEdit={() => {
-          navigate(`/dashboard/suppliers/edit-supplier/${s._id}`);
-          setEditingSupplier(s);
-        }}
-        onDelete={() => setDeleteId(s._id)}
-      />
-    ))
-  )}
-</Flex>
+      <Flex wrap="wrap" gap="4">
+        {filteredSuppliers.length === 0 ? (
+          <Flex
+            width="100%"
+            align="center"
+            justify="center"
+            style={{ padding: "60px 0", color: "#9ca3af", fontSize: 16 }}
+          >
+            No suppliers found
+          </Flex>
+        ) : (
+          filteredSuppliers.map((s) => (
+            <SupplierCard
+              key={s._id}
+              name={s.companyName}
+              contactPerson={s.contactPerson}
+              phone={s.phone}
+              email={s.email}
+              address={s.address ?? ""}
+              products={s.productsSupplied ?? ""}
+              gst={s.gst}
+              status={s.active ? "Active" : "Inactive"}
+              accentColor=""
+              softColor="rgba(124,92,255,0.15)"
+              onEdit={() => {
+                navigate(`/dashboard/suppliers/edit-supplier/${s._id}`);
+                setEditingSupplier(s);
+              }}
+              onDelete={() => setDeleteId(s._id)}
+            />
+          ))
+        )}
+      </Flex>
 
       {/* ===== ADD / EDIT DIALOG ===== */}
       <Dialog.Root
@@ -169,16 +168,16 @@ export default function Suppliers() {
             initialValues={
               editingSupplier
                 ? {
-                    companyName: editingSupplier.companyName,
-                    contactPerson: editingSupplier.contactPerson,
-                    phone: editingSupplier.phone,
-                    email: editingSupplier.email,
-                    address: editingSupplier.address,
-                    gst: editingSupplier.gst,
-                    paymentTerms: editingSupplier.paymentTerms,
-                    productsSupplied: editingSupplier.productsSupplied,
-                    active: editingSupplier.active,
-                  }
+                  companyName: editingSupplier.companyName,
+                  contactPerson: editingSupplier.contactPerson,
+                  phone: editingSupplier.phone,
+                  email: editingSupplier.email,
+                  address: editingSupplier.address,
+                  gst: editingSupplier.gst,
+                  paymentTerms: editingSupplier.paymentTerms,
+                  productsSupplied: editingSupplier.productsSupplied,
+                  active: editingSupplier.active,
+                }
                 : { active: true }
             }
             onSave={handleSave}
@@ -195,13 +194,13 @@ export default function Suppliers() {
             This action cannot be undone. Are you sure you want to delete this supplier?
           </p>
           <Flex justify="end" gap="3" mt="4">
-             <Button
-  variant="soft"
-  color="gray"
-  onClick={() => setDeleteId(null)}
->
-  Cancel
-</Button>
+            <Button
+              variant="soft"
+              color="gray"
+              onClick={() => setDeleteId(null)}
+            >
+              Cancel
+            </Button>
             <Button color="red" onClick={handleDelete}>Delete</Button>
           </Flex>
         </Dialog.Content>

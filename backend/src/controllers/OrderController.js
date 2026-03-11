@@ -13,8 +13,6 @@ class OrderController {
             next(err);
         }
     }
-
-    // ✅ UPDATED: Support pagination via query params
     async getOrders(req, res, next) {
         try {
             const {
@@ -39,7 +37,7 @@ class OrderController {
 
             res.json({
                 success: true,
-                ...result, // Spreads: data, pagination
+                ...result, 
             });
         } catch (err) {
             next(err);

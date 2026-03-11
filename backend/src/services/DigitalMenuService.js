@@ -14,15 +14,12 @@ exports.getAllDigitalMenuProducts = async () => {
         image: product.image ? product.image.url : "",
         stockQty: product.stockQty,
         isAvailable: product.stockQty > 0,
-        isVeg: product.isVeg !== undefined ? product.isVeg : true, // ✅ FIXED
+        isVeg: product.isVeg !== undefined ? product.isVeg : true, 
     }));
 
     return formattedProducts;
 
 };
-
-
-/* ================= GET PRODUCT BY ID ================= */
 
 exports.getDigitalMenuProductById = async (productId) => {
 
@@ -39,7 +36,7 @@ exports.getDigitalMenuProductById = async (productId) => {
         image: product.image ? product.image.url : "",
         stockQty: product.stockQty,
         isAvailable: product.stockQty > 0,
-        isVeg: product.isVeg !== undefined ? product.isVeg : true, // ✅ FIXED
+        isVeg: product.isVeg !== undefined ? product.isVeg : true, 
     };
 
 };

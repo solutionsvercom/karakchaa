@@ -1,28 +1,181 @@
-// src/scheduler/CustomerSalesBackupScheduler.js
-
 const path = require("path");
 const fs = require("fs");
 const cron = require("node-cron");
 const ExcelJS = require("exceljs");
+const { google } = require("googleapis");
 
-// Your MongoDB Models
+// ✅ Your MongoDB Models
 const Customer = require("../models/Customers/CustomerSchema");
 const Sale = require("../models/Sales/SaleSchema");
 
-// Helper to safely format dates
+// 🔧 Helper to safely format dates (handles Date, string, null, invalid)
 function formatDate(value) {
     if (!value) return "";
     const d = value instanceof Date ? value : new Date(value);
-    if (isNaN(d.getTime())) return "";
+    if (isNaN(d.getTime())) return ""; // invalid date
     return d.toISOString();
+}
+
+const PROJECT_ROOT = path.join(__dirname, "..", "..");
+const GOOGLE_CREDENTIALS_PATH = path.join(
+    PROJECT_ROOT,
+    "google-oauth-credentials.json"
+);
+const GOOGLE_TOKEN_PATH = path.join(PROJECT_ROOT, "google-drive-token.json");
+
+//  Load Google OAuth2 credentials JSON
+function loadGoogleCredentials() {
+    try {
+        if (!fs.existsSync(GOOGLE_CREDENTIALS_PATH)) {
+            console.log(
+                "[GOOGLE DRIVE] Credentials file not found at:",
+                GOOGLE_CREDENTIALS_PATH
+            );
+            console.log(
+                '[GOOGLE DRIVE] Skipping Drive upload. Run "node authenticate-google-drive.js" after creating credentials.'
+            );
+            return null;
+        }
+
+        const raw = fs.readFileSync(GOOGLE_CREDENTIALS_PATH, "utf8");
+        const parsed = JSON.parse(raw);
+
+        const installed = parsed.installed || parsed.web;
+        if (!installed) {
+            console.log(
+                "[GOOGLE DRIVE] Invalid credentials format. Expected 'installed' or 'web' key."
+            );
+            return null;
+        }
+
+        const { client_id, client_secret, redirect_uris } = installed;
+        if (!client_id || !client_secret || !redirect_uris || !redirect_uris.length) {
+            console.log(
+                "[GOOGLE DRIVE] Missing client_id/client_secret/redirect_uris in credentials."
+            );
+            return null;
+        }
+
+        return {
+            clientId: client_id,
+            clientSecret: client_secret,
+            redirectUri: redirect_uris[0],
+        };
+    } catch (err) {
+        console.error("[GOOGLE DRIVE] Error reading credentials file:", err);
+        return null;
+    }
+}
+
+// Load stored token JSON
+function loadGoogleToken() {
+    try {
+        if (!fs.existsSync(GOOGLE_TOKEN_PATH)) {
+            console.log(
+                "[GOOGLE DRIVE] Token file not found at:",
+                GOOGLE_TOKEN_PATH
+            );
+            console.log(
+                '[GOOGLE DRIVE] Skipping Drive upload. Run "node authenticate-google-drive.js" to generate google-drive-token.json.'
+            );
+            return null;
+        }
+
+        const raw = fs.readFileSync(GOOGLE_TOKEN_PATH, "utf8");
+        return JSON.parse(raw);
+    } catch (err) {
+        console.error("[GOOGLE DRIVE] Error reading token file:", err);
+        return null;
+    }
+}
+
+//  Get authenticated Google Drive client (OAuth2, personal Gmail)
+function getGoogleDriveClient() {
+    console.log("[GOOGLE DRIVE] Authenticating...");
+
+    const creds = loadGoogleCredentials();
+    if (!creds) return null;
+
+    const token = loadGoogleToken();
+    if (!token) return null;
+
+    try {
+        const oAuth2Client = new google.auth.OAuth2(
+            creds.clientId,
+            creds.clientSecret,
+            creds.redirectUri
+        );
+
+        oAuth2Client.setCredentials(token);
+
+        const drive = google.drive({ version: "v3", auth: oAuth2Client });
+        return drive;
+    } catch (err) {
+        console.error("[GOOGLE DRIVE] Error creating OAuth2 client:", err);
+        return null;
+    }
+}
+
+//  Upload an Excel file to Google Drive
+async function uploadToGoogleDrive(filePath, fileName) {
+    console.log(`[GOOGLE DRIVE] Uploading file: ${fileName}`);
+
+    const drive = getGoogleDriveClient();
+    if (!drive) {
+        console.log("[GOOGLE DRIVE] Drive client not available. Upload skipped.");
+        return;
+    }
+
+    if (!fs.existsSync(filePath)) {
+        console.log("[GOOGLE DRIVE] Local file not found. Upload skipped.");
+        return;
+    }
+
+    try {
+        const fileMetadata = {
+            name: fileName,
+        };
+
+        const media = {
+            mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            body: fs.createReadStream(filePath),
+        };
+
+        const response = await drive.files.create({
+            requestBody: fileMetadata,
+            media,
+            fields: "id, name, webViewLink, webContentLink",
+        });
+
+        const file = response.data;
+
+        console.log("[GOOGLE DRIVE] ✔ Upload successful!");
+        console.log("[GOOGLE DRIVE] File ID:", file.id);
+        console.log("[GOOGLE DRIVE] View Link:", file.webViewLink);
+
+        // Optional: delete local file after successful upload
+        try {
+            fs.unlinkSync(filePath);
+            console.log("[GOOGLE DRIVE] Local file deleted after successful upload.");
+        } catch (deleteErr) {
+            console.error(
+                "[GOOGLE DRIVE] Could not delete local file after upload:",
+                deleteErr
+            );
+        }
+    } catch (err) {
+        console.error("[GOOGLE DRIVE] ❌ Upload failed:", err);
+        // Keep local backup if upload fails
+    }
 }
 
 function registerCustomerSalesBackup() {
     console.log("[SCHEDULER] Initializing backup + delete scheduler (TEST mode)...");
 
-    cron.schedule("*/1 * * * *", async function() {
+    // 🔁 TEST: run every 1 minute
+    cron.schedule("*/1 * * * *", async() => {
         console.log("===================================================");
-        console.log("[SCHEDULER] BACKUP + CLEANUP JOB STARTED");
+        console.log("[SCHEDULER] ▶ BACKUP + CLEANUP JOB STARTED");
 
         var now = new Date();
         console.log("[TIME] Current Date:", now.toISOString());
@@ -30,24 +183,24 @@ function registerCustomerSalesBackup() {
 
         try {
             /* =====================================================
-               1 - FETCH DATA
+               1️⃣ FETCH DATA (TEST: ALL RECORDS)
             ===================================================== */
             console.log("[STEP 1] Fetching ALL customers...");
-            var recentCustomers = await Customer.find({}).lean();
-            console.log("[RESULT] Found " + recentCustomers.length + " customers.");
+            const recentCustomers = await Customer.find({}).lean();
+            console.log(`[RESULT] Found ${recentCustomers.length} customers.`);
 
             console.log("[STEP 1] Fetching ALL sales...");
-            var recentSales = await Sale.find({})
+            const recentSales = await Sale.find({})
                 .populate("customer", "fullName phoneNumber")
                 .populate("soldBy", "name")
                 .populate("product", "name productName title")
                 .lean();
-            console.log("[RESULT] Found " + recentSales.length + " sales.");
+            console.log(`[RESULT] Found ${recentSales.length} sales.`);
 
             /* =====================================================
-               2 - BUILD EXCEL FILE
+               2️⃣ BUILD EXCEL FILE
             ===================================================== */
-            console.log("[STEP 2] Creating Excel workbook...");
+            console.log("[STEP 2] Creating Excel workbook…");
 
             var workbook = new ExcelJS.Workbook();
             var customersSheet = workbook.addWorksheet("Customers");
@@ -147,11 +300,14 @@ function registerCustomerSalesBackup() {
             console.log("[STEP 2] Excel sheets populated.");
 
             /* =====================================================
-               3 - SAVE EXCEL FILE
+               3️⃣ SAVE EXCEL FILE
             ===================================================== */
-            var dateStr = now.toISOString().split("T")[0];
-            var exportsDir = path.join(__dirname, "..", "..", "exports");
-            var filePath = path.join(exportsDir, "customer-sales-backup-" + dateStr + ".xlsx");
+            const dateStr = now.toISOString().split("T")[0];
+            const exportsDir = path.join(__dirname, "..", "..", "exports");
+            const filePath = path.join(
+                exportsDir,
+                `customer-sales-backup-${dateStr}.xlsx`
+            );
 
             console.log("[STEP 3] Saving Excel file:", filePath);
 
@@ -164,24 +320,32 @@ function registerCustomerSalesBackup() {
             console.log("[RESULT] Excel Backup Saved Successfully");
 
             /* =====================================================
-               4 - DELETE DATA OLDER THAN 1 MINUTE (TEST ONLY)
+               4️⃣ DELETE DATA OLDER THAN 1 MINUTE (TEST ONLY)
+               - We use JS to decide which docs are "old"
+               - Then delete via _id to avoid any type issues
             ===================================================== */
-            var ONE_MINUTE_MS = 60 * 1000;
-            var cutoffTime = now.getTime();
+            const ONE_MINUTE_MS = 60 * 1000;
+            const cutoffTime = now.getTime();
 
             console.log("---------------------------------------------------");
             console.log("[STEP 4] Deleting data older than 1 minute (TEST)...");
+            console.log(
+                "[STEP 4] Cutoff is 'now - 1 minute' (based on createdAt / date)."
+            );
 
-            var oldCustomerIds = recentCustomers
-                .filter(function(c) {
+            // 🧮 Find old customers in JS
+            const oldCustomerIds = recentCustomers
+                .filter((c) => {
                     if (!c.createdAt) return false;
-                    var d = new Date(c.createdAt);
+                    const d = new Date(c.createdAt);
                     if (isNaN(d.getTime())) return false;
                     return cutoffTime - d.getTime() > ONE_MINUTE_MS;
                 })
-                .map(function(c) { return c._id; });
+                .map((c) => c._id);
 
-            console.log("[STEP 4] Customers older than 1 minute (to delete): " + oldCustomerIds.length);
+            console.log(
+                `[STEP 4] Customers older than 1 minute (to delete): ${oldCustomerIds.length}`
+            );
 
             var deleteCustomersResult = { deletedCount: 0 };
             if (oldCustomerIds.length > 0) {
@@ -192,24 +356,28 @@ function registerCustomerSalesBackup() {
 
             console.log("[RESULT] Deleted " + deleteCustomersResult.deletedCount + " old customers.");
 
-            var oldSaleIds = recentSales
-                .filter(function(s) {
-                    var candidates = [s.createdAt, s.date];
-                    var validDates = candidates
-                        .map(function(v) { return v ? new Date(v) : null; })
-                        .filter(function(d) { return d && !isNaN(d.getTime()); });
+            // 🧮 Find old sales in JS (check createdAt OR date)
+            const oldSaleIds = recentSales
+                .filter((s) => {
+                    const candidates = [s.createdAt, s.date];
+                    const validDates = candidates
+                        .map((v) => (v ? new Date(v) : null))
+                        .filter((d) => d && !isNaN(d.getTime()));
 
                     if (validDates.length === 0) return false;
 
-                    return validDates.some(function(d) {
-                        return cutoffTime - d.getTime() > ONE_MINUTE_MS;
-                    });
+                    // If ANY of the dates is older than 1 minute, mark as old
+                    return validDates.some(
+                        (d) => cutoffTime - d.getTime() > ONE_MINUTE_MS
+                    );
                 })
-                .map(function(s) { return s._id; });
+                .map((s) => s._id);
 
-            console.log("[STEP 4] Sales older than 1 minute (to delete): " + oldSaleIds.length);
+            console.log(
+                `[STEP 4] Sales older than 1 minute (to delete): ${oldSaleIds.length}`
+            );
 
-            var deleteSalesResult = { deletedCount: 0 };
+            let deleteSalesResult = { deletedCount: 0 };
             if (oldSaleIds.length > 0) {
                 deleteSalesResult = await Sale.deleteMany({ _id: { $in: oldSaleIds } });
             }
@@ -217,16 +385,18 @@ function registerCustomerSalesBackup() {
             console.log("[RESULT] Deleted " + deleteSalesResult.deletedCount + " old sales.");
 
             console.log("---------------------------------------------------");
-            console.log("[SCHEDULER] TEST JOB FINISHED SUCCESSFULLY");
+            console.log("[SCHEDULER] ✅ TEST JOB FINISHED SUCCESSFULLY");
             console.log("===================================================");
         } catch (err) {
             console.log("---------------------------------------------------");
-            console.error("[SCHEDULER] ERROR in job:", err);
+            console.error("[SCHEDULER] ❌ ERROR in job:", err);
             console.log("===================================================");
         }
     });
 
-    console.log("[SCHEDULER] Test scheduler registered to run every 1 minute");
+    console.log(
+        "[SCHEDULER] Test scheduler registered to run every 1 minute ✔"
+    );
 }
 
 module.exports = { registerCustomerSalesBackup };

@@ -1,7 +1,5 @@
 const DigitalOrder = require("../models/DigitalOrder/DigitalOrderSchema");
 
-/* ================= CREATE DIGITAL ORDER ================= */
-
 exports.createDigitalOrderService = async(orderData) => {
 
     const {
@@ -14,9 +12,6 @@ exports.createDigitalOrderService = async(orderData) => {
 
     if (!items || items.length === 0)
         throw new Error("Order items required");
-
-
-    /* Calculate total */
 
     const totalAmount = items.reduce(
         (sum, item) =>
@@ -43,8 +38,6 @@ exports.createDigitalOrderService = async(orderData) => {
 };
 
 
-/* ================= GET ORDER STATUS ================= */
-
 exports.getDigitalOrderStatusService = async(orderId) => {
 
     const order = await DigitalOrder.findById(orderId);
@@ -56,8 +49,6 @@ exports.getDigitalOrderStatusService = async(orderId) => {
 
 };
 
-
-/* ================= GET ALL ORDERS ================= */
 
 exports.getAllDigitalOrdersService = async() => {
 

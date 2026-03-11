@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 
-/* ================= TYPES ================= */
 
 export interface OrderItem {
   productId: string;
@@ -28,7 +27,6 @@ interface OrderState {
   error: string | null;
 }
 
-/*  INITIAL STATE  */
 
 const initialState: OrderState = {
   order: null,
@@ -36,20 +34,16 @@ const initialState: OrderState = {
   error: null,
 };
 
-/*  API BASE  */
 
 const BASE_URL = "http://localhost:5000/api/digital-menu";
 
-/*  ASYNC THUNKS  */
 
-/* CREATE ORDER */
 export const createDigitalOrder = createAsyncThunk<
   DigitalOrder,
   Partial<DigitalOrder>,
   { rejectValue: string }
 >("digitalOrder/create", async (data, thunkAPI) => {
   try {
-    // Ensure orderType is set to 'online'
     const payload = {
       ...data,
       orderType: "online", // ← Force this to 'online'
@@ -64,7 +58,6 @@ export const createDigitalOrder = createAsyncThunk<
   }
 });
 
-/* FETCH ORDER STATUS */
 export const fetchOrderStatus = createAsyncThunk<
   DigitalOrder,
   string,
@@ -83,7 +76,6 @@ export const fetchOrderStatus = createAsyncThunk<
   }
 });
 
-/*  SLICE  */
 
 const digitalOrderSlice = createSlice({
   name: "digitalOrder",
@@ -98,7 +90,6 @@ const digitalOrderSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      /* CREATE ORDER */
 
       .addCase(createDigitalOrder.pending, (state) => {
         state.loading = true;
@@ -118,7 +109,6 @@ const digitalOrderSlice = createSlice({
         state.error = action.payload || "Failed to create order";
       })
 
-      /* FETCH STATUS */
 
       .addCase(
         fetchOrderStatus.fulfilled,
@@ -133,7 +123,6 @@ const digitalOrderSlice = createSlice({
   },
 });
 
-/* EXPORT  */
 
 export const { clearOrderError } = digitalOrderSlice.actions;
 export default digitalOrderSlice.reducer;
