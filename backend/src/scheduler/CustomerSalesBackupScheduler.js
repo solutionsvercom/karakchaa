@@ -170,10 +170,10 @@ async function uploadToGoogleDrive(filePath, fileName) {
 }
 
 function registerCustomerSalesBackup() {
-    console.log("[SCHEDULER] Initializing backup + delete scheduler (TEST mode)...");
+    console.log("[SCHEDULER] Initializing backup + delete scheduler (MONTHLY mode)...");
 
-    // 🔁 TEST: run every 1 minute
-    cron.schedule("*/1 * * * *", async() => {
+    // 🔁 MONTHLY: runs at midnight on the 1st of every month
+    cron.schedule("0 0 1 * *", async() => {
         console.log("===================================================");
         console.log("[SCHEDULER] ▶ BACKUP + CLEANUP JOB STARTED");
 
@@ -183,7 +183,7 @@ function registerCustomerSalesBackup() {
 
         try {
             /* =====================================================
-               1️⃣ FETCH DATA (TEST: ALL RECORDS)
+               1️⃣ FETCH DATA
             ===================================================== */
             console.log("[STEP 1] Fetching ALL customers...");
             const recentCustomers = await Customer.find({}).lean();
@@ -320,17 +320,17 @@ function registerCustomerSalesBackup() {
             console.log("[RESULT] Excel Backup Saved Successfully");
 
             /* =====================================================
-               4️⃣ DELETE DATA OLDER THAN 1 MINUTE (TEST ONLY)
+               4️⃣ DELETE DATA OLDER THAN 1 MONTH
                - We use JS to decide which docs are "old"
                - Then delete via _id to avoid any type issues
             ===================================================== */
-            const ONE_MINUTE_MS = 60 * 1000;
+            const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
             const cutoffTime = now.getTime();
 
             console.log("---------------------------------------------------");
-            console.log("[STEP 4] Deleting data older than 1 minute (TEST)...");
+            console.log("[STEP 4] Deleting data older than 1 month...");
             console.log(
-                "[STEP 4] Cutoff is 'now - 1 minute' (based on createdAt / date)."
+                "[STEP 4] Cutoff is 'now - 1 month' (based on createdAt / date)."
             );
 
             // 🧮 Find old customers in JS
@@ -339,12 +339,12 @@ function registerCustomerSalesBackup() {
                     if (!c.createdAt) return false;
                     const d = new Date(c.createdAt);
                     if (isNaN(d.getTime())) return false;
-                    return cutoffTime - d.getTime() > ONE_MINUTE_MS;
+                    return cutoffTime - d.getTime() > ONE_MONTH_MS;
                 })
                 .map((c) => c._id);
 
             console.log(
-                `[STEP 4] Customers older than 1 minute (to delete): ${oldCustomerIds.length}`
+                `[STEP 4] Customers older than 1 month (to delete): ${oldCustomerIds.length}`
             );
 
             var deleteCustomersResult = { deletedCount: 0 };
@@ -366,15 +366,15 @@ function registerCustomerSalesBackup() {
 
                     if (validDates.length === 0) return false;
 
-                    // If ANY of the dates is older than 1 minute, mark as old
+                    // If ANY of the dates is older than 1 month, mark as old
                     return validDates.some(
-                        (d) => cutoffTime - d.getTime() > ONE_MINUTE_MS
+                        (d) => cutoffTime - d.getTime() > ONE_MONTH_MS
                     );
                 })
                 .map((s) => s._id);
 
             console.log(
-                `[STEP 4] Sales older than 1 minute (to delete): ${oldSaleIds.length}`
+                `[STEP 4] Sales older than 1 month (to delete): ${oldSaleIds.length}`
             );
 
             let deleteSalesResult = { deletedCount: 0 };
@@ -385,7 +385,7 @@ function registerCustomerSalesBackup() {
             console.log("[RESULT] Deleted " + deleteSalesResult.deletedCount + " old sales.");
 
             console.log("---------------------------------------------------");
-            console.log("[SCHEDULER] ✅ TEST JOB FINISHED SUCCESSFULLY");
+            console.log("[SCHEDULER] ✅ MONTHLY JOB FINISHED SUCCESSFULLY");
             console.log("===================================================");
         } catch (err) {
             console.log("---------------------------------------------------");
@@ -395,7 +395,7 @@ function registerCustomerSalesBackup() {
     });
 
     console.log(
-        "[SCHEDULER] Test scheduler registered to run every 1 minute ✔"
+        "[SCHEDULER] Monthly scheduler registered to run on 1st of every month ✔"
     );
 }
 
