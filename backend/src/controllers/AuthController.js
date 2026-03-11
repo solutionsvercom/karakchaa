@@ -7,9 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-pro
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 const REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN || '30d';
 
-/* =========================
-   REGISTER USER (ADMIN ONLY)
-========================= */
+/* REGISTER USER (ADMIN ONLY) */
 exports.register = async(req, res) => {
     try {
         const { name, companyId, email, password, role, phoneNumber } = req.body;
@@ -36,7 +34,7 @@ exports.register = async(req, res) => {
             password,
             role: roleDoc._id,
             roleName: roleDoc.name,
-            phoneNumber: phoneNumber ? phoneNumber.trim() : null // ✅ no optional chaining
+            phoneNumber: phoneNumber ? phoneNumber.trim() : null 
         });
 
         await user.save();
@@ -53,9 +51,7 @@ exports.register = async(req, res) => {
     }
 };
 
-/* =========================
-   LOGIN
-========================= */
+/* LOGIN */
 exports.login = async(req, res) => {
     try {
         const { companyId, password } = req.body;
@@ -92,11 +88,7 @@ exports.login = async(req, res) => {
     }
 };
 
-/* =========================
-   VERIFY PASSWORD
-   Checks a user's current password without side effects.
-   Used by frontend before allowing password change in edit form.
-========================= */
+
 exports.verifyPassword = async(req, res) => {
     try {
         const { userId, password } = req.body;
@@ -119,9 +111,6 @@ exports.verifyPassword = async(req, res) => {
     }
 };
 
-/* =========================
-   GET CURRENT USER
-========================= */
 exports.getCurrentUser = async(req, res) => {
     try {
         const user = await User.findById(req.user.userId).populate("role").select("-password");
@@ -139,9 +128,7 @@ exports.getCurrentUser = async(req, res) => {
     }
 };
 
-/* =========================
-   GET ALL USERS
-========================= */
+
 exports.getAllUsers = async(req, res) => {
     try {
         const users = await User.find().populate('role', 'name modules').select('-password').sort({ createdAt: -1 });
@@ -160,11 +147,7 @@ exports.getAllUsers = async(req, res) => {
     }
 };
 
-/* =========================
-   UPDATE USER (ADMIN ONLY)
-   ✅ FIXED: accepts password and hashes it manually
-   (findByIdAndUpdate bypasses pre('save') hook so we hash with bcrypt directly)
-========================= */
+
 exports.updateUser = async(req, res) => {
     try {
         const { name, companyId, email, role, phoneNumber, isActive, password } = req.body;
@@ -188,7 +171,7 @@ exports.updateUser = async(req, res) => {
         if (name) updateData.name = name.trim();
         if (companyId) updateData.companyId = String(companyId).trim();
         if (email !== undefined) updateData.email = email ? email.toLowerCase().trim() : null;
-        if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber ? phoneNumber.trim() : null; // ✅ no optional chaining
+        if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber ? phoneNumber.trim() : null; 
         if (isActive !== undefined) updateData.isActive = isActive;
 
         if (role) {
@@ -198,7 +181,6 @@ exports.updateUser = async(req, res) => {
             updateData.roleName = roleDoc.name;
         }
 
-        // ✅ Hash password manually — findByIdAndUpdate skips pre('save') hook
         if (password) {
             if (password.length < 6) {
                 return res.status(400).json({ success: false, message: "Password must be at least 6 characters" });
@@ -222,9 +204,7 @@ exports.updateUser = async(req, res) => {
     }
 };
 
-/* =========================
-   DELETE USER
-========================= */
+/* DELETE USER */
 exports.deleteUser = async(req, res) => {
     try {
         const { id } = req.params;
@@ -242,9 +222,7 @@ exports.deleteUser = async(req, res) => {
     }
 };
 
-/* =========================
-   CHANGE PASSWORD
-========================= */
+/* CHANGE PASSWORD */
 exports.changePassword = async(req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
@@ -268,9 +246,7 @@ exports.changePassword = async(req, res) => {
     }
 };
 
-/* =========================
-   REFRESH TOKEN
-========================= */
+/* REFRESH TOKEN */
 exports.refreshToken = async(req, res) => {
     try {
         const { refreshToken } = req.body;

@@ -1,9 +1,5 @@
 const Customer = require('../models/Customers/CustomerSchema');
 
-/* =========================
-   CREATE CUSTOMER
-   (Add New Customer)
-========================= */
 exports.createCustomer = async(req, res) => {
     try {
         const { fullName, phoneNumber, address, notes } = req.body;
@@ -15,7 +11,6 @@ exports.createCustomer = async(req, res) => {
             });
         }
 
-        // ✅ CHECK FOR DUPLICATE (Same Name + Same Phone)
         const existingCustomer = await Customer.findOne({
             fullName: fullName.trim(),
             phoneNumber: phoneNumber.trim()
@@ -51,10 +46,6 @@ exports.createCustomer = async(req, res) => {
     }
 };
 
-/* =========================
-   GET ALL CUSTOMERS
-   (Customer Table List)
-========================= */
 exports.getAllCustomers = async(req, res) => {
     try {
         const customers = await Customer.find().sort({ createdAt: -1 });
@@ -74,10 +65,6 @@ exports.getAllCustomers = async(req, res) => {
     }
 };
 
-/* =========================
-   GET SINGLE CUSTOMER
-   (Edit Customer Modal)
-========================= */
 exports.getCustomerById = async(req, res) => {
     try {
         const customer = await Customer.findById(req.params.id);
@@ -103,20 +90,15 @@ exports.getCustomerById = async(req, res) => {
     }
 };
 
-/* =========================
-   UPDATE CUSTOMER
-   (Edit Customer)
-========================= */
 exports.updateCustomer = async(req, res) => {
     try {
         const { fullName, phoneNumber } = req.body;
 
-        // ✅ CHECK FOR DUPLICATE (Same Name + Same Phone) excluding current customer
         if (fullName && phoneNumber) {
             const existingCustomer = await Customer.findOne({
                 fullName: fullName.trim(),
                 phoneNumber: phoneNumber.trim(),
-                _id: { $ne: req.params.id } // Exclude current customer
+                _id: { $ne: req.params.id } 
             });
 
             if (existingCustomer) {
@@ -153,10 +135,6 @@ exports.updateCustomer = async(req, res) => {
     }
 };
 
-/* =========================
-   DELETE CUSTOMER
-   (Optional / Action Menu)
-========================= */
 exports.deleteCustomer = async(req, res) => {
     try {
         const deletedCustomer = await Customer.findByIdAndDelete(req.params.id);
@@ -181,10 +159,6 @@ exports.deleteCustomer = async(req, res) => {
     }
 };
 
-/* =========================
-   CUSTOMER DASHBOARD STATS
-   (Top Cards)
-========================= */
 exports.getCustomerStats = async(req, res) => {
     try {
         const stats = await Customer.aggregate([{

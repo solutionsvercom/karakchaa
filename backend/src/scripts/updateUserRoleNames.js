@@ -19,7 +19,6 @@ const updateRoleNames = async() => {
             if (roleDoc) {
                 user.roleName = roleDoc.name;
                 await user.save();
-                // ✅ CHANGED: log companyId instead of email
                 console.log(`Updated ${user.companyId} → ${roleDoc.name}`);
             }
         }

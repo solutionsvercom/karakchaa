@@ -49,11 +49,6 @@ const productSchema = new mongoose.Schema({
         min: 0,
     },
 
-    // supplier: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Supplier", 
-    // },
-
     image: {
         url: { type: String },
     },

@@ -4,13 +4,13 @@ const customerSchema = new mongoose.Schema({
     fullName: {
         type: String,
         required: true,
-        trim: true // ✅ Automatically trim whitespace
+        trim: true 
     },
 
     phoneNumber: {
         type: String,
         required: true,
-        trim: true // ✅ Automatically trim whitespace
+        trim: true 
     },
 
     address: {
@@ -42,7 +42,6 @@ const customerSchema = new mongoose.Schema({
     }
 });
 
-// ✅ COMPOUND INDEX - Prevents duplicate name+phone at database level
 customerSchema.index({ fullName: 1, phoneNumber: 1 }, { unique: true });
 
 module.exports = mongoose.model('Customer', customerSchema);

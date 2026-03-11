@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 
-// ✅ Each ordered item stored on the sale for full invoice display
 const saleItemSchema = new mongoose.Schema({
     product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
     name: { type: String, required: true },
@@ -15,10 +14,8 @@ const saleSchema = new mongoose.Schema({
         unique: true,
     },
 
-    // ✅ All items in this order
     items: [saleItemSchema],
 
-    // Single product ref kept for backward compatibility
     product: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product",
@@ -75,5 +72,4 @@ const saleSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-// ✅ Guard prevents OverwriteModelError on nodemon hot-reload
 module.exports = mongoose.models.Sale || mongoose.model("Sale", saleSchema);

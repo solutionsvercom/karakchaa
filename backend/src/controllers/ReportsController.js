@@ -1,8 +1,5 @@
 const { buildReports } = require("../services/ReportsService");
 
-/* ======================================================
-   CONTROLLER: GET REPORTS
-====================================================== */
 const getReports = async (req, res) => {
   try {
     const { period = "All Time" } = req.query;

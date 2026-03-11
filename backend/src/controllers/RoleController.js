@@ -1,11 +1,10 @@
 const Role = require("../models/Users/RoleSchema");
 const User = require("../models/Users/UserSchema");
 
-// ✅ Maps ANY variation the frontend might send → correct stored value
 const normalizeModule = (module) => {
     if (!module) return null;
     const map = {
-        // Customer (your menu key is 'customers' but DB stores 'customer')
+        // Customer
         "customers": "customer",
         "customer": "customer",
         "Customers": "customer",
@@ -70,7 +69,7 @@ const cleanModules = (modules) => {
     )];
 };
 
-/* ================= CREATE ROLE ================= */
+/*CREATE ROLE*/
 exports.createRole = async(req, res) => {
     try {
         const { name, modules } = req.body;
@@ -104,12 +103,10 @@ exports.createRole = async(req, res) => {
     }
 };
 
-/* ================= GET ALL ROLES ================= */
 exports.getRoles = async(req, res) => {
     try {
         const roles = await Role.find().sort({ createdAt: -1 });
 
-        // ✅ Normalize + deduplicate on every read (fixes stale DB data too)
         const cleanedRoles = roles.map(role => {
             const roleObj = role.toObject();
             roleObj.modules = cleanModules(roleObj.modules);
@@ -124,7 +121,6 @@ exports.getRoles = async(req, res) => {
     }
 };
 
-/* ================= UPDATE ROLE ================= */
 exports.updateRole = async(req, res) => {
     try {
         const { name, modules } = req.body;
@@ -139,7 +135,6 @@ exports.updateRole = async(req, res) => {
             return res.status(404).json({ success: false, message: 'Role not found' });
         }
 
-        // Check duplicate name
         if (name && name.trim().toLowerCase() !== existingRole.name.toLowerCase()) {
             const duplicate = await Role.findOne({
                 name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
@@ -153,7 +148,6 @@ exports.updateRole = async(req, res) => {
         const updateData = {};
         if (name) updateData.name = name.trim();
 
-        // ✅ Always normalize + deduplicate modules before saving
         if (modules && Array.isArray(modules)) {
             updateData.modules = cleanModules(modules);
         }
@@ -162,7 +156,6 @@ exports.updateRole = async(req, res) => {
             id, updateData, { new: true, runValidators: true }
         );
 
-        // Sync roleName in users if role name changed
         if (name && name.trim().toLowerCase() !== existingRole.name.toLowerCase()) {
             await User.updateMany({ role: id }, { $set: { roleName: name.trim() } });
         }
@@ -178,7 +171,6 @@ exports.updateRole = async(req, res) => {
     }
 };
 
-/* ================= DELETE ROLE ================= */
 exports.deleteRole = async(req, res) => {
     try {
         const { id } = req.params;

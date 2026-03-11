@@ -31,11 +31,11 @@ const orderSchema = new mongoose.Schema(
       default: "dine-in",
     },
 
-    // ✅ NEW: Explicit order source for clear differentiation
+    //  Explicit order source for clear differentiation
     orderSource: {
       type: String,
       enum: ["POS", "DIGITAL"],
-      default: "POS", // Backward compatible - existing orders without this field get POS
+      default: "POS", 
     },
 
     status: {
@@ -54,7 +54,6 @@ const orderSchema = new mongoose.Schema(
 
     notes: String,
 
-    /* ⭐ ATOMIC SALE LOCK — prevents duplicate invoices */
     saleCreated: {
       type: Boolean,
       default: false,
@@ -63,11 +62,9 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✅ STAFF-LEVEL: Compound index for pagination queries
 // Most common query: filter by status/orderType, sort by createdAt
 orderSchema.index({ status: 1, orderType: 1, createdAt: -1 });
 
-// ✅ STAFF-LEVEL: Index for orderSource filtering
 orderSchema.index({ orderSource: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Order", orderSchema);
