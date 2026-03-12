@@ -65,19 +65,16 @@ const AddSupplier = ({ onClose, initialValues, mode = "add", onSave }: AddSuppli
         onSubmit={(data) => {
           setError(null);
 
-          // Company name validation
           if (!data.companyName?.trim()) {
             setError("Company name is required");
             return;
           }
 
-          // Contact person validation
           if (!data.contactPerson?.trim()) {
             setError("Contact person is required");
             return;
           }
 
-          // Phone validation
           const digits = String(data.phone ?? "").replace(/\D/g, "");
           if (!digits) {
             setError("Phone number is required");
@@ -92,14 +89,19 @@ const AddSupplier = ({ onClose, initialValues, mode = "add", onSave }: AddSuppli
             return;
           }
 
-          // Email validation (optional but must be valid if provided)
           const email = data.email?.trim();
           if (email && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
             setError("Please enter a valid email address");
             return;
           }
 
-          onSave({ ...data, phone: digits });
+          const gst = data.gst?.trim().toUpperCase();
+          if (gst && !/^[A-Z0-9]+$/.test(gst)) {
+            setError("Please enter a valid GST number");
+            return;
+          }
+
+          onSave({ ...data, phone: digits, gst });
           onClose();
         }}
       />
