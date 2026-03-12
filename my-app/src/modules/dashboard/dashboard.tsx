@@ -309,24 +309,32 @@ export default function Dashboard() {
 
         {/*  CHARTS ROW 1  */}
         <div className="dash-charts-row">
-          <RevenueTrendChart
-            data={revenueTrendData}
-            title="Sales Trend (Last 7 Days)"
-            height={300}
-          />
-          <LowStockAlert products={stockItems} />
+          <div className="dash-chart-card">
+            <RevenueTrendChart
+              data={revenueTrendData}
+              title="Sales Trend (Last 7 Days)"
+              height={280}
+            />
+          </div>
+          <div className="dash-chart-card">
+            <LowStockAlert products={stockItems} />
+          </div>
         </div>
 
         {/* CHARTS ROW 2 */}
         <div className="dash-charts-row">
-          <TopProductsChart
-            data={topProductsData}
-            title="Top Selling Products"
-            height={300}
-            maxProducts={3}
-            barSize={50}
-          />
-          <RecentSales sales={sales} limit={5} />
+          <div className="dash-chart-card">
+            <TopProductsChart
+              data={topProductsData}
+              title="Top Selling Products"
+              height={280}
+              maxProducts={3}
+              barSize={50}
+            />
+          </div>
+          <div className="dash-chart-card" style={{ overflowX: "auto" }}>
+            <RecentSales sales={sales} limit={5} />
+          </div>
         </div>
       </Flex>
     </>
