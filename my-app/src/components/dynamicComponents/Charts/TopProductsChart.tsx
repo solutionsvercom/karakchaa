@@ -45,23 +45,35 @@ export const TopProductsChart: React.FC<TopProductsChartProps> = ({
 
       <div className="kb-card">
         <ResponsiveContainer width="100%" height={height}>
-          <BarChart data={limitedData} layout="vertical">
+          <BarChart
+            data={limitedData}
+            layout="vertical"
+            margin={{ top: 4, right: 16, left: 16, bottom: 4 }}
+          >
             <XAxis type="number" allowDecimals={false} />
-            <YAxis type="category" dataKey="name" />
+            <YAxis
+              type="category"
+              dataKey="name"
+              width={110}
+              tick={{ fontSize: 12, fill: "var(--gray-11)" }}
+              tickFormatter={(value: string) =>
+                value.length > 14 ? value.slice(0, 14) + "…" : value
+              }
+            />
             <Tooltip
-            cursor={{ fill: "var(--gray-a3)" }}
-              
+              cursor={{ fill: "var(--gray-a3)" }}
+              position={{ x: 130, y: undefined as any }}
               contentStyle={{
-                backgroundColor: "var(--tooltip-bg)",
-                border: "1px solid var(--tooltip-border)",
-                color: "var(--tooltip-text)",
+                backgroundColor: "var(--color-panel-solid)",
+                border: "1px solid var(--gray-a6)",
+                borderRadius: 8,
+                fontSize: 13,
+                padding: "6px 12px",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.12)",
               }}
-              labelStyle={{
-                color: "var(--tooltip-label)",
-              }}
-              itemStyle={{
-                color: "var(--tooltip-text)",
-              }}
+              labelStyle={{ fontWeight: 600, color: "var(--gray-12)", marginBottom: 2 }}
+              itemStyle={{ color: "var(--gray-11)" }}
+              formatter={(value: number | undefined) => [value ?? 0, "Sales"]}
             />
            <Bar
   dataKey="count"
