@@ -134,23 +134,27 @@ export default function Suppliers() {
         ) : (
           filteredSuppliers.map((s) => (
             <SupplierCard
-              key={s._id}
-              name={s.companyName}
-              contactPerson={s.contactPerson}
-              phone={s.phone}
-              email={s.email}
-              address={s.address ?? ""}
-              products={s.productsSupplied ?? ""}
-              gst={s.gst}
-              status={s.active ? "Active" : "Inactive"}
-              accentColor=""
-              softColor="rgba(124,92,255,0.15)"
-              onEdit={() => {
-                navigate(`/dashboard/suppliers/edit-supplier/${s._id}`);
-                setEditingSupplier(s);
-              }}
-              onDelete={() => setDeleteId(s._id)}
-            />
+  key={s._id}
+  name={s.companyName}
+  contactPerson={s.contactPerson}
+  phone={s.phone}
+  email={s.email}
+  address={s.address ?? ""}
+  products={s.productsSupplied ?? ""}
+  gst={s.gst}
+  status={
+    <span style={{ color: s.active ? "#16a34a" : "#dc2626" }}>
+      {s.active ? "Active" : "Inactive"}
+    </span>
+  }
+  accentColor=""
+  softColor={s.active ? "rgba(124,92,255,0.15)" : "rgba(220,38,38,0.15)"}
+  onEdit={() => {
+    navigate(`/dashboard/suppliers/edit-supplier/${s._id}`);
+    setEditingSupplier(s);
+  }}
+  onDelete={() => setDeleteId(s._id)}
+/>
           ))
         )}
       </Flex>
