@@ -1,174 +1,208 @@
-// src/components/dynamicComponents/RecentSales.tsx
 import React from "react";
-import { Flex, Text, Button } from "@radix-ui/themes";
-import { ArrowRight } from "lucide-react";
+import { Badge } from "@radix-ui/themes";
 import { useNavigate } from "react-router-dom";
-import type { Sale } from "../../../features/SalesSlice";
+import { Sale } from "../../../features/SalesSlice";
 
 interface RecentSalesProps {
   sales: Sale[];
   limit?: number;
-  showViewAll?: boolean;
 }
 
-export const RecentSales: React.FC<RecentSalesProps> = ({
-  sales,
-  limit = 10,
-  showViewAll = true,
-}) => {
-  const navigate = useNavigate();
+const formatTime = (iso: string) => {
+  try {
+    return new Date(iso).toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+};
 
-  const recentSales = [...sales]
+const getStatusColor = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case "completed": return "green";
+    case "pending":   return "yellow";
+    case "cancelled": return "red";
+    default:          return "gray";
+  }
+};
+
+const getItemNames = (sale: Sale): string => {
+  // Try items array first
+  const items = (sale as any).items;
+  if (Array.isArray(items) && items.length > 0) {
+    return items.map((i: any) => i.name).join(", ");
+  }
+  // Fallback to single product
+  return sale.product?.name || "—";
+};
+
+export const RecentSales: React.FC<RecentSalesProps> = ({ sales, limit = 5 }) => {
+  const navigate = useNavigate();
+  const recent = [...sales]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, limit);
 
-  const handleViewAll = () => {
-    navigate("/Dashboard/Sales");
-  };
-
-  const formatTime = (dateTime: string) => {
-    const date = new Date(dateTime);
-    return date.toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
-
-  const getPaymentStyle = (payment: string) => {
-    const styles = {
-      completed: { bg: "var(--green-a2)", text: "var(--green-11)" },
-      pending: { bg: "var(--yellow-a2)", text: "var(--yellow-11)" },
-      cancelled: { bg: "var(--red-a2)", text: "var(--red-11)" },
-    };
-    return styles[payment.toLowerCase() as keyof typeof styles] || styles.pending;
-  };
-
-  // Helper function to get customer name - matches Sales table exactly
-  const getCustomerName = (sale: Sale) => {
-    // First check for populated customer object (from backend)
-    if (sale.customer?.fullName) return sale.customer.fullName;
-    // Then check for customerName field
-    if (sale.customerName) return sale.customerName;
-    // Default to Walk-in
-    return "Walk-in";
-  };
-
-  // Helper function to get items display - matches Sales table
-  const getItemsDisplay = (sale: Sale) => {
-    // If items array exists and has items
-    if (sale.items && Array.isArray(sale.items) && sale.items.length > 0) {
-      return sale.items.map((item: { name: string }) => item.name).join(", ");
-    }
-    // If single product
-    if (sale.product?.name) return sale.product.name;
-    // Default
-    return "-";
-  };
-
   return (
-    <Flex direction="column" className="kb-chart-card" style={{ flex: 1 }}>
-      <Flex justify="between" align="center" mb="3">
-        <Text weight="bold" size="4">
-          Recent Sales
-        </Text>
-        {showViewAll && (
-          <Button
-            variant="ghost"
-            size="2"
-            onClick={handleViewAll}
-            style={{ cursor: "pointer" }}
-          >
-            View All
-            <ArrowRight size={16} />
-          </Button>
-        )}
-      </Flex>
-
-      <div className="kb-card" style={{ overflow: "auto" }}>
-        {/* Table Header */}
-        <Flex
-          p="3"
-          gap="3"
+    <div style={{
+      background: "var(--gray-1)",
+      borderRadius: 16,
+      border: "1px solid var(--gray-4)",
+      padding: "20px 20px 8px",
+      height: "100%",
+      display: "flex",
+      flexDirection: "column",
+    }}>
+      {/* Header */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 16,
+      }}>
+        <span style={{ fontWeight: 700, fontSize: 16 }}>Recent Sales</span>
+        <button
+          onClick={() => navigate("/dashboard/sales")}
           style={{
-            borderBottom: "1px solid var(--gray-a6)",
-            backgroundColor: "var(--gray-a2)",
+            background: "var(--accent-9)",
+            color: "white",
+            border: "none",
+            borderRadius: 8,
+            padding: "6px 14px",
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
           }}
         >
-          <Text size="2" weight="medium" color="gray" style={{ flex: "0 0 120px" }}>
-            INVOICE
-          </Text>
-          <Text size="2" weight="medium" color="gray" style={{ flex: "1 1 150px" }}>
-            CUSTOMER
-          </Text>
-          <Text size="2" weight="medium" color="gray" style={{ flex: "1 1 100px" }}>
-            ITEMS
-          </Text>
-          <Text size="2" weight="medium" color="gray" style={{ flex: "0 0 100px" }}>
-            AMOUNT
-          </Text>
-          <Text size="2" weight="medium" color="gray" style={{ flex: "0 0 100px" }}>
-            PAYMENT
-          </Text>
-          <Text size="2" weight="medium" color="gray" style={{ flex: "0 0 100px" }}>
-            TIME
-          </Text>
-        </Flex>
-
-        {/* Table Body */}
-        <Flex direction="column">
-          {recentSales.length === 0 ? (
-            <Flex align="center" justify="center" p="6">
-              <Text size="3" color="gray">
-                No recent sales
-              </Text>
-            </Flex>
-          ) : (
-            recentSales.map((sale) => (
-              <Flex
-                key={sale._id}
-                p="3"
-                gap="3"
-                align="center"
-                style={{
-                  borderBottom: "1px solid var(--gray-a3)",
-                }}
-              >
-                <Text size="2" weight="medium" style={{ flex: "0 0 120px" }}>
-                  #{sale.invoiceNumber}
-                </Text>
-                <Text size="2" style={{ flex: "1 1 150px" }}>
-                  {getCustomerName(sale)}
-                </Text>
-                <Text size="2" color="gray" style={{ flex: "1 1 100px" }}>
-                  {getItemsDisplay(sale)}
-                </Text>
-                <Text size="2" weight="medium" style={{ flex: "0 0 100px" }}>
-                  ₹{sale.totalAmount}
-                </Text>
-                <Flex style={{ flex: "0 0 100px" }}>
-                  <span
-                    style={{
-                      padding: "4px 12px",
-                      borderRadius: "4px",
-                      fontSize: "12px",
-                      fontWeight: 500,
-                      textTransform: "uppercase",
-                      backgroundColor: getPaymentStyle(sale.paymentStatus).bg,
-                      color: getPaymentStyle(sale.paymentStatus).text,
-                    }}
-                  >
-                    {sale.paymentStatus}
-                  </span>
-                </Flex>
-                <Text size="2" color="gray" style={{ flex: "0 0 100px" }}>
-                  {formatTime(sale.createdAt)}
-                </Text>
-              </Flex>
-            ))
-          )}
-        </Flex>
+          View All →
+        </button>
       </div>
-    </Flex>
+
+      {/* Table */}
+      <div style={{ overflowX: "auto", flex: 1 }}>
+        <table style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          fontSize: 13,
+          tableLayout: "fixed",
+        }}>
+          <colgroup>
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "28%" }} />
+            <col style={{ width: "13%" }} />
+            <col style={{ width: "15%" }} />
+            <col style={{ width: "10%" }} />
+          </colgroup>
+
+          <thead>
+            <tr style={{ borderBottom: "1px solid var(--gray-4)" }}>
+              {["INVOICE", "CUSTOMER", "ITEMS", "AMOUNT", "PAYMENT", "TIME"].map((h) => (
+                <th key={h} style={{
+                  padding: "8px 10px",
+                  textAlign: "left",
+                  fontWeight: 600,
+                  fontSize: 11,
+                  color: "var(--gray-10)",
+                  letterSpacing: "0.05em",
+                  whiteSpace: "nowrap",
+                }}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          <tbody>
+            {recent.map((sale, i) => {
+              const itemNames = getItemNames(sale);
+              const customer = sale.customer?.fullName || sale.customerName || "Walk-in";
+              const status = sale.paymentStatus || "completed";
+
+              return (
+                <tr
+                  key={sale._id ?? i}
+                  style={{
+                    borderBottom: "1px solid var(--gray-3)",
+                    verticalAlign: "middle",
+                  }}
+                >
+                  {/* Invoice */}
+                  <td style={{ padding: "12px 10px", fontWeight: 600, whiteSpace: "nowrap" }}>
+                    #{sale.invoiceNumber}
+                  </td>
+
+                  {/* Customer */}
+                  <td style={{
+                    padding: "12px 10px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    color: "var(--gray-11)",
+                  }}>
+                    {customer}
+                  </td>
+
+                  {/* Items — truncated with tooltip */}
+                  <td style={{ padding: "12px 10px" }}>
+                    <span
+                      title={itemNames}
+                      style={{
+                        display: "block",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        color: "var(--gray-11)",
+                        maxWidth: "100%",
+                      }}
+                    >
+                      {itemNames}
+                    </span>
+                  </td>
+
+                  {/* Amount */}
+                  <td style={{ padding: "12px 10px", fontWeight: 700, whiteSpace: "nowrap" }}>
+                    ₹{sale.totalAmount}
+                  </td>
+
+                  {/* Payment status */}
+                  <td style={{ padding: "12px 10px" }}>
+                    <Badge
+                      color={getStatusColor(status) as any}
+                      variant="soft"
+                      style={{ textTransform: "capitalize", fontSize: 11 }}
+                    >
+                      {status}
+                    </Badge>
+                  </td>
+
+                  {/* Time */}
+                  <td style={{
+                    padding: "12px 10px",
+                    color: "var(--gray-10)",
+                    whiteSpace: "nowrap",
+                    fontSize: 12,
+                  }}>
+                    {formatTime(sale.createdAt)}
+                  </td>
+                </tr>
+              );
+            })}
+
+            {recent.length === 0 && (
+              <tr>
+                <td colSpan={6} style={{ padding: "32px", textAlign: "center", color: "var(--gray-9)" }}>
+                  No recent sales
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 };

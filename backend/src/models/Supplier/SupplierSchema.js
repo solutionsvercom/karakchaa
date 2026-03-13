@@ -45,10 +45,8 @@ const supplierSchema = new mongoose.Schema(
       trim: true,
       uppercase: true,
       default: "",
-      match: [
-        /^$|^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
-        "Invalid GST number",
-      ],
+       match: [/^[A-Z0-9]*$/, "Invalid GST number"],
+
     },
 
     paymentTerms: {
