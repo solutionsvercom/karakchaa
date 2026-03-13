@@ -142,9 +142,13 @@ export default function Suppliers() {
               address={s.address ?? ""}
               products={s.productsSupplied ?? ""}
               gst={s.gst}
-              status={s.active ? "Active" : "Inactive"}
+              status={
+                <span style={{ color: s.active ? "#16a34a" : "#dc2626" }}>
+                  {s.active ? "Active" : "Inactive"}
+                </span>
+              }
               accentColor=""
-              softColor="rgba(124,92,255,0.15)"
+              softColor={s.active ? "rgba(124,92,255,0.15)" : "rgba(220,38,38,0.15)"}
               onEdit={() => {
                 navigate(`/dashboard/suppliers/edit-supplier/${s._id}`);
                 setEditingSupplier(s);
