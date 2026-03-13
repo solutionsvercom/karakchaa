@@ -7,7 +7,7 @@ import {
   DropdownMenu,
   IconButton,
 } from "@radix-ui/themes";
-import { ChevronDown, MoreVertical, Pencil, Eye } from "lucide-react";
+import { ChevronDown, Eye } from "lucide-react";
 import Table, { Column } from "../../components/dynamicComponents/Table";
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
 import { useDispatch, useSelector } from "react-redux";
@@ -196,21 +196,9 @@ export default function Sales() {
     {
       key: "actions", header: "Actions",
       render: (_, row) => (
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger>
-            <IconButton variant="soft" radius="full">
-              <MoreVertical size={16} />
-            </IconButton>
-          </DropdownMenu.Trigger>
-          <DropdownMenu.Content>
-            <DropdownMenu.Item onClick={() => setViewSale(row)}>
-              <Eye size={14} /> View Invoice
-            </DropdownMenu.Item>
-            {/* <DropdownMenu.Item onClick={() => setEditSale({ row, sale: sales[row.id] })}>
-              <Pencil size={14} /> Change Status
-            </DropdownMenu.Item> */}
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
+        <IconButton variant="soft" radius="full" onClick={() => setViewSale(row)} title="View Invoice">
+          <Eye size={16} />
+        </IconButton>
       ),
     },
   ];
@@ -528,6 +516,7 @@ export default function Sales() {
                   <InfoCell label="Customer" value={viewSale.customer} />
                   <InfoCell label="Phone" value={viewSale.phone || "—"} />
                   <InfoCell label="Payment Method" value={viewSale.type} />
+                  <InfoCell label="Order Source" value={viewSale.orderSource || "POS"} />
                   <InfoCell label="Status" value={viewSale.payment} statusColor={
                     viewSale.payment === "completed" ? "var(--green-9)" :
                       viewSale.payment === "cancelled" ? "var(--red-9)" : "var(--yellow-9)"

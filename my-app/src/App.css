@@ -872,3 +872,27 @@
     gap: 8px;
     padding: 12px;
 }
+
+/* ===== DASHBOARD CHART CARDS ===== */
+.dash-chart-card {
+    background: var(--gray-1);
+    border-radius: 16px;
+    border: 1px solid var(--gray-4);
+    padding: 16px;
+    overflow: hidden;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.dash-summary-grid,
+.dash-charts-row {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+    .dash-chart-card {
+        padding: 12px;
+        border-radius: 12px;
+    }
+}

@@ -34,6 +34,7 @@ const dispatch = useAppDispatch();
   const [phone, setPhone] = useState("");
   const [table, setTable] = useState("");
   const [notes, setNotes] = useState("");
+  const [errors, setErrors] = useState<{ name?: string; phone?: string; table?: string }>({});
 
   useEffect(() => {
     if (open) {
@@ -54,6 +55,23 @@ const dispatch = useAppDispatch();
 
   const handlePlaceOrder = async () => {
   if (!list.length) return;
+
+  // Validate required fields
+  const newErrors: { name?: string; phone?: string; table?: string } = {};
+  if (!name.trim()) newErrors.name = "Name is required.";
+  if (!phone.trim()) {
+    newErrors.phone = "Phone number is required.";
+  } else if (!/^\d{10}$/.test(phone.trim())) {
+    newErrors.phone = "Please enter a valid 10-digit phone number.";
+  }
+  if (orderType === "dinein" && !table.trim()) {
+    newErrors.table = "Table number is required for Dine In.";
+  }
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
+  setErrors({});
 
   try {
     console.log("🔵 Starting order creation...");
@@ -201,7 +219,7 @@ const dispatch = useAppDispatch();
                 className={`orderTypeCard ${
                   orderType === "dinein" ? "orderTypeCardActive" : ""
                 }`}
-                onClick={() => setOrderType("dinein")}
+                onClick={() => { setOrderType("dinein"); setErrors(p => ({ ...p, table: undefined })); }}
               >
                 <UtensilsCrossed size={22} />
                 <div>Dine In</div>
@@ -223,35 +241,39 @@ const dispatch = useAppDispatch();
             <div className="cartSectionTitle">Your Details</div>
 
             <div className="formStack">
-              <div className="inputWrap">
+              <div className="inputWrap" style={{ borderColor: errors.name ? "#dc2626" : undefined }}>
                 <User className="inputIcon" size={18} />
                 <input
                   className="textInput"
-                  placeholder="Your Name"
+                  placeholder="Your Name *"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => { setName(e.target.value); setErrors(p => ({ ...p, name: undefined })); }}
                 />
               </div>
+              {errors.name && <div style={{ color: "#dc2626", fontSize: 12, marginTop: -4 }}>{errors.name}</div>}
 
-              <div className="inputWrap">
+              <div className="inputWrap" style={{ borderColor: errors.phone ? "#dc2626" : undefined }}>
                 <Phone className="inputIcon" size={18} />
                 <input
                   className="textInput"
-                  placeholder="Phone Number"
+                  placeholder="Phone Number * (10 digits)"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  maxLength={10}
+                  onChange={(e) => { setPhone(e.target.value); setErrors(p => ({ ...p, phone: undefined })); }}
                 />
               </div>
+              {errors.phone && <div style={{ color: "#dc2626", fontSize: 12, marginTop: -4 }}>{errors.phone}</div>}
 
-              <div className="inputWrap">
+              <div className="inputWrap" style={{ borderColor: errors.table ? "#dc2626" : undefined }}>
                 <Hash className="inputIcon" size={18} />
                 <input
                   className="textInput"
-                  placeholder="Table Number"
+                  placeholder={orderType === "dinein" ? "Table Number *" : "Table Number (optional)"}
                   value={table}
-                  onChange={(e) => setTable(e.target.value)}
+                  onChange={(e) => { setTable(e.target.value); setErrors(p => ({ ...p, table: undefined })); }}
                 />
               </div>
+              {errors.table && <div style={{ color: "#dc2626", fontSize: 12, marginTop: -4 }}>{errors.table}</div>}
             </div>
           </div>
 
