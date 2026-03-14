@@ -63,7 +63,7 @@ export default function Reports() {
     dispatch(fetchSales({ page: 1, limit: 100000 }));
     dispatch(fetchExpenseTotals());
     dispatch(fetchExpenses());
-    dispatch(fetchEmployees("")); 
+    dispatch(fetchEmployees(""));
   }, [dispatch]);
 
   /* MAP SALES → DASHBOARD FORMAT */
@@ -74,6 +74,11 @@ export default function Reports() {
         invoice: s.invoiceNumber,
         customer: s.product?.name || "Walk-in",
         items: s.product?.name || "-",
+        // ✅ FIX: pass through real product + items array so buildTopProducts
+        //    counts all products correctly (same logic as Dashboard)
+        product: s.product,
+        quantity: s.quantity,
+        saleItems: s.items || [],
         type: s.paymentMethod,
         amount: s.totalAmount,
         payment: s.paymentStatus,
@@ -100,7 +105,7 @@ export default function Reports() {
 
   const salesSummary = calculateTotals(filteredData);
 
-  /*Calculate Active Employee Salary */
+  /* Calculate Active Employee Salary */
   const totalEmployeeSalary = useMemo(() => {
     return employees
       .filter((e) => e.active !== false)
@@ -109,11 +114,11 @@ export default function Reports() {
 
   const totalExpenses = totals?.totalExpenses ?? 0;
 
-  /*Net Profit now includes salary */
+  /* Net Profit now includes salary */
   const netProfit =
     salesSummary.totalRevenue - (totalExpenses + totalEmployeeSalary);
 
-  /*CATEGORY BREAKDOWN */
+  /* CATEGORY BREAKDOWN */
   const categoryTotals = useMemo(() => {
     const map: Record<string, number> = {};
 
@@ -131,7 +136,7 @@ export default function Reports() {
 
     map["others"] = others;
 
-    /*Inject Employee Salary into breakdown */
+    /* Inject Employee Salary into breakdown */
     map["salary"] = totalEmployeeSalary;
 
     return map as Record<string, number>;
@@ -142,6 +147,8 @@ export default function Reports() {
     [filteredData, category]
   );
 
+  // ✅ FIX: buildTopProducts now receives saleItems + product on each entry,
+  //    so it counts multi-item sales correctly — matching the Dashboard chart.
   const topProductsData = useMemo(
     () => buildTopProducts(filteredData),
     [filteredData]
@@ -190,7 +197,7 @@ export default function Reports() {
           value={String(reportSummary?.totalOrders ?? 0)}
           accentColor="#00C853"
           softColor="#E5F9EE"
-          icon={<ReceiptText size={22} strokeWidth={2.2} />as any}
+          icon={<ReceiptText size={22} strokeWidth={2.2} /> as any}
         />
 
         <SummaryCard
@@ -198,7 +205,7 @@ export default function Reports() {
           value={`₹${(reportSummary?.totalExpenses ?? 0).toLocaleString()}`}
           accentColor="#FF9100"
           softColor="#FFF3E0"
-          icon={<TrendingDown size={22} strokeWidth={2.2} />as any}
+          icon={<TrendingDown size={22} strokeWidth={2.2} /> as any}
         />
 
         <SummaryCard
@@ -207,7 +214,7 @@ export default function Reports() {
             <span
               style={{
                 color: netProfit >= 0 ? "#16A34A" : "#DC2626",
-                fontWeight: 600
+                fontWeight: 600,
               }}
             >
               {netProfit < 0 ? "-" : "+"}₹{Math.abs(netProfit).toLocaleString()}
@@ -219,7 +226,7 @@ export default function Reports() {
             netProfit >= 0 ? (
               <TrendingUp size={22} strokeWidth={2.2} />
             ) : (
-              <TrendingDown size={22} strokeWidth={2.2} />as any
+              <TrendingDown size={22} strokeWidth={2.2} /> as any
             )
           }
         />
@@ -238,60 +245,60 @@ export default function Reports() {
 
       <div className="kb-summary-row">
         <SummaryCard
-            title="Inventory"
-            value={`₹${(categoryTotals["inventory"] ?? 0).toLocaleString()}`}
-            accentColor="#ECEFF1"
-            softColor="#F5F5F5"
-            icon={<Package size={22} strokeWidth={2.2} color="#1E88E5" />as any}
-          />
+          title="Inventory"
+          value={`₹${(categoryTotals["inventory"] ?? 0).toLocaleString()}`}
+          accentColor="#ECEFF1"
+          softColor="#F5F5F5"
+          icon={<Package size={22} strokeWidth={2.2} color="#1E88E5" /> as any}
+        />
 
-          <SummaryCard
-            title="Supplies"
-            value={`₹${(categoryTotals["supplies"] ?? 0).toLocaleString()}`}
-            accentColor="#ECEFF1"
-            softColor="#F5F5F5"
-            icon={<ShoppingCart size={22} strokeWidth={2.2} color="#00897B" />as any}
-          />
+        <SummaryCard
+          title="Supplies"
+          value={`₹${(categoryTotals["supplies"] ?? 0).toLocaleString()}`}
+          accentColor="#ECEFF1"
+          softColor="#F5F5F5"
+          icon={<ShoppingCart size={22} strokeWidth={2.2} color="#00897B" /> as any}
+        />
 
-          <SummaryCard
-            title="Salary"
-            value={`₹${(categoryTotals["salary"] ?? 0).toLocaleString()}`}
-            accentColor="#ECEFF1"
-            softColor="#F5F5F5"
-            icon={<BriefcaseBusiness size={22} strokeWidth={2.2} color="#5E35B1" />as any}
-          />
+        <SummaryCard
+          title="Salary"
+          value={`₹${(categoryTotals["salary"] ?? 0).toLocaleString()}`}
+          accentColor="#ECEFF1"
+          softColor="#F5F5F5"
+          icon={<BriefcaseBusiness size={22} strokeWidth={2.2} color="#5E35B1" /> as any}
+        />
 
-          <SummaryCard
-            title="Utilities"
-            value={`₹${(categoryTotals["utilities"] ?? 0).toLocaleString()}`}
-            accentColor="#ECEFF1"
-            softColor="#F5F5F5"
-            icon={<Lightbulb size={22} strokeWidth={2.2} color="#F9A825" />as any}
-          />
+        <SummaryCard
+          title="Utilities"
+          value={`₹${(categoryTotals["utilities"] ?? 0).toLocaleString()}`}
+          accentColor="#ECEFF1"
+          softColor="#F5F5F5"
+          icon={<Lightbulb size={22} strokeWidth={2.2} color="#F9A825" /> as any}
+        />
 
-          <SummaryCard
-            title="Rent"
-            value={`₹${(categoryTotals["rent"] ?? 0).toLocaleString()}`}
-            accentColor="#ECEFF1"
-            softColor="#F5F5F5"
-            icon={<Building2 size={22} strokeWidth={2.2} color="#546E7A" />as any}
-          />
+        <SummaryCard
+          title="Rent"
+          value={`₹${(categoryTotals["rent"] ?? 0).toLocaleString()}`}
+          accentColor="#ECEFF1"
+          softColor="#F5F5F5"
+          icon={<Building2 size={22} strokeWidth={2.2} color="#546E7A" /> as any}
+        />
 
-          <SummaryCard
-            title="Maintenance"
-            value={`₹${(categoryTotals["maintenance"] ?? 0).toLocaleString()}`}
-            accentColor="#ECEFF1"
-            softColor="#F5F5F5"
-            icon={<Wrench size={22} strokeWidth={2.2} color="#FB8C00" />as any}
-          />
+        <SummaryCard
+          title="Maintenance"
+          value={`₹${(categoryTotals["maintenance"] ?? 0).toLocaleString()}`}
+          accentColor="#ECEFF1"
+          softColor="#F5F5F5"
+          icon={<Wrench size={22} strokeWidth={2.2} color="#FB8C00" /> as any}
+        />
 
-          <SummaryCard
-            title="Others"
-            value={`₹${(categoryTotals["others"] ?? 0).toLocaleString()}`}
-            accentColor="#ECEFF1"
-            softColor="#F5F5F5"
-            icon={<Folder size={22} strokeWidth={2.2} color="#6D6D6D" />as any}
-          />
+        <SummaryCard
+          title="Others"
+          value={`₹${(categoryTotals["others"] ?? 0).toLocaleString()}`}
+          accentColor="#ECEFF1"
+          softColor="#F5F5F5"
+          icon={<Folder size={22} strokeWidth={2.2} color="#6D6D6D" /> as any}
+        />
       </div>
     </Flex>
   );

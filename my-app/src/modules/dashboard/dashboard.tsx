@@ -116,6 +116,9 @@ const buildTopProductsData = (sales: Sale[], topN: number = 3): ProductSalesCoun
   const productCounts = new Map<string, number>();
 
   last7Days.forEach((sale) => {
+    // Skip cancelled sales
+    if (sale.paymentStatus?.toLowerCase() === "cancelled") return;
+
     // Handle both single product and items array
     if (sale.product?.name) {
       const currentCount = productCounts.get(sale.product.name) || 0;

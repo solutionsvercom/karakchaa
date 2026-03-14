@@ -583,15 +583,38 @@ export function buildRevenueTrendByMonth(
 
 /**
  * Build top products
+ * Handles both multi-item sales (items array) and single-product sales (product field).
+ * Counts by quantity sold, not by number of transactions.
  */
 export function buildTopProducts(
-  data: { items: string }[],
+  data: {
+    items?: string;
+    saleItems?: { name: string; quantity: number }[];
+    product?: { name: string } | null;
+    quantity?: number;
+  }[],
   limit: number = 5
 ) {
   const map: Record<string, number> = {};
 
   data.forEach((sale) => {
-    map[sale.items] = (map[sale.items] || 0) + 1;
+    // Skip cancelled sales — they should not count toward top products
+    if ((sale as any).payment?.toLowerCase() === "cancelled") return;
+
+    // Priority 1: use the real items array (multi-item sales)
+    if (Array.isArray(sale.saleItems) && sale.saleItems.length > 0) {
+      sale.saleItems.forEach((item) => {
+        if (item.name && item.name !== "-") {
+          map[item.name] = (map[item.name] || 0) + (item.quantity || 1);
+        }
+      });
+    // Priority 2: use populated product object
+    } else if (sale.product?.name) {
+      map[sale.product.name] = (map[sale.product.name] || 0) + (sale.quantity || 1);
+    // Priority 3: legacy string fallback (only if it's a real name, not a placeholder)
+    } else if (sale.items && sale.items !== "-") {
+      map[sale.items] = (map[sale.items] || 0) + 1;
+    }
   });
 
   return Object.entries(map)
