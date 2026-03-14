@@ -45,11 +45,11 @@ const BASE_URL = API_CUSTOMERS;
 
 export const fetchCustomers = createAsyncThunk<
   Customer[],
-  void,
+  { page?: number; limit?: number },
   { rejectValue: string }
->("customers/fetchAll", async (_, thunkAPI) => {
+>("customers/fetchAll", async ({ page = 1, limit = 50 }, thunkAPI) => {
   try {
-    const response = await axios.get(`${BASE_URL}/all`);
+    const response = await axios.get(`${BASE_URL}/all?page=${page}&limit=${limit}`);
     return response.data?.data ?? [];
   } catch (error: any) {
     return thunkAPI.rejectWithValue(

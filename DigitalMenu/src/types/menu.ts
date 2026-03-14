@@ -7,4 +7,5 @@ export type MenuItem = {
   veg: boolean;
   available: boolean;
   image?: string;
+  stockQty: number;
 };

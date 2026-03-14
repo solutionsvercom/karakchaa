@@ -26,6 +26,7 @@ export interface Order {
   | "Completed"
   | "Cancelled";
   totalAmount: number;
+  discount?: number;
   createdAt: string;
   notes?: string;
   saleCreated?: boolean;
@@ -38,6 +39,7 @@ interface CreateOrderPayload {
   orderType: "dine-in" | "takeaway" | "delivery" | "online";
   paymentMethod?: string;
   notes?: string;
+  discount?: number;
 }
 
 // STAFF-LEVEL: Pagination state

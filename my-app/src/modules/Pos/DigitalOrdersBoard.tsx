@@ -121,7 +121,7 @@ export default function DigitalOrdersBoard() {
     dispatch(fetchSales());
 
     if (newStatus === "Completed" || newStatus === "Cancelled") {
-      dispatch(fetchCustomers());
+      dispatch(fetchCustomers({ page: 1, limit: 100000 }));
     }
   };
 

@@ -27,12 +27,14 @@ const CartContext = createContext<CartContextType | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
   const reduxItems = useAppSelector((state) => state.cart.items);
+  const products = useAppSelector((state) => state.digitalMenu.products);
 
   // Convert Redux array format to Context object format
   const items: Record<string, CartItem> = useMemo(() => {
     const result: Record<string, CartItem> = {};
     
     reduxItems.forEach((reduxItem) => {
+      const product = products.find((p) => p._id === reduxItem.productId);
       result[reduxItem.productId] = {
         item: {
           id: reduxItem.productId,
@@ -43,6 +45,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           description: "",
           veg: reduxItem.veg ?? true,
           available: true,
+          stockQty: product?.stockQty ?? 0,
         },
         qty: reduxItem.quantity,
       };
@@ -54,6 +57,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const getQty = (id: string) => items[id]?.qty ?? 0;
 
   const add = (item: MenuItem) => {
+    const currentQty = getQty(item.id);
+    const product = products.find(p => p._id === item.id);
+    if (product && currentQty + 1 > product.stockQty) {
+      alert(`Cannot add more. Only ${product.stockQty} available in stock.`);
+      return;
+    }
     dispatch(
       addToCart({
         productId: item.id,
@@ -67,6 +76,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const inc = (id: string) => {
+    const currentQty = getQty(id);
+    const product = products.find(p => p._id === id);
+    if (product && currentQty + 1 > product.stockQty) {
+      alert(`Cannot add more. Only ${product.stockQty} available in stock.`);
+      return;
+    }
     // Redux addToCart already handles incrementing
     const existing = reduxItems.find((item) => item.productId === id);
     if (existing) {

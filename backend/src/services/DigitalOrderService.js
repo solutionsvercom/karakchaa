@@ -1,4 +1,34 @@
 const DigitalOrder = require("../models/DigitalOrder/DigitalOrderSchema");
+const Product = require("../models/Product/ProductSchema");
+const Stockmanagement = require("../models/Stockmanagement/StockmanagementSchema");
+
+async function syncStockmanagement(productDoc, quantity, action, referenceNo) {
+  const stockItem = await Stockmanagement.findOne({ sku: productDoc.sku });
+  if (!stockItem) return;
+
+  if (action === "remove") {
+    stockItem.currentStock = Math.max(0, stockItem.currentStock - quantity);
+  } else {
+    stockItem.currentStock += quantity;
+  }
+
+  if (stockItem.currentStock === 0) {
+    stockItem.status = "Out of Stock";
+  } else if (stockItem.currentStock <= stockItem.minStockLevel) {
+    stockItem.status = "Low Stock";
+  } else {
+    stockItem.status = "In Stock";
+  }
+
+  stockItem.stockHistory.push({
+    action,
+    quantity,
+    reason: action === "remove" ? "digital order" : "digital order cancelled",
+    referenceNo,
+  });
+
+  await stockItem.save();
+}
 
 exports.createDigitalOrderService = async(orderData) => {
 
@@ -19,6 +49,22 @@ exports.createDigitalOrderService = async(orderData) => {
         0
     );
 
+    // Validate stock and sync inventory
+    for (const item of items) {
+        const product = await Product.findById(item.productId || item.product);
+        if (!product) {
+            throw new Error("Product not found");
+        }
+
+        if (product.stockQty < item.quantity) {
+            throw new Error(`Insufficient stock for ${product.name}`);
+        }
+
+        product.stockQty = Math.max(0, product.stockQty - item.quantity);
+        await product.save();
+
+        await syncStockmanagement(product, item.quantity, "remove", "DIGITAL_ORDER");
+    }
 
     const newOrder = new DigitalOrder({
 

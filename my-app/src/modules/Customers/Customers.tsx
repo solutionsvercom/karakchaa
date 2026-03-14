@@ -62,7 +62,7 @@ export default function Customers() {
   );
 
   useEffect(() => {
-    dispatch(fetchCustomers());
+    dispatch(fetchCustomers({ page: 1, limit: 100000 }));
     dispatch(fetchCustomerStats());
   }, [dispatch]);
 
