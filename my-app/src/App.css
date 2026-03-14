@@ -589,7 +589,9 @@
     flex-direction: column !important;
 }
 
+
 /* Image area — fixed height, never grows */
+
 .product-card-img {
     height: 140px !important;
     flex-shrink: 0 !important;
@@ -600,7 +602,9 @@
     background: linear-gradient(180deg, #f8fafc, #f1f5f9);
 }
 
+
 /*  Content area — fills remaining space */
+
 .product-card-body {
     flex: 1 !important;
     display: flex !important;
@@ -787,6 +791,7 @@
     color: var(--gray-10);
 }
 
+
 /* =========================
    SUPPLIER CARDS RESPONSIVE
    ========================= */
@@ -798,6 +803,7 @@
         border-radius: 14px !important;
     }
 }
+
 
 /* =========================
    CHART / TABLE RESPONSIVE
@@ -815,10 +821,11 @@
         -webkit-overflow-scrolling: touch;
     }
     /* Tighten gap-4 flex rows on mobile (chart rows etc.) */
-    .kb-content > * > [style*="gap"] {
+    .kb-content>*>[style*="gap"] {
         flex-wrap: wrap;
     }
 }
+
 
 /* =========================
    SMALL SCREEN SUMMARY CARD
@@ -844,7 +851,9 @@
     }
 }
 
+
 /* ===== PRODUCT CARD LAYOUT FIX =====  */
+
 .product-card {
     position: relative;
     overflow: hidden;
@@ -873,7 +882,9 @@
     padding: 12px;
 }
 
+
 /* ===== DASHBOARD CHART CARDS ===== */
+
 .dash-chart-card {
     background: var(--gray-1);
     border-radius: 16px;
@@ -895,4 +906,37 @@
         padding: 12px;
         border-radius: 12px;
     }
+}
+
+.kb-summary-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.kb-summary-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.kb-summary-card-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.kb-summary-card:hover .kb-summary-card-icon-wrapper {
+    transform: scale(1.1);
+}
+
+.kb-summary-card-icon-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.kb-summary-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
