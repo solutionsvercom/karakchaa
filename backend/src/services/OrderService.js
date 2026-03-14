@@ -37,14 +37,17 @@ async function createOrder(data) {
     orderType,
     paymentMethod,
     notes,
+    discount = 0,
   } = data;
 
   const orderNumber = await generateOrderNumber();
 
-  const totalAmount = items.reduce(
+  const subtotal = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
+
+  const totalAmount = Math.max(subtotal - discount, 0);
 
   const formattedItems = items.map((item) => ({
     product: item.productId || item.product,
@@ -69,13 +72,10 @@ async function createOrder(data) {
     orderSource, 
     status: initialStatus, 
     paymentMethod: paymentMethod || "Cash",
+    discount,
     totalAmount,
     notes,
   });
-
-  if (orderSource === "POS") {
-    await SaleService.createSaleFromOrder(order, paymentMethod);
-  }
 
   return order;
 }

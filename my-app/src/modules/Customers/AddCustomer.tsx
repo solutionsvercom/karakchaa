@@ -136,7 +136,7 @@ const AddCustomer = ({ mode, initialValues, customerId }: AddCustomerProps) => {
               ).unwrap();
             }
 
-            await dispatch(fetchCustomers());
+            await dispatch(fetchCustomers({ page: 1, limit: 100000 }));
             await dispatch(fetchCustomerStats());
 
             navigate("/dashboard/customer");

@@ -48,13 +48,19 @@ exports.createCustomer = async(req, res) => {
 
 exports.getAllCustomers = async(req, res) => {
     try {
-        const customers = await Customer.find().sort({ createdAt: -1 });
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const skip = (page - 1) * limit;
+
+        const customers = await Customer.find().sort({ createdAt: -1 }).skip(skip).limit(limit);
+        const total = await Customer.countDocuments();
 
         res.json({
             success: true,
             message: 'Customers fetched successfully',
             count: customers.length,
-            data: customers
+            data: customers,
+            pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
         });
     } catch (error) {
         res.status(500).json({

@@ -179,7 +179,7 @@ export default function Dashboard() {
     dispatch(fetchStockItems());
     dispatch(fetchStockStats());
     dispatch(fetchSales({ page: 1, limit: 100000 }));
-    dispatch(fetchCustomers());
+    dispatch(fetchCustomers({ page: 1, limit: 100000 }));
     dispatch(fetchProducts());
     dispatch(fetchExpenses());
   }, [dispatch]);

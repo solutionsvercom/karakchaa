@@ -84,7 +84,7 @@ export const CheckoutDialog = ({
 
       clearCart();
       dispatch(fetchSales());
-      dispatch(fetchCustomers());
+      dispatch(fetchCustomers({ page: 1, limit: 100000 }));
       dispatch(fetchStockItems());
       dispatch(fetchProducts());
 

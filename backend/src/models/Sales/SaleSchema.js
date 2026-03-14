@@ -38,6 +38,12 @@ const saleSchema = new mongoose.Schema({
         required: true,
     },
 
+    discount: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
+
     customer: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Customer",

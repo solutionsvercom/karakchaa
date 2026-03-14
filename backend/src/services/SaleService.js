@@ -4,6 +4,16 @@ const Order = require("../models/Order/OrderSchema");
 const Counter = require("../models/System/CounterSchema");
 const Customer = require("../models/Customers/CustomerSchema");
 const Stockmanagement = require("../models/Stockmanagement/StockmanagementSchema");
+const mongoose = require("mongoose");
+
+// Utility to sync Product.stockQty with Stockmanagement (read-only cache)
+async function syncProductStock(productDoc) {
+  const stockItem = await Stockmanagement.findOne({ sku: productDoc.sku });
+  if (stockItem) {
+    productDoc.stockQty = stockItem.currentStock;
+    await productDoc.save();
+  }
+}
 
 async function generateInvoiceNumber() {
   const counterKey = "invoice_number";
@@ -135,6 +145,7 @@ async function createSale(data) {
     orderType,
     notes,
     soldBy,
+    discount = 0,
   } = data;
 
   if (!items || !items.length) {
@@ -144,73 +155,88 @@ async function createSale(data) {
   const customerId = await findOrCreateCustomer(customerName, phone);
   const orderNumber = await generateOrderNumber();
 
-  let totalAmount = 0;
-  const orderItems = [];
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    let totalAmount = 0;
+    const orderItems = [];
 
-  for (const item of items) {
-    const productDoc = await Product.findById(item.product);
-    if (!productDoc) throw new Error("Product not found");
+    for (const item of items) {
+      const productDoc = await Product.findById(item.product);
+      if (!productDoc) throw new Error("Product not found");
 
-    if (productDoc.stockQty < item.quantity) {
-      throw new Error("Insufficient stock");
+      if (productDoc.stockQty < item.quantity) {
+        throw new Error("Insufficient stock");
+      }
+
+      productDoc.stockQty -= item.quantity;
+      await productDoc.save({ session });
+
+      // Sync Stockmanagement (new: ensure consistency)
+      await syncStockmanagement(productDoc, item.quantity, "remove", "TEMP");  // Temp, will update with real invoice
+      await syncProductStock(productDoc);  // Keep Product in sync
+
+      totalAmount += productDoc.sellingPrice * item.quantity;
+
+      orderItems.push({
+        product: productDoc._id,
+        name: productDoc.name,
+        price: productDoc.sellingPrice,
+        quantity: item.quantity,
+      });
     }
 
-    productDoc.stockQty -= item.quantity;
-    await productDoc.save();
+    const discountedTotal = Math.max(totalAmount - discount, 0);
 
-    totalAmount += productDoc.sellingPrice * item.quantity;
+    const order = await Order.create({
+      orderNumber,
+      items: orderItems,
+      customerName,
+      phone,
+      orderType,
+      notes,
+      discount,
+      totalAmount: discountedTotal,
+      status: "Pending",
+      customer: customerId,
+    }, { session });
 
-    orderItems.push({
-      product: productDoc._id,
-      name: productDoc.name,
-      price: productDoc.sellingPrice,
-      quantity: item.quantity,
-    });
-  }
+    const invoiceNumber = await generateInvoiceNumber();
 
-  const order = await Order.create({
-    orderNumber,
-    items: orderItems,
-    customerName,
-    phone,
-    orderType,
-    notes,
-    totalAmount,
-    status: "Pending",
-    customer: customerId,
-  });
-
-  const invoiceNumber = await generateInvoiceNumber();
-  const createdSales = [];
-
-  for (const item of orderItems) {
-    const productDoc = await Product.findById(item.product);
-
-    const sale = await Sale.create({
+    const sale = await Sale.create([{
       invoiceNumber,
-      product: item.product,
-      quantity: item.quantity,
-      sellingPrice: item.price,
-      totalAmount: item.price * item.quantity,
+      items: orderItems.map(item => ({
+        product: item.product,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+      product: orderItems[0]?.product,
+      quantity: orderItems.reduce((sum, item) => sum + item.quantity, 0),
+      sellingPrice: discountedTotal,
+      totalAmount: discountedTotal,
+      discount,
       customer: customerId,
       paymentMethod,
       paymentStatus,
       soldBy,
-      orderSource: orderType || "POS", 
-    });
+      orderSource: orderType || "POS",
+    }], { session });
 
-    if (productDoc) {
-      await syncStockmanagement(productDoc, item.quantity, "remove", invoiceNumber);
+    const createdSales = [sale[0]];
+
+    if (customerId) {
+      await updateCustomerStats(customerId, totalAmount, "increment");
     }
 
-    createdSales.push(sale);
+    await session.commitTransaction();
+    return { order, sales: createdSales };
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
   }
-
-  if (customerId) {
-    await updateCustomerStats(customerId, totalAmount, "increment");
-  }
-
-  return { order, sales: createdSales };
 }
 
 async function createSaleFromOrder(order, paymentMethod = "Cash") {
@@ -235,67 +261,85 @@ async function createSaleFromOrder(order, paymentMethod = "Cash") {
 
   const invoiceNumber = await generateInvoiceNumber();
 
-  for (const item of lockedOrder.items) {
-    const productDoc = await Product.findById(item.product);
-    if (!productDoc) throw new Error(`Product not found: ${item.name}`);
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    for (const item of lockedOrder.items) {
+      const productDoc = await Product.findById(item.product);
+      if (!productDoc) throw new Error(`Product not found: ${item.name}`);
 
-    const stockItem = await Stockmanagement.findOne({ sku: productDoc.sku });
-    const available = stockItem ? stockItem.currentStock : productDoc.stockQty;
+      const stockItem = await Stockmanagement.findOne({ sku: productDoc.sku });
+      const available = stockItem ? stockItem.currentStock : productDoc.stockQty;
 
-    if (available < item.quantity) {
-      throw new Error(`Insufficient stock for: ${productDoc.name} (available: ${available}, needed: ${item.quantity})`);
+      if (available < item.quantity) {
+        throw new Error(`Insufficient stock for: ${productDoc.name} (available: ${available}, needed: ${item.quantity})`);
+      }
     }
+
+    let totalAmount = 0;
+    let firstProductId = null;
+    let totalQuantity = 0;
+    const saleItems = [];
+
+    for (const item of lockedOrder.items) {
+      const productDoc = await Product.findById(item.product);
+      if (!firstProductId) firstProductId = productDoc._id;
+
+      productDoc.stockQty = Math.max(0, productDoc.stockQty - item.quantity);
+      await productDoc.save({ session });
+
+      await syncStockmanagement(productDoc, item.quantity, "remove", invoiceNumber);
+
+      await syncProductStock(productDoc);  // Ensure Product reflects Stockmanagement
+
+      saleItems.push({
+        product: productDoc._id,
+        name: item.name || productDoc.name,
+        price: item.price,
+        quantity: item.quantity,
+      });
+
+      totalAmount += item.price * item.quantity;
+      totalQuantity += item.quantity;
+    }
+
+    const normalizePayment = (method) => {
+      const valid = ["Cash", "Card", "UPI", "PhonePe", "GPay", "Paytm", "Other"];
+      const match = valid.find(v => v.toLowerCase() === (method || "Cash").toLowerCase());
+      return match || "Cash";
+    };
+
+    const discount = order.discount || 0;
+    const discountedTotal = Math.max(totalAmount - discount, 0);
+
+    const sale = await Sale.create([{
+      invoiceNumber,
+      items: saleItems,
+      product: firstProductId,
+      quantity: totalQuantity,
+      sellingPrice: discountedTotal,
+      totalAmount: discountedTotal,
+      discount,
+      customer: customerId,
+      paymentMethod: normalizePayment(paymentMethod || lockedOrder.paymentMethod),
+      paymentStatus: "Completed",
+      orderSource: lockedOrder.orderSource || "POS",
+    }], { session });
+
+    const createdSale = sale[0];
+
+    if (customerId) {
+      await updateCustomerStats(customerId, totalAmount, "increment");
+    }
+
+    await session.commitTransaction();
+    return [createdSale];
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
   }
-
-  let totalAmount = 0;
-  let firstProductId = null;
-  let totalQuantity = 0;
-  const saleItems = [];
-
-  for (const item of lockedOrder.items) {
-    const productDoc = await Product.findById(item.product);
-    if (!firstProductId) firstProductId = productDoc._id;
-
-    productDoc.stockQty = Math.max(0, productDoc.stockQty - item.quantity);
-    await productDoc.save();
-
-    await syncStockmanagement(productDoc, item.quantity, "remove", invoiceNumber);
-
-    saleItems.push({
-      product: productDoc._id,
-      name: item.name || productDoc.name,
-      price: item.price,
-      quantity: item.quantity,
-    });
-
-    totalAmount += item.price * item.quantity;
-    totalQuantity += item.quantity;
-  }
-
-  const normalizePayment = (method) => {
-    const valid = ["Cash", "Card", "UPI", "PhonePe", "GPay", "Paytm", "Other"];
-    const match = valid.find(v => v.toLowerCase() === (method || "Cash").toLowerCase());
-    return match || "Cash";
-  };
-
-  const sale = await Sale.create({
-    invoiceNumber,
-    items: saleItems,
-    product: firstProductId,
-    quantity: totalQuantity,
-    sellingPrice: totalAmount,
-    totalAmount,
-    customer: customerId,
-    paymentMethod: normalizePayment(paymentMethod || lockedOrder.paymentMethod),
-    paymentStatus: "Completed",
-    orderSource: lockedOrder.orderSource || "POS",
-  });
-
-  if (customerId) {
-    await updateCustomerStats(customerId, totalAmount, "increment");
-  }
-
-  return [sale];
 }
 
 async function reverseSaleFromOrder(order) {
@@ -303,48 +347,59 @@ async function reverseSaleFromOrder(order) {
 
   if (!order.saleCreated) return;
 
-
   const customerId = order.customer ||
     (order.phone
       ? (await Customer.findOne({ phoneNumber: order.phone }))?._id
       : null);
 
-  for (const item of order.items) {
-    const productDoc = await Product.findById(item.product);
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    for (const item of order.items) {
+      const productDoc = await Product.findById(item.product);
 
-    if (!productDoc) continue;
+      if (!productDoc) continue;
 
-    productDoc.stockQty += item.quantity;
-    await productDoc.save();
+      productDoc.stockQty += item.quantity;
+      await productDoc.save({ session });
 
-    // Restore Stockmanagement collection
-    await syncStockmanagement(
-      productDoc,
-      item.quantity,
-      "add",
-      `CANCEL-${order.orderNumber}`
+      // Restore Stockmanagement collection
+      await syncStockmanagement(
+        productDoc,
+        item.quantity,
+        "add",
+        `CANCEL-${order.orderNumber}`
+      );
+
+      await syncProductStock(productDoc);  // Sync back
+    }
+
+    // Reverse customer stats
+    if (customerId) {
+      await updateCustomerStats(customerId, order.totalAmount, "decrement");
+    }
+
+    const saleUpdatePromises = order.items.map((item) =>
+      Sale.findOneAndUpdate(
+        {
+          product: item.product,
+          customer: customerId,
+          paymentStatus: { $ne: "Cancelled" },
+        },
+        { $set: { paymentStatus: "Cancelled" } },
+        { sort: { createdAt: -1 }, session } // most recent first
+      )
     );
+
+    await Promise.all(saleUpdatePromises);
+
+    await session.commitTransaction();
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
   }
-
-  // Reverse customer stats
-  if (customerId) {
-    await updateCustomerStats(customerId, order.totalAmount, "decrement");
-  }
-
-  
-  const saleUpdatePromises = order.items.map((item) =>
-    Sale.findOneAndUpdate(
-      {
-        product: item.product,
-        customer: customerId,
-        paymentStatus: { $ne: "Cancelled" },
-      },
-      { $set: { paymentStatus: "Cancelled" } },
-      { sort: { createdAt: -1 } } // most recent first
-    )
-  );
-
-  await Promise.all(saleUpdatePromises);
 }
 
 async function getAllSales(filters = {}) {
