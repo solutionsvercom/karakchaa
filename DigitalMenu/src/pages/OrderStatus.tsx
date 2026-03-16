@@ -24,6 +24,8 @@ type OrderState = {
   items: CartItem[];
   subtotal: number;
   tax: number;
+  discount: number;
+  gstRate: number;
   total: number;
   backendOrderId?: string;
 };
@@ -108,166 +110,248 @@ export default function OrderStatusPage() {
 
   if (!state) return null;
 
-  const { orderNumber, items, subtotal, tax, total } = state;
+  const { orderNumber, items, subtotal, tax, discount, gstRate, total } = state;
   const displayOrderNumber = liveOrderNumber || orderNumber;
   const isReady = terminalStatus === "ready";
 
-  return (
-    <div className="order-page">
-      <div className="order-shell">
+  const statusColorMap: Record<string, { bg: string, color: string, border: string }> = {
+    pending: { bg: "#F3F4F6", color: "#374151", border: "#E5E7EB" },
+    accepted: { bg: "#DBEAFE", color: "#1D4ED8", border: "#BFDBFE" },
+    preparing: { bg: "#FEF3C7", color: "#B45309", border: "#FDE68A" },
+    ready: { bg: "#DCFCE7", color: "#15803D", border: "#BBF7D0" },
+    completed: { bg: "#DCFCE7", color: "#15803D", border: "#BBF7D0" },
+    cancelled: { bg: "#FEE2E2", color: "#B91C1C", border: "#FECACA" },
+  };
 
-        <header className={`order-header ${isReady ? "ready-header" : ""}`}>
-          <p className="order-label">Order Number</p>
-          <p className="order-code">#{displayOrderNumber}</p>
-        </header>
+  const statusLower = liveOrderNumber ? Object.keys(statusColorMap)[stepIndex] || "pending" : "pending";
+  // We infer the status from the stepIndex logic if needed, but since we don't store raw status, we'll map backwards
+  let displayStatus = "Pending";
+  if (stepIndex === 1) displayStatus = "Accepted";
+  if (stepIndex === 2) displayStatus = "Preparing";
+  if (isReady || stepIndex === 3) displayStatus = "Ready";
+
+  const badgeTheme = statusColorMap[displayStatus.toLowerCase()] || statusColorMap.pending;
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "#FAFAFA",
+      padding: "20px 16px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      fontFamily: "system-ui, sans-serif"
+    }}>
+      <div style={{
+        width: "100%",
+        maxWidth: "480px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "16px"
+      }}>
+
+        {/* Header Card */}
+        <div style={{
+          background: "white",
+          borderRadius: "20px",
+          padding: "24px",
+          border: "1px solid #E5E7EB",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+          textAlign: "center",
+          position: "relative",
+          overflow: "hidden"
+        }}>
+          <div style={{
+            position: "absolute",
+            top: 0, left: 0, right: 0, height: "4px",
+            background: "linear-gradient(90deg, #7c3aed, #4f46e5)"
+          }} />
+          <h2 style={{ fontSize: "14px", color: "#6B7280", margin: "0 0 8px 0", fontWeight: 500, textTransform: "uppercase", letterSpacing: "1px" }}>
+            Order Number
+          </h2>
+          <div style={{ fontSize: "36px", fontWeight: 800, color: "#111827", margin: "0 0 16px 0", letterSpacing: "-1px" }}>
+            #{displayOrderNumber}
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <span style={{
+              background: badgeTheme.bg,
+              color: badgeTheme.color,
+              border: `1px solid ${badgeTheme.border}`,
+              padding: "6px 16px",
+              borderRadius: "999px",
+              fontSize: "14px",
+              fontWeight: 700,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px"
+            }}>
+              {isReady && <BellRing size={16} />}
+              {displayStatus}
+            </span>
+          </div>
+        </div>
 
         {isReady && (
-          <section className="order-complete-hero order-ready-hero">
-            <div className="order-complete-icon-wrap order-ready-icon-wrap">
-              <BellRing className="order-complete-icon order-ready-icon" />
-            </div>
-            <h2 className="order-complete-title order-ready-title">
-              Your Order is Ready!
-            </h2>
-            <p className="order-complete-subtitle">
-              Please pay and collect your order from the counter.
-            </p>
-          </section>
+          <div style={{
+            background: "linear-gradient(135deg, #22C55E, #16A34A)",
+            borderRadius: "20px",
+            padding: "20px",
+            color: "white",
+            textAlign: "center",
+            boxShadow: "0 10px 25px rgba(34, 197, 94, 0.25)",
+            animation: "slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1)"
+          }}>
+            <BellRing size={32} style={{ marginBottom: "12px" }} />
+            <h3 style={{ margin: "0 0 4px 0", fontSize: "20px", fontWeight: 700 }}>Order is Ready!</h3>
+            <p style={{ margin: 0, fontSize: "14px", opacity: 0.9 }}>Head to the counter to collect your order.</p>
+          </div>
         )}
 
-        <section className="order-card status-card">
-          <h2 className="card-title">Order Status</h2>
-
+        {/* Timeline */}
+        <div style={{
+          background: "white",
+          borderRadius: "20px",
+          padding: "24px",
+          border: "1px solid #E5E7EB",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.03)"
+        }}>
+          <h3 style={{ margin: "0 0 20px 0", fontSize: "18px", color: "#111827", fontWeight: 700 }}>Track Order</h3>
           <div className="status-timeline">
+            {/* Step 0 */}
             <div className={`status-step ${stepIndex >= 0 ? "active" : ""}`}>
-              <div
-                className={`status-icon-wrapper ${
-                  stepIndex === 0 ? "active" : stepIndex > 0 ? "completed" : ""
-                }`}
-              >
-                <Clock3 className="status-icon" />
+              <div className={`status-icon-wrapper ${stepIndex === 0 ? "active" : stepIndex > 0 ? "completed" : ""}`}>
+                <Clock3 size={12} className="status-icon" />
               </div>
               <div className="status-text">
-                <p className="status-title">Order Placed</p>
-                {stepIndex === 0 && (
-                  <p className="status-subtitle">In progress...</p>
-                )}
+                <p className="status-title" style={{ fontWeight: 600 }}>Order Placed</p>
+                {stepIndex === 0 && <p className="status-subtitle" style={{ color: "#7c3aed" }}>Confirmed and waiting</p>}
               </div>
             </div>
-
             <div className="status-connector" />
 
+            {/* Step 1 */}
             <div className={`status-step ${stepIndex >= 1 ? "active" : ""}`}>
-              <div
-                className={`status-icon-wrapper ${
-                  stepIndex === 1 ? "active" : stepIndex > 1 ? "completed" : ""
-                }`}
-              >
-                <CheckCircle2 className="status-icon" />
+              <div className={`status-icon-wrapper ${stepIndex === 1 ? "active" : stepIndex > 1 ? "completed" : ""}`}>
+                <CheckCircle2 size={12} className="status-icon" />
               </div>
               <div className="status-text">
-                <p className={`status-title ${stepIndex >= 1 ? "" : "muted"}`}>
-                  Confirmed
-                </p>
+                <p className={`status-title ${stepIndex >= 1 ? "" : "muted"}`} style={{ fontWeight: stepIndex >= 1 ? 600 : 400 }}>Accepted</p>
               </div>
             </div>
-
             <div className="status-connector" />
 
+            {/* Step 2 */}
             <div className={`status-step ${stepIndex >= 2 ? "active" : ""}`}>
-              <div
-                className={`status-icon-wrapper ${
-                  stepIndex === 2 ? "active" : stepIndex > 2 ? "completed" : ""
-                }`}
-              >
-                <Loader2 className="status-icon" />
+              <div className={`status-icon-wrapper ${stepIndex === 2 ? "active" : stepIndex > 2 ? "completed" : ""}`}>
+                <Loader2 size={12} className={`status-icon ${stepIndex === 2 ? 'spin' : ''}`} />
               </div>
               <div className="status-text">
-                <p className={`status-title ${stepIndex >= 2 ? "" : "muted"}`}>
-                  Preparing
-                </p>
+                <p className={`status-title ${stepIndex >= 2 ? "" : "muted"}`} style={{ fontWeight: stepIndex >= 2 ? 600 : 400 }}>Preparing</p>
               </div>
             </div>
-
             <div className="status-connector" />
 
+            {/* Step 3 */}
             <div className={`status-step ${stepIndex >= 3 ? "active" : ""}`}>
-              <div
-                className={`status-icon-wrapper ${
-                  stepIndex >= 3 ? (isReady ? "active ready-pulse" : "completed") : ""
-                }`}
-              >
-                <CheckCircle2 className="status-icon" />
+              <div className={`status-icon-wrapper ${stepIndex >= 3 ? "active" : ""}`}>
+                <CheckCircle2 size={12} className="status-icon" />
               </div>
               <div className="status-text">
-                <p className={`status-title ${stepIndex >= 3 ? "" : "muted"}`}>
-                  Ready
-                </p>
-                {isReady && (
-                  <p className="status-subtitle ready-subtitle">
-                    Collect from counter!
-                  </p>
-                )}
+                <p className={`status-title ${stepIndex >= 3 ? "" : "muted"}`} style={{ fontWeight: stepIndex >= 3 ? 600 : 400 }}>Ready</p>
               </div>
             </div>
           </div>
-        </section>
+        </div>
 
-        <section className="order-card details-card">
-          <h2 className="card-title">Order Details</h2>
-
-          <div className="order-items">
+        {/* Order Details */}
+        <div style={{
+          background: "white",
+          borderRadius: "20px",
+          padding: "24px",
+          border: "1px solid #E5E7EB",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.03)"
+        }}>
+          <h3 style={{ margin: "0 0 16px 0", fontSize: "18px", color: "#111827", fontWeight: 700 }}>Order Items</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "20px" }}>
             {items.map((item) => (
-              <div key={item.id} className="order-row order-item-row">
-                <span className="order-item-name">
-                  {item.name} × {item.qty}
-                </span>
-                <span className="order-item-price">
-                  ₹{item.price * item.qty}
-                </span>
+              <div key={item.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "14px", fontWeight: 500, color: "#374151" }}>
+                <span>{item.qty} × {item.name}</span>
+                <span style={{ fontWeight: 600 }}>₹{item.price * item.qty}</span>
               </div>
             ))}
           </div>
 
-          <div className="order-total">
-            <div className="order-row order-total-row">
+          <div style={{ borderTop: "1px dashed #E5E7EB", paddingTop: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "#6B7280" }}>
               <span>Subtotal</span>
               <span>₹{subtotal}</span>
             </div>
-            <div className="order-row order-total-row">
-              <span>GST (5%)</span>
-              <span>+ ₹{tax}</span>
+            
+            {(discount > 0 || discount !== undefined) && discount > 0 ? (
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "#10B981" }}>
+                <span>Discount</span>
+                <span>- ₹{discount}</span>
+              </div>
+            ) : null}
+
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", color: "#6B7280" }}>
+              <span>GST ({gstRate || 0}%)</span>
+              <span>₹{tax}</span>
             </div>
-            <div className="order-row order-total-row order-total-main">
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "18px", fontWeight: 700, color: "#111827", marginTop: "8px" }}>
               <span>Total</span>
-              <span className="order-total-main-value">₹{total}</span>
+              <span>₹{total}</span>
             </div>
           </div>
-        </section>
-
-        <section className="order-card order-note">
-          <p className="order-note-text">
-            <Lightbulb
-              size={18}
-              color="#facc15"
-              fill="#facc15"
-              strokeWidth={1.5}
-              className="mr-2"
-            />
-            {isReady
-              ? "Your order is ready! Please pay and collect it from the counter."
-              : "This page updates automatically. Payment will be collected at the counter."}
-          </p>
-        </section>
+        </div>
 
         <button
-          className="order-more-btn colorful-home-btn"
           onClick={() => navigate("/")}
+          style={{
+            background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+            color: "white",
+            border: "none",
+            borderRadius: "16px",
+            padding: "16px",
+            fontSize: "16px",
+            fontWeight: 700,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            cursor: "pointer",
+            boxShadow: "0 10px 25px rgba(124, 58, 237, 0.25)",
+            marginTop: "8px"
+          }}
         >
-          <Home size={20} className="home-colored" />
+          <Home size={20} />
           Order More
         </button>
+
       </div>
+      <style>
+        {`
+          @keyframes spin {
+            100% { transform: rotate(360deg); }
+          }
+          .spin { animation: spin 2s linear infinite; }
+          @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .status-step { display: flex; align-items: center; gap: 12px; margin: 4px 0; }
+          .status-icon-wrapper { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #E5E7EB; display: flex; align-items: center; justify-content: center; background: white; z-index: 2; transition: all 0.3s ease; }
+          .status-icon-wrapper.active { border-color: #7c3aed; background: #ede9fe; color: #7c3aed; transform: scale(1.3); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25); }
+          .status-icon-wrapper.completed { border-color: #10B981; background: #D1FAE5; color: #10B981; }
+          .status-icon { color: inherit; }
+          .status-icon-wrapper:not(.active):not(.completed) .status-icon { color: #9CA3AF; }
+          .status-connector { height: 16px; border-left: 2px solid #E5E7EB; margin-left: 13px; z-index: 1; }
+          .status-title { margin: 0; font-size: 14px; color: #111827; }
+          .status-title.muted { color: #9CA3AF; }
+          .status-subtitle { margin: 4px 0 0 0; font-size: 12px; }
+        `}
+      </style>
     </div>
   );
 }

@@ -20,6 +20,7 @@ const MODULES = [
   "reports",
   "users",
   "roles",
+  "settings",
 ];
 
 interface AddRoleProps {

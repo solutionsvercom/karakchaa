@@ -24,7 +24,7 @@ type Props = {
 type OrderType = "dinein" | "takeaway";
 
 export default function CartDrawer({ open, onClose }: Props) {
-  const { items, subtotal, totalQty, inc, dec, remove, clear } = useCart();
+  const { items, subtotal, totalQty, discountAmount, taxAmount, total, inc, dec, remove, clear } = useCart();
   const navigate = useNavigate();
 const dispatch = useAppDispatch();
   const list = Object.values(items);
@@ -46,12 +46,7 @@ const dispatch = useAppDispatch();
     return () => document.body.classList.remove("cart-open");
   }, [open]);
 
-  const taxRate = 0.05;
-
-  const tax = useMemo(() => Math.round(subtotal * taxRate), [subtotal]);
-  const total = useMemo(() => Math.round(subtotal + tax), [subtotal, tax]);
-
-  const currencySubtotal = useMemo(() => `₹${subtotal}`, [subtotal]);
+  const currencySubtotal = useMemo(() => `₹${Math.round(subtotal)}`, [subtotal]);
 
   const handlePlaceOrder = async () => {
   if (!list.length) return;
@@ -110,9 +105,10 @@ const dispatch = useAppDispatch();
       state: {
         orderNumber: result.orderNumber || result._id,
         items: orderItems,
-        subtotal,
-        tax,
-        total,
+        subtotal: Math.round(subtotal),
+        tax: Math.round(taxAmount),
+        discount: Math.round(discountAmount),
+        total: Math.round(total),
         orderType: "online",
         name,
         phone,
@@ -307,16 +303,23 @@ const dispatch = useAppDispatch();
               <span>{currencySubtotal}</span>
             </div>
 
+            {discountAmount > 0 && (
+              <div className="summaryRow" style={{ color: "#10B981" }}>
+                <span>Discount</span>
+                <span>- ₹{Math.round(discountAmount)}</span>
+              </div>
+            )}
+
             <div className="summaryRow">
-              <span>GST (5%)</span>
-              <span>+ ₹{tax}</span>
+              <span>GST/Taxes</span>
+              <span>+ ₹{Math.round(taxAmount)}</span>
             </div>
 
             <div className="summaryDivider"></div>
 
             <div className="summaryRow totalRow">
               <span>Total</span>
-              <span>₹{total}</span>
+              <span>₹{Math.round(total)}</span>
             </div>
           </div>
 
@@ -325,7 +328,7 @@ const dispatch = useAppDispatch();
             disabled={list.length === 0}
             onClick={handlePlaceOrder}
           >
-            Place Order — ₹{total}
+            Place Order — ₹{Math.round(total)}
           </button>
         </div>
       </aside>

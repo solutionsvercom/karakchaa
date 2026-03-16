@@ -56,6 +56,30 @@ const orderSchema = new mongoose.Schema(
       min: 0,
     },
 
+    subtotal: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    gstRate: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    gstAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    taxableAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     totalAmount: Number,
 
     notes: String,

@@ -1,6 +1,5 @@
 import { Button, Flex, Text, IconButton, TextField } from "@radix-ui/themes";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useCart } from "./CartContext";
@@ -11,12 +10,22 @@ interface CartProps {
 }
 
 const Cart = ({ onCheckout }: CartProps) => {
-  const { items, total, increment, decrement, removeItem, clearCart } = useCart();
+  const {
+    items,
+    subtotal,
+    total,
+    discount,
+    gstRate,
+    pricing,
+    increment,
+    decrement,
+    removeItem,
+    clearCart,
+    setDiscount,
+    setGstRate,
+  } = useCart();
   const { products } = useSelector((state: RootState) => state.product);
-
-  const [discount, setDiscount] = useState(0);
   const navigate = useNavigate();
-  const discountedTotal = Math.max(total - discount, 0);
 
   const handleCheckout = () => {
     onCheckout?.();
@@ -130,31 +139,40 @@ const Cart = ({ onCheckout }: CartProps) => {
           <Flex direction="column" gap="2">
             <Flex justify="between">
               <Text color="gray">Subtotal</Text>
-              <Text>Rs {total}</Text>
+              <Text>Rs {subtotal}</Text>
             </Flex>
 
             <Flex justify="between" align="center">
               <Text color="gray">Discount</Text>
-              <TextField.Root
-                type="number"
-                value={discount}
-                onChange={(e) => setDiscount(Number(e.target.value))}
-                style={{ width: 90 }}
-              />
+              <Text weight="medium">
+                {pricing.discount > 0 ? `- Rs ${pricing.discount}` : "Rs 0"}
+              </Text>
             </Flex>
+
+            <Flex justify="between" align="center">
+              <Text color="gray">GST %</Text>
+              <Text weight="medium">{gstRate}%</Text>
+            </Flex>
+
+            {pricing.gstRate > 0 && (
+              <Flex justify="between">
+                <Text color="gray">GST Amount</Text>
+                <Text>Rs {pricing.gstAmount}</Text>
+              </Flex>
+            )}
 
             <Flex justify="between" mt="1">
               <Text size="4" weight="bold">
                 Total
               </Text>
               <Text size="5" weight="bold" color="violet">
-                Rs {discountedTotal}
+                Rs {pricing.total}
               </Text>
             </Flex>
           </Flex>
 
           <Button size="4" onClick={handleCheckout}>
-            Checkout · Rs {discountedTotal}
+            Checkout · Rs {pricing.total}
           </Button>
         </Flex>
       )}

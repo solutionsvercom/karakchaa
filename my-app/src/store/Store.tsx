@@ -9,6 +9,7 @@ import salesReducer from "../features/SalesSlice";
 import expensesReducer from "../features/ExpensesSlice";
 import suppliersReducer from "../features/SuppliersSlice";
 import ordersReducer from "../features/OrdersSlice";
+import settingsReducer from "../features/SettingsSlice";
 
 
 export const store = configureStore({
@@ -22,7 +23,7 @@ export const store = configureStore({
     expenses: expensesReducer,
     suppliers: suppliersReducer,
     orders: ordersReducer,
-      
+    settings: settingsReducer,
   },
 });
 

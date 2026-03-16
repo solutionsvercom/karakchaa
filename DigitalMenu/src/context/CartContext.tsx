@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useMemo } from "react";
+import React, { createContext, useContext, useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { AlertCircle } from "lucide-react";
 import {
   addToCart,
   decreaseQuantity,
@@ -8,11 +9,15 @@ import {
 } from "../features/CartSlice";
 import type { MenuItem } from "../types/menu";
 import type { CartItem } from "../types/cart";
+import { fetchSettings } from "../features/SettingsSlice";
 
 type CartContextType = {
   items: Record<string, CartItem>;
   totalQty: number;
   subtotal: number;
+  discountAmount: number;
+  taxAmount: number;
+  total: number;
 
   getQty: (id: string) => number;
   add: (item: MenuItem) => void;
@@ -28,6 +33,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
   const reduxItems = useAppSelector((state) => state.cart.items);
   const products = useAppSelector((state) => state.digitalMenu.products);
+  const settings = useAppSelector((state) => state.settings);
+  const [cartError, setCartError] = useState<string | null>(null);
+
+  // Fetch settings on boot
+  React.useEffect(() => {
+    dispatch(fetchSettings());
+  }, [dispatch]);
+
+  const showError = (msg: string) => {
+    setCartError(msg);
+    setTimeout(() => {
+      setCartError(null);
+    }, 3000);
+  };
 
   // Convert Redux array format to Context object format
   const items: Record<string, CartItem> = useMemo(() => {
@@ -60,7 +79,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const currentQty = getQty(item.id);
     const product = products.find(p => p._id === item.id);
     if (product && currentQty + 1 > product.stockQty) {
-      alert(`Cannot add more. Only ${product.stockQty} available in stock.`);
+      showError(`Cannot add more. Only ${product.stockQty} available in stock.`);
       return;
     }
     dispatch(
@@ -79,7 +98,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const currentQty = getQty(id);
     const product = products.find(p => p._id === id);
     if (product && currentQty + 1 > product.stockQty) {
-      alert(`Cannot add more. Only ${product.stockQty} available in stock.`);
+      showError(`Cannot add more. Only ${product.stockQty} available in stock.`);
       return;
     }
     // Redux addToCart already handles incrementing
@@ -117,17 +136,42 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     dispatch(clearCart());
   };
 
-  const { totalQty, subtotal } = useMemo(() => {
+  const { totalQty, subtotal, discountAmount, taxAmount, total } = useMemo(() => {
     const values = Object.values(items);
     const totalQty = values.reduce((sum, x) => sum + x.qty, 0);
-    const subtotal = values.reduce((sum, x) => sum + x.qty * x.item.price, 0);
-    return { totalQty, subtotal };
-  }, [items]);
+    const grossSubtotal = values.reduce((sum, x) => sum + x.qty * x.item.price, 0);
+    
+    // Apply Settings
+    let discountAmount = 0;
+    if (settings.discountType === "percentage") {
+      discountAmount = (grossSubtotal * settings.discountValue) / 100;
+    } else {
+      discountAmount = settings.discountValue;
+    }
+    
+    // Clamp discount
+    discountAmount = Math.max(0, Math.min(discountAmount, grossSubtotal));
+    const taxableAmount = Math.max(0, grossSubtotal - discountAmount);
+    
+    const taxAmount = (taxableAmount * settings.gstRate) / 100;
+    const total = taxableAmount + taxAmount;
+    
+    return { 
+      totalQty, 
+      subtotal: grossSubtotal,
+      discountAmount,
+      taxAmount,
+      total
+    };
+  }, [items, settings]);
 
   const value: CartContextType = {
     items,
     totalQty,
     subtotal,
+    discountAmount,
+    taxAmount,
+    total,
     getQty,
     add,
     inc,
@@ -136,7 +180,47 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     clear,
   };
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  return (
+    <CartContext.Provider value={value}>
+      {children}
+      
+      {/* PROFESSIONAL TOAST OVERLAY REPLACE BROWSER ALERT */}
+      {cartError && (
+        <div 
+          style={{ 
+            position: "fixed", 
+            bottom: "32px", 
+            left: "50%", 
+            transform: "translateX(-50%)", 
+            background: "#1C2024", 
+            border: "1px solid #E5484D",
+            color: "white", 
+            padding: "12px 20px", 
+            borderRadius: "12px", 
+            zIndex: 99999, 
+            fontWeight: 500, 
+            fontSize: "14px",
+            boxShadow: "0 12px 32px rgba(229, 72, 77, 0.25)",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            animation: "slideUp 0.3s ease forwards"
+          }}
+        >
+          <AlertCircle size={20} color="#FFC53D" />
+          {cartError}
+          <style>
+            {`
+              @keyframes slideUp {
+                from { opacity: 0; transform: translate(-50%, 20px); }
+                to { opacity: 1; transform: translate(-50%, 0); }
+              }
+            `}
+          </style>
+        </div>
+      )}
+    </CartContext.Provider>
+  );
 }
 
 export function useCart() {

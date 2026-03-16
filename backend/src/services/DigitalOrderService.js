@@ -1,6 +1,8 @@
 const DigitalOrder = require("../models/DigitalOrder/DigitalOrderSchema");
 const Product = require("../models/Product/ProductSchema");
 const Stockmanagement = require("../models/Stockmanagement/StockmanagementSchema");
+const Settings = require("../models/Settings");
+const { calculatePricing } = require("./PricingService");
 
 async function syncStockmanagement(productDoc, quantity, action, referenceNo) {
   const stockItem = await Stockmanagement.findOne({ sku: productDoc.sku });
@@ -43,11 +45,26 @@ exports.createDigitalOrderService = async(orderData) => {
     if (!items || items.length === 0)
         throw new Error("Order items required");
 
-    const totalAmount = items.reduce(
-        (sum, item) =>
-        sum + item.price * item.quantity,
+    let settings = await Settings.findOne();
+    if (!settings) settings = { gstRate: 0, discountType: "percentage", discountValue: 0 };
+
+    const subtotalRaw = items.reduce(
+        (sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 0),
         0
     );
+
+    let discount = 0;
+    if (settings.discountType === "percentage") {
+        discount = (subtotalRaw * (settings.discountValue || 0)) / 100;
+    } else {
+        discount = settings.discountValue || 0;
+    }
+
+    const pricing = calculatePricing({
+        items: items.map(i => ({ price: i.price, quantity: i.quantity })),
+        discount,
+        gstRate: settings.gstRate || 0,
+    });
 
     // Validate stock and sync inventory
     for (const item of items) {
@@ -73,7 +90,7 @@ exports.createDigitalOrderService = async(orderData) => {
         phone,
         tableNumber,
         orderType,
-        totalAmount,
+        totalAmount: pricing.totalAmount,
 
     });
 

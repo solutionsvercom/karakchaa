@@ -3,7 +3,7 @@ import { Flex, Box, Select, Card } from "@radix-ui/themes";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CheckoutDialog } from "./CheckoutDialog";
-import { ShoppingCart, X, Bell } from "lucide-react";
+import { ShoppingCart, X, Bell, Monitor, TabletSmartphone } from "lucide-react";
 
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import ProductCard from "../../components/dynamicComponents/ProductCard";
@@ -25,7 +25,7 @@ export default function Pos() {
   const isCheckoutMode = location.pathname.includes("/create-sale");
 
   const dispatch = useDispatch<AppDispatch>();
-  const { addItem, items, total } = useCart();
+  const { addItem, items, total, discount, gstRate } = useCart();
 
   const { products, loading } = useSelector((state: RootState) => state.product);
   const { orders } = useSelector((state: RootState) => state.orders);
@@ -51,9 +51,13 @@ export default function Pos() {
   }, [dispatch]);
 
   useEffect(() => {
-    dispatch(fetchOrders());
+    dispatch(fetchOrders({ status: "Pending,Accepted,Preparing,Ready", limit: 1000 }));
     const interval = setInterval(() => {
-      dispatch(fetchOrders());
+      const mode = (window as any).digitalFilterMode;
+      // Only poll active orders if we are NOT actively browsing completed/cancelled lists
+      if (mode !== "completed" && mode !== "cancelled") {
+        dispatch(fetchOrders({ status: "Pending,Accepted,Preparing,Ready", limit: 1000 }));
+      }
     }, 10000);
 
     return () => clearInterval(interval);
@@ -192,8 +196,13 @@ export default function Pos() {
               fontWeight: 500,
               background: activeTab === "pos" ? "var(--accent-9)" : "transparent",
               color: activeTab === "pos" ? "white" : "var(--gray-12)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
             }}
           >
+            <Monitor size={18} strokeWidth={2.5} />
             Point of Sale
           </Box>
           <Box
@@ -213,6 +222,7 @@ export default function Pos() {
               gap: 8,
             }}
           >
+            <TabletSmartphone size={18} strokeWidth={2.5} />
             <span>Digital Menu Orders</span>
             {digitalNewCount > 0 && (
               <span
@@ -458,7 +468,8 @@ export default function Pos() {
       <CheckoutDialog
         open={isCheckoutMode}
         onClose={() => navigate("/dashboard/pos")}
-        discount={0}
+        discount={discount}
+        gstRate={gstRate}
       />
 
       <style>{`

@@ -10,6 +10,11 @@ export interface Sale {
   quantity: number;
   sellingPrice: number;
   totalAmount: number;
+  subtotal?: number;
+  discount?: number;
+  gstRate?: number;
+  gstAmount?: number;
+  taxableAmount?: number;
   paymentMethod: string;
   paymentStatus: string;
   createdAt: string;
