@@ -1,6 +1,8 @@
 const Order = require("../models/Order/OrderSchema");
 const SaleService = require("./SaleService");
 const Counter = require("../models/System/CounterSchema");
+const Settings = require("../models/Settings");
+const { calculatePricing } = require("./PricingService");
 
 async function generateOrderNumber() {
   const counterKey = "order_number";
@@ -37,17 +39,24 @@ async function createOrder(data) {
     orderType,
     paymentMethod,
     notes,
-    discount = 0,
   } = data;
 
   const orderNumber = await generateOrderNumber();
 
-  const subtotal = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  // Fetch global Settings
+  let settings = await Settings.findOne();
+  if (!settings) settings = { gstRate: 0, discountType: "percentage", discountValue: 0 };
 
-  const totalAmount = Math.max(subtotal - discount, 0);
+  const gstRate = settings.gstRate || 0;
+  let discount = 0;
+
+  const subtotalRaw = items.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 0), 0);
+
+  if (settings.discountType === "percentage") {
+    discount = (subtotalRaw * (settings.discountValue || 0)) / 100;
+  } else {
+    discount = settings.discountValue || 0;
+  }
 
   const formattedItems = items.map((item) => ({
     product: item.productId || item.product,
@@ -55,6 +64,12 @@ async function createOrder(data) {
     price: item.price,
     quantity: item.quantity,
   }));
+
+  const pricing = calculatePricing({
+    items: formattedItems,
+    discount,
+    gstRate,
+  });
 
   // Centralized orderSource assignment (single source of truth)
   const finalOrderType = orderType || "online";
@@ -72,10 +87,19 @@ async function createOrder(data) {
     orderSource, 
     status: initialStatus, 
     paymentMethod: paymentMethod || "Cash",
-    discount,
-    totalAmount,
+    discount: pricing.discount,
+    subtotal: pricing.subtotal,
+    gstRate: pricing.gstRate,
+    gstAmount: pricing.gstAmount,
+    taxableAmount: pricing.taxableAmount,
+    totalAmount: pricing.totalAmount,
     notes,
   });
+
+  if (orderSource === "POS" && initialStatus === "Completed") {
+    await SaleService.createSaleFromOrder(order, order.paymentMethod);
+    order.saleCreated = true;
+  }
 
   return order;
 }
@@ -92,7 +116,14 @@ async function getOrders(options = {}) {
   } = options;
 
   const query = {};
-  if (status) query.status = status;
+  if (status) {
+    // Check if status is a comma-separated list
+    if (status.includes(",")) {
+      query.status = { $in: status.split(",").map(s => s.trim()) };
+    } else {
+      query.status = status;
+    }
+  }
   if (orderSource) query.orderSource = orderSource;
   if (orderType) query.orderType = orderType;
 

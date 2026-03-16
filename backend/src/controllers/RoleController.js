@@ -49,6 +49,9 @@ const normalizeModule = (module) => {
         // Roles
         "roles": "roles",
         "Roles": "roles",
+        // Settings
+        "settings": "settings",
+        "Settings": "settings",
     };
     return map[module] !== undefined ? map[module] : module.toLowerCase();
 };
@@ -57,7 +60,7 @@ const VALID_MODULES = [
     "dashboard", "pos", "products", "customer",
     "stockmanagement", "sales", "suppliers",
     "employees", "expenses", "reports",
-    "feedback", "users", "roles"
+    "feedback", "users", "roles", "settings"
 ];
 
 const cleanModules = (modules) => {

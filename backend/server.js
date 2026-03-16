@@ -35,6 +35,7 @@ const saleRoutes = require("./src/routes/Sale");
 app.use("/api/auth", authRoutes);
 const digitalMenuRoutes = require("./src/routes/DigitalMenuRoutes");
 const digitalOrderRoutes = require("./src/routes/DigitalOrderRoutes");
+const settingsRoutes = require("./src/routes/settingsRoutes");
 
 
 /* ROUTES USE */
@@ -54,6 +55,7 @@ app.use("/api/digital-menu", digitalMenuRoutes);
 app.use("/api/digital-menu", digitalOrderRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/reports", require("./src/routes/ReportsRoutes"));
+app.use("/api/settings", settingsRoutes);
 
 
 

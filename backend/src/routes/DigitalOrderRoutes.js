@@ -36,6 +36,10 @@ router.get("/orders/status/:orderRef", async(req, res) => {
                 status: order.status.toLowerCase(),
                 items: order.items,
                 totalAmount: order.totalAmount,
+                subtotal: order.subtotal,
+                discount: order.discount,
+                gstRate: order.gstRate,
+                gstAmount: order.gstAmount,
                 customerName: order.customerName,
                 phone: order.phone,
             }

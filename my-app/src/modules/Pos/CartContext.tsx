@@ -1,4 +1,8 @@
-import React, { createContext, useContext, useReducer } from "react";
+import React, { createContext, useContext, useReducer, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { calculatePricing, PricingSummary } from "./pricing";
+import { RootState, AppDispatch } from "../../store/Store";
+import { fetchSettings } from "../../features/SettingsSlice";
 
 type Product = {
   id: string;
@@ -17,12 +21,19 @@ type CartState = {
 
 type CartContextType = {
   items: CartItem[];
+  subtotal: number;
   total: number;
+  discount: number;
+  gstRate: number;
+  pricing: PricingSummary;
   addItem: (product: Product) => void;
   increment: (id: string, maxQty?: number) => void;
   decrement: (id: string) => void;
   removeItem: (id: string) => void;
   clearCart: () => void;
+  setDiscount: (discount: number) => void;
+  setGstRate: (gstRate: number) => void;
+  resetPricing: () => void;
 };
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -98,21 +109,61 @@ const cartReducer = (state: CartState, action: any): CartState => {
 };
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
-  const [state, dispatch] = useReducer(cartReducer, { items: [] });
+  const [state, dispatchCart] = useReducer(cartReducer, { items: [] });
+  const reduxDispatch = useDispatch<AppDispatch>();
+  const settings = useSelector((state: RootState) => state.settings);
 
-  const total = state.items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
+  // Still allow local overrides if needed (e.g., custom discount on the fly)
+  const [localDiscount, setDiscountState] = React.useState<number | null>(null);
+  const [localGstRate, setGstRateState] = React.useState<number | null>(null);
+
+  // Fetch global settings once when provider mounts
+  useEffect(() => {
+    reduxDispatch(fetchSettings());
+  }, [reduxDispatch]);
+
+  const activeDiscountValue = localDiscount !== null ? localDiscount : settings.discountValue;
+  // If we applied a local override, assume it's flat, else use system default
+  const activeDiscountType = localDiscount !== null ? "flat" : settings.discountType;
+  const activeGstRate = localGstRate !== null ? localGstRate : settings.gstRate;
+
+  const pricing = React.useMemo(
+    () => calculatePricing(state.items, activeDiscountType, activeDiscountValue, activeGstRate),
+    [state.items, activeDiscountType, activeDiscountValue, activeGstRate]
   );
+
+  const setDiscount = (nextDiscount: number) => {
+    setDiscountState(Math.max(Number(nextDiscount) || 0, 0));
+  };
+
+  const setGstRate = (nextGstRate: number) => {
+    const normalizedRate = Number(nextGstRate) || 0;
+    setGstRateState(Math.min(Math.max(normalizedRate, 0), 100));
+  };
+
+  const resetPricing = () => {
+    setDiscountState(0);
+    setGstRateState(0);
+  };
 
   const value: CartContextType = {
     items: state.items,
-    total,
-    addItem: (product) => dispatch({ type: "ADD", payload: product }),
-    increment: (id, maxQty) => dispatch({ type: "INC", payload: { id, maxQty } }),
-    decrement: (id) => dispatch({ type: "DEC", payload: id }),
-    removeItem: (id) => dispatch({ type: "REMOVE", payload: id }),
-    clearCart: () => dispatch({ type: "CLEAR" }),
+    subtotal: pricing.subtotal,
+    total: pricing.total,
+    discount: activeDiscountValue,
+    gstRate: activeGstRate,
+    pricing,
+    addItem: (product) => dispatchCart({ type: "ADD", payload: product }),
+    increment: (id, maxQty) => dispatchCart({ type: "INC", payload: { id, maxQty } }),
+    decrement: (id) => dispatchCart({ type: "DEC", payload: id }),
+    removeItem: (id) => dispatchCart({ type: "REMOVE", payload: id }),
+    clearCart: () => {
+      dispatchCart({ type: "CLEAR" });
+      resetPricing();
+    },
+    setDiscount,
+    setGstRate,
+    resetPricing,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

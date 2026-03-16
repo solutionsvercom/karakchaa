@@ -19,6 +19,7 @@ const StockmanagementPage = lazy(() => import("./pages/Dashboard/Stockmanagement
 const SalesPage = lazy(() => import("./pages/Dashboard/Sales"));
 const UsersPage = lazy(() => import("./pages/Dashboard/Users"));
 const RolesPage = lazy(() => import("./pages/Dashboard/Roles"));
+const SettingsPage = lazy(() => import("./modules/Settings/Settings"));
 
 import Login from "./pages/Login";
 
@@ -42,12 +43,13 @@ const MODULE_ROUTES = {
   feedback:         "/dashboard/feedback",
   users:            "/dashboard/users",
   roles:            "/dashboard/roles",
+  settings:         "/dashboard/settings",
 };
 
 const MODULE_PRIORITY = [
   "dashboard", "pos", "sales", "products", "customer",
   "stockmanagement", "suppliers", "employees",
-  "expenses", "reports", "feedback", "users", "roles",
+  "expenses", "reports", "feedback", "users", "roles", "settings"
 ];
 
 /*
@@ -206,6 +208,8 @@ function App() {
           <Route path="roles" element={<ProtectedRoute allowedRoles={["admin"]}><RolesPage /></ProtectedRoute>} />
           <Route path="roles/add-role" element={<ProtectedRoute allowedRoles={["admin"]}><RolesPage /></ProtectedRoute>} />
           <Route path="roles/:id/edit-role" element={<ProtectedRoute allowedRoles={["admin"]}><RolesPage /></ProtectedRoute>} />
+
+          <Route path="settings" element={<ProtectedRoute allowedRoles={["admin"]}><SettingsPage /></ProtectedRoute>} />
 
         </Route>
 

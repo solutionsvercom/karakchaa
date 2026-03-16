@@ -20,7 +20,8 @@ import {
   LogOut,
   UserPlus,
   Shield,
-  Key
+  Key,
+  Settings as SettingsIcon,
 } from "lucide-react";
 
 
@@ -37,6 +38,7 @@ const menuItems = [
   { label: 'Reports', path: '/dashboard/reports', key: 'reports', icon: <BarChart3 size={16} /> },
   { label: 'User Management', path: '/dashboard/users', key: 'users', icon: <UserPlus size={16} /> },
   { label: 'Role Management', path: '/dashboard/roles', key: 'roles', icon: <Key size={16} /> },
+  { label: 'Global Settings', path: '/dashboard/settings', key: 'settings', icon: <SettingsIcon size={16} /> },
 ];
 
 
@@ -113,7 +115,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <nav className="kb-sidebar-menu">
         {menuItems
   .filter(item =>
-    user?.modules?.includes(item.key)
+    user?.role === "admin" || user?.modules?.includes(item.key)
   )
   .map(item => {
 

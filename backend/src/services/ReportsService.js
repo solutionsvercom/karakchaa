@@ -59,12 +59,18 @@ const getDateRange = (period) => {
 const buildReports = async (period = "All Time") => {
   const { startDate, endDate } = getDateRange(period);
 
-  const dateFilter = startDate
+  const salesDateFilter = startDate
     ? { createdAt: { $gte: startDate, $lte: endDate } }
     : {};
+  const expenseDateFilter = startDate
+    ? { date: { $gte: startDate, $lte: endDate } }
+    : {};
 
-  const sales = await Sale.find(dateFilter).lean();
-  const expenses = await Expense.find(dateFilter).lean();
+  const sales = await Sale.find({
+    ...salesDateFilter,
+    paymentStatus: { $ne: "Cancelled" },
+  }).lean();
+  const expenses = await Expense.find(expenseDateFilter).lean();
 
   const totalRevenue = sales.reduce(
     (sum, s) => sum + (s.totalAmount || 0),

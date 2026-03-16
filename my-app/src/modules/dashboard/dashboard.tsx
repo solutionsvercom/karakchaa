@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../store/Store";
 
 import { fetchStockItems, fetchStockStats } from "../../features/StockmanagementSlice";
-import { fetchSales, Sale } from "../../features/SalesSlice";
+import { fetchSales } from "../../features/SalesSlice";
 import { fetchCustomers } from "../../features/CustomersSlice";
 import { fetchProducts } from "../../features/ProductsSlice";
 import { fetchExpenses } from "../../features/ExpensesSlice";
@@ -13,6 +13,8 @@ import { SummaryCard } from "../../components/dynamicComponents/Cards";
 import {
   RevenueTrendChart,
   TopProductsChart,
+  buildRevenueTrendSmart,
+  buildTopProducts,
 } from "../../components/dynamicComponents/Charts";
 
 import {
@@ -25,128 +27,13 @@ import {
 
 import { LowStockAlert } from "../../components/dynamicComponents/Charts/LowStockAlert";
 import { RecentSales } from "../../components/dynamicComponents/Charts/RecentSales";
-
-/*  TYPES  */
-
-interface DailySalesData {
-  date: string;
-  revenue: number;
-  count: number;
-}
-
-interface ProductSalesCount {
-  name: string;
-  count: number;
-}
-
-/*  HELPER FUNCTIONS  */
-
-/**
- * Get sales from last N days
- */
-const getLastNDaysSales = (sales: Sale[], days: number): Sale[] => {
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - days);
-  cutoffDate.setHours(0, 0, 0, 0);
-
-  return sales.filter((sale) => {
-    const saleDate = new Date(sale.createdAt);
-    return saleDate >= cutoffDate;
-  });
-};
-
-/**
- * Get today's sales
- */
-const getTodaysSales = (sales: Sale[]): Sale[] => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  return sales.filter((sale) => {
-    const saleDate = new Date(sale.createdAt);
-    saleDate.setHours(0, 0, 0, 0);
-    return saleDate.getTime() === today.getTime();
-  });
-};
-
-/**
- * Build revenue trend data for last 7 days
- */
-const buildRevenueTrendData = (sales: Sale[]): DailySalesData[] => {
-  const last7Days = getLastNDaysSales(sales, 7);
-  
-  // Group sales by date
-  const salesByDate = new Map<string, { revenue: number; count: number }>();
-
-  // Initialize last 7 days
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    const dateStr = date.toLocaleDateString("en-US", { weekday: "short" });
-    salesByDate.set(dateStr, { revenue: 0, count: 0 });
-  }
-
-  // Aggregate sales data
-  last7Days.forEach((sale) => {
-    const saleDate = new Date(sale.createdAt);
-    const dateStr = saleDate.toLocaleDateString("en-US", { weekday: "short" });
-    
-    const existing = salesByDate.get(dateStr);
-    if (existing) {
-      existing.revenue += sale.totalAmount;
-      existing.count += 1;
-    }
-  });
-
-  // Convert to array format for chart
-  return Array.from(salesByDate.entries()).map(([date, data]) => ({
-    date,
-    revenue: data.revenue,
-    count: data.count,
-  }));
-};
-
-/**
- * Build top selling products data
- */
-const buildTopProductsData = (sales: Sale[], topN: number = 3): ProductSalesCount[] => {
-  const last7Days = getLastNDaysSales(sales, 7);
-  
-  // Count sales by product
-  const productCounts = new Map<string, number>();
-
-  last7Days.forEach((sale) => {
-    // Skip cancelled sales
-    if (sale.paymentStatus?.toLowerCase() === "cancelled") return;
-
-    // Handle both single product and items array
-    if (sale.product?.name) {
-      const currentCount = productCounts.get(sale.product.name) || 0;
-      productCounts.set(sale.product.name, currentCount + sale.quantity);
-    } else if (sale.items && Array.isArray(sale.items)) {
-      sale.items.forEach((item) => {
-        const currentCount = productCounts.get(item.name) || 0;
-        productCounts.set(item.name, currentCount + item.quantity);
-      });
-    }
-  });
-
-  // Convert to array and sort by count
-  return Array.from(productCounts.entries())
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, topN);
-};
-
-/**
- * Calculate totals from sales
- */
-const calculateTotals = (sales: Sale[]) => {
-  const totalRevenue = sales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-  const totalOrders = sales.length;
-  const averageOrder = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
-  return { totalRevenue, totalOrders, averageOrder };
-};
+import {
+  calculateSalesTotals,
+  getLastNDaysSales,
+  getReportableSales,
+  getTodaysSales,
+  mapSalesToAnalytics,
+} from "../../utils/salesAnalytics";
 
 /**
  * Get today's new customers
@@ -186,18 +73,21 @@ export default function Dashboard() {
 
   /*  PROCESS DATA  */
 
+  const reportableSales = getReportableSales(sales);
+
   // Today's data
-  const todaysSales = getTodaysSales(sales);
-  const todaysSummary = calculateTotals(todaysSales);
+  const todaysSales = getTodaysSales(reportableSales);
+  const todaysSummary = calculateSalesTotals(todaysSales);
   const todaysCustomers = getTodaysCustomersCount(customers);
 
   // Weekly data
-  const weeklySales = getLastNDaysSales(sales, 7);
-  const weeklySummary = calculateTotals(weeklySales);
+  const weeklySales = getLastNDaysSales(reportableSales, 7);
+  const weeklySummary = calculateSalesTotals(weeklySales);
+  const weeklyAnalyticsSales = mapSalesToAnalytics(weeklySales);
 
   // Chart data
-  const revenueTrendData = buildRevenueTrendData(sales);
-  const topProductsData = buildTopProductsData(sales, 3);
+  const revenueTrendData = buildRevenueTrendSmart(weeklyAnalyticsSales, "Last 7 Days");
+  const topProductsData = buildTopProducts(weeklyAnalyticsSales, 3);
 
   // Active products count
   const activeProductsCount = products.filter((p) => p.isActive).length;
@@ -336,7 +226,7 @@ export default function Dashboard() {
             />
           </div>
           <div className="dash-chart-card" style={{ overflowX: "auto" }}>
-            <RecentSales sales={sales} limit={5} />
+            <RecentSales sales={reportableSales} limit={5} />
           </div>
         </div>
       </Flex>

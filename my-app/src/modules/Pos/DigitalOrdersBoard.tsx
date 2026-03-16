@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../store/Store";
-import { fetchOrders, loadMoreOrders, updateOrderStatus } from "../../features/OrdersSlice";
+import { fetchOrders, loadMoreOrders, updateOrderStatus, resetOrders } from "../../features/OrdersSlice";
 import { fetchSales } from "../../features/SalesSlice";
 import { fetchCustomers } from "../../features/CustomersSlice";
 import { fetchStockItems } from "../../features/StockmanagementSlice";
 import { ArrowLeft } from "lucide-react";
 import { PaymentMethodModal } from "../../components/PaymentMethodModal";
 import { Toast, ToastProvider, ToastViewport } from "../../components/Toast";
+import * as AlertDialog from "@radix-ui/react-alert-dialog";
 
 type PaymentMethod = "Cash" | "UPI" | "PhonePe" | "GPay" | "Paytm" | "Card" | "Other";
 
@@ -35,8 +36,65 @@ export default function DigitalOrdersBoard() {
   //STAFF-LEVEL: Lazy loading with intersection observer
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Filter to show only digital menu orders (orderType: 'online' OR orderSource: 'DIGITAL')
-  // Then apply active/completed/all filter
+  // Set window.digitalFilterMode whenever filterMode changes
+  useEffect(() => {
+    (window as any).digitalFilterMode = filterMode;
+  }, [filterMode]);
+
+  // Fetch fresh data whenever filter mode changes
+  useEffect(() => {
+    dispatch(resetOrders()); // Clear old data before fetching new batch!
+    
+    let statusParams: string | undefined;
+
+    if (filterMode === "active") {
+      statusParams = "Pending,Accepted,Preparing,Ready"; 
+    } else if (filterMode === "completed") {
+      statusParams = "Completed";
+    } else if (filterMode === "cancelled") {
+      statusParams = "Cancelled";
+    }
+
+    dispatch(fetchOrders({ 
+      orderSource: "DIGITAL",
+      ...(statusParams && { status: statusParams }),
+      limit: filterMode === "active" ? 1000 : 15 // Active fetches all, others fetch 15
+    }));
+  }, [dispatch, filterMode]);
+
+  //STAFF-LEVEL: Intersection Observer for lazy loading
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && pagination?.hasMore && !loadingMore && filterMode !== "active") {
+          let statusParams: string | undefined;
+          if (filterMode === "completed") statusParams = "Completed";
+          else if (filterMode === "cancelled") statusParams = "Cancelled";
+
+          // Load next page
+          dispatch(loadMoreOrders({
+            page: pagination.page + 1,
+            limit: 15,
+            orderSource: "DIGITAL",
+            ...(statusParams && { status: statusParams })
+          }));
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [dispatch, pagination, loadingMore]);
+
   const orders = useMemo(() => {
     const onlineOrders = allOrders.filter((order) => 
       order.orderType === "online" || order.orderSource === "DIGITAL"
@@ -57,44 +115,8 @@ export default function DigitalOrdersBoard() {
         );
     }
     
-    return onlineOrders; // "all"
+    return onlineOrders;
   }, [allOrders, filterMode]);
-
-  // Initial fetch
-  useEffect(() => {
-    dispatch(fetchOrders({ 
-      orderSource: "DIGITAL", // NEW: Filter by source
-      limit: 20 // Staff-level: reasonable initial load
-    }));
-  }, [dispatch]);
-
-  //STAFF-LEVEL: Intersection Observer for lazy loading
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && pagination?.hasMore && !loadingMore) {
-          // Load next page
-          dispatch(loadMoreOrders({
-            page: pagination.page + 1,
-            limit: 20,
-            orderSource: "DIGITAL",
-          }));
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    const currentTarget = observerTarget.current;
-    if (currentTarget) {
-      observer.observe(currentTarget);
-    }
-
-    return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget);
-      }
-    };
-  }, [dispatch, pagination, loadingMore]);
 
   useEffect(() => {
     if (!orders.length) {
@@ -206,11 +228,56 @@ export default function DigitalOrdersBoard() {
 
   const statusColor = (status: string) => {
     const s = status.toLowerCase();
-    if (s === "completed") return "#22C55E";
-    if (s === "cancelled") return "#EF4444";
-    if (s === "ready") return "#F59E0B";
-    return "var(--accent-9)";
+    if (s === "completed") return { bg: "var(--green-4)", color: "var(--green-11)", border: "var(--green-7)" };
+    if (s === "cancelled") return { bg: "var(--red-4)", color: "var(--red-11)", border: "var(--red-7)" };
+    if (s === "ready") return { bg: "var(--amber-4)", color: "var(--amber-11)", border: "var(--amber-7)" };
+    if (s === "preparing") return { bg: "var(--amber-3)", color: "var(--amber-11)", border: "var(--amber-6)" };
+    if (s === "accepted") return { bg: "var(--blue-4)", color: "var(--blue-11)", border: "var(--blue-7)" };
+    return { bg: "var(--accent-4)", color: "var(--accent-11)", border: "var(--accent-7)" };
   };
+
+  const getActionButtonTheme = (status: string | null) => {
+    switch ((status || "").toLowerCase()) {
+      case "accepted":
+        return {
+          background: "var(--blue-9)",
+          border: "1px solid var(--blue-8)",
+          color: "white",
+        };
+      case "preparing":
+        return {
+          background: "var(--amber-9)",
+          border: "1px solid var(--amber-8)",
+          color: "white",
+        };
+      case "ready":
+        return {
+          background: "var(--green-9)",
+          border: "1px solid var(--green-8)",
+          color: "white",
+        };
+      case "completed":
+        return {
+          background: "var(--green-10)",
+          border: "1px solid var(--green-8)",
+          color: "white",
+        };
+      case "cancelled":
+        return {
+          background: "var(--red-9)",
+          border: "1px solid var(--red-8)",
+          color: "white",
+        };
+      default:
+        return {
+          background: "var(--accent-9)",
+          border: "1px solid var(--accent-8)",
+          color: "white",
+        };
+    }
+  };
+
+  const actionButtonTheme = getActionButtonTheme(nextStatus || statusLower);
 
   return (
     <ToastProvider>
@@ -369,9 +436,11 @@ export default function DigitalOrdersBoard() {
                       fontSize: 11,
                       padding: "3px 8px",
                       borderRadius: 8,
-                      background: statusColor(order.status),
-                      color: "white",
+                      background: statusColor(order.status).bg,
+                      color: statusColor(order.status).color,
+                      border: `1px solid ${statusColor(order.status).border}`,
                       textTransform: "capitalize",
+                      fontWeight: 600,
                     }}
                   >
                     {order.status}
@@ -410,7 +479,7 @@ export default function DigitalOrdersBoard() {
             ))}
 
             {/*STAFF-LEVEL: Lazy loading indicator */}
-            {pagination?.hasMore && (
+            {filterMode !== "active" && pagination?.hasMore && (
               <div
                 ref={observerTarget}
                 style={{
@@ -511,11 +580,13 @@ export default function DigitalOrdersBoard() {
                 </div>
                 <span
                   style={{
-                    fontSize: 12,
-                    padding: "6px 10px",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    padding: "6px 12px",
                     borderRadius: 8,
-                    background: statusColor(selectedOrder.status),
-                    color: "white",
+                    background: statusColor(selectedOrder.status).bg,
+                    color: statusColor(selectedOrder.status).color,
+                    border: `1px solid ${statusColor(selectedOrder.status).border}`,
                     textTransform: "capitalize",
                   }}
                 >
@@ -594,8 +665,8 @@ export default function DigitalOrdersBoard() {
               {selectedOrder.notes && (
                 <div
                   style={{
-                    background: "rgba(180, 83, 9, 0.2)",
-                    border: "1px solid #D97706",
+                    background: "rgba(245, 158, 11, 0.1)",
+                    border: "1px solid rgba(245, 158, 11, 0.3)",
                     borderRadius: 10,
                     padding: 12,
                   }}
@@ -603,14 +674,14 @@ export default function DigitalOrdersBoard() {
                   <p
                     style={{
                       margin: "0 0 6px 0",
-                      color: "#FBBF24",
-                      fontWeight: 600,
+                      color: "#B45309",
+                      fontWeight: 700,
                       fontSize: 13,
                     }}
                   >
                     Special Instructions
                   </p>
-                  <p style={{ margin: 0, color: "#FDE68A", fontSize: 13 }}>
+                  <p style={{ margin: 0, color: "#92400E", fontSize: 13, fontWeight: 500 }}>
                     {selectedOrder.notes}
                   </p>
                 </div>
@@ -650,36 +721,100 @@ export default function DigitalOrdersBoard() {
                   }}
                   disabled={!nextStatus || Boolean(isStatusLocked)}
                   style={{
-                    background: "#2563EB",
-                    border: "none",
-                    color: "white",
+                    background: actionButtonTheme.background,
+                    border: actionButtonTheme.border,
+                    color: actionButtonTheme.color,
                     borderRadius: 10,
                     fontWeight: 600,
                     padding: "11px 12px",
                     cursor: "pointer",
                     opacity: !nextStatus || isStatusLocked ? 0.55 : 1,
                     fontSize: 15,
+                    transition: "all 0.2s ease",
+                    boxShadow: !nextStatus || isStatusLocked
+                      ? "none"
+                      : "0 10px 24px rgba(0,0,0,0.16)",
                   }}
                 >
                   {nextStatusLabel}
                 </button>
-                <button
-                  onClick={() => changeStatus("Cancelled")}
-                  disabled={isCancelDisabled}
-                  style={{
-                    background: "transparent",
-                    border: "1px solid #EF4444",
-                    color: "#FCA5A5",
-                    borderRadius: 10,
-                    fontWeight: 600,
-                    padding: "11px 12px",
-                    cursor: "pointer",
-                    opacity: isCancelDisabled ? 0.55 : 1,
-                    fontSize: 15,
-                  }}
-                >
-                  Cancel Order
-                </button>
+                <AlertDialog.Root>
+                  <AlertDialog.Trigger asChild>
+                    <button
+                      disabled={isCancelDisabled}
+                      style={{
+                        background: "transparent",
+                        border: "1px solid #EF4444",
+                        color: "#EF4444",
+                        borderRadius: 10,
+                        fontWeight: 600,
+                        padding: "11px 12px",
+                        cursor: isCancelDisabled ? "not-allowed" : "pointer",
+                        opacity: isCancelDisabled ? 0.5 : 1,
+                        fontSize: 15,
+                        transition: "all 0.2s ease"
+                      }}
+                    >
+                      Cancel Order
+                    </button>
+                  </AlertDialog.Trigger>
+                  <AlertDialog.Portal>
+                    <AlertDialog.Overlay style={{ position: "fixed", inset: 0, background: "rgba(0, 0, 0, 0.5)", zIndex: 1000 }} />
+                    <AlertDialog.Content style={{
+                      position: "fixed",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      background: "white",
+                      padding: "24px",
+                      borderRadius: "16px",
+                      width: "90%",
+                      maxWidth: "400px",
+                      zIndex: 1001,
+                      boxShadow: "0 20px 40px rgba(0,0,0,0.2)"
+                    }}>
+                      <AlertDialog.Title style={{ margin: "0 0 10px", fontSize: "18px", fontWeight: 700, color: "#111827" }}>
+                        Cancel Order
+                      </AlertDialog.Title>
+                      <AlertDialog.Description style={{ margin: "0 0 20px", fontSize: "15px", color: "#4B5563" }}>
+                        Are you sure you want to cancel this order? This action cannot be undone.
+                      </AlertDialog.Description>
+                      <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                        <AlertDialog.Cancel asChild>
+                          <button style={{
+                            padding: "10px 16px",
+                            borderRadius: "8px",
+                            border: "none",
+                            background: "#F3F4F6",
+                            color: "#374151",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            fontSize: "14px"
+                          }}>
+                            No, keep it
+                          </button>
+                        </AlertDialog.Cancel>
+                        <AlertDialog.Action asChild>
+                          <button 
+                            onClick={() => changeStatus("Cancelled")}
+                            style={{
+                              padding: "10px 16px",
+                              borderRadius: "8px",
+                              border: "none",
+                              background: "#EF4444",
+                              color: "white",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              fontSize: "14px"
+                            }}
+                          >
+                            Yes, Cancel Order
+                          </button>
+                        </AlertDialog.Action>
+                      </div>
+                    </AlertDialog.Content>
+                  </AlertDialog.Portal>
+                </AlertDialog.Root>
               </div>
             </div>
           )}

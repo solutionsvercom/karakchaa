@@ -27,6 +27,10 @@ export interface Order {
   | "Cancelled";
   totalAmount: number;
   discount?: number;
+  subtotal?: number;
+  gstRate?: number;
+  gstAmount?: number;
+  taxableAmount?: number;
   createdAt: string;
   notes?: string;
   saleCreated?: boolean;
@@ -40,6 +44,7 @@ interface CreateOrderPayload {
   paymentMethod?: string;
   notes?: string;
   discount?: number;
+  gstRate?: number;
 }
 
 // STAFF-LEVEL: Pagination state

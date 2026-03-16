@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useState } from "react";
 import { Flex, Button, Text, DropdownMenu } from "@radix-ui/themes";
 import { ChevronDown } from "lucide-react";
-import { useDataFilter } from "../../hooks/useDataFilter";
+import { filterByDateRange, useDataFilter } from "../../hooks/useDataFilter";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../../store/Store";
 import { Sale, fetchSales } from "../../features/SalesSlice";
@@ -12,8 +12,7 @@ import {
   buildTopProducts,
 } from "../../components/dynamicComponents/Charts";
 import { SummaryCard } from "../../components/dynamicComponents/Cards";
-import { fetchExpenseTotals, fetchExpenses } from "../../features/ExpensesSlice";
-import { fetchEmployees } from "../../features/EmployeesSlice";
+import { fetchExpenses } from "../../features/ExpensesSlice";
 import {
   IndianRupee,
   ReceiptText,
@@ -27,20 +26,15 @@ import {
   Wrench,
   Folder
 } from "lucide-react";
-import axios from "axios";
-import { API_REPORTS } from "../../config/Api";
+import {
+  calculateSalesTotals,
+  getReportableSales,
+  mapSalesToAnalytics,
+} from "../../utils/salesAnalytics";
 
 /*  HELPER */
 
 const knownCategories = ["inventory", "supplies", "salary", "utilities", "rent", "maintenance"];
-
-const calculateTotals = (data: any[]) => {
-  const totalRevenue = data.reduce((sum, sale) => sum + sale.amount, 0);
-  const totalOrders = data.length;
-  const averageOrder =
-    totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
-  return { totalRevenue, totalOrders, averageOrder };
-};
 
 /*  COMPONENT */
 
@@ -48,81 +42,50 @@ export default function Reports() {
   const dispatch = useDispatch<AppDispatch>();
 
   const { sales } = useSelector((state: RootState) => state.sales);
-  const { totals, expenses } = useSelector((state: RootState) => state.expenses);
-  const { employees } = useSelector((state: RootState) => state.employees);
-
-  const [reportSummary, setReportSummary] = useState<{
-    period: string;
-    totalRevenue: number;
-    totalOrders: number;
-    totalExpenses: number;
-    netProfit: number;
-  } | null>(null);
+  const { expenses } = useSelector((state: RootState) => state.expenses);
 
   useEffect(() => {
     dispatch(fetchSales({ page: 1, limit: 100000 }));
-    dispatch(fetchExpenseTotals());
     dispatch(fetchExpenses());
-    dispatch(fetchEmployees(""));
   }, [dispatch]);
 
   /* MAP SALES → DASHBOARD FORMAT */
   const dashboardSales = useMemo(
-    () =>
-      sales.map((s: Sale, index: number) => ({
-        id: index,
-        invoice: s.invoiceNumber,
-        customer: s.product?.name || "Walk-in",
-        items: s.product?.name || "-",
-        // ✅ FIX: pass through real product + items array so buildTopProducts
-        //    counts all products correctly (same logic as Dashboard)
-        product: s.product,
-        quantity: s.quantity,
-        saleItems: s.items || [],
-        type: s.paymentMethod,
-        amount: s.totalAmount,
-        payment: s.paymentStatus,
-        dateTime: s.createdAt,
-      })),
+    () => mapSalesToAnalytics(getReportableSales(sales)),
     [sales]
   );
 
   const { category, setCategory, filteredData } = useDataFilter(dashboardSales);
+  const salesSummary = calculateSalesTotals(
+    filteredData.map((sale) => ({ totalAmount: sale.amount }))
+  );
 
-  useEffect(() => {
-    const loadReports = async () => {
-      try {
-        const res = await axios.get(API_REPORTS, {
-          params: { period: category },
-        });
-        setReportSummary(res.data);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    loadReports();
-  }, [category]);
+  const expenseRowsWithDate = useMemo(
+    () =>
+      (expenses || []).map((expense: any) => ({
+        ...expense,
+        dateTime: expense.date || expense.createdAt,
+      })),
+    [expenses]
+  );
 
-  const salesSummary = calculateTotals(filteredData);
+  const filteredExpenses = useMemo(
+    () => filterByDateRange(expenseRowsWithDate, category),
+    [expenseRowsWithDate, category]
+  );
 
-  /* Calculate Active Employee Salary */
-  const totalEmployeeSalary = useMemo(() => {
-    return employees
-      .filter((e) => e.active !== false)
-      .reduce((sum, e) => sum + (e.salary || 0), 0);
-  }, [employees]);
+  const totalExpenses = useMemo(
+    () => filteredExpenses.reduce((sum, expense: any) => sum + Number(expense.amount || 0), 0),
+    [filteredExpenses]
+  );
 
-  const totalExpenses = totals?.totalExpenses ?? 0;
-
-  /* Net Profit now includes salary */
-  const netProfit =
-    salesSummary.totalRevenue - (totalExpenses + totalEmployeeSalary);
+  const netProfit = salesSummary.totalRevenue - totalExpenses;
 
   /* CATEGORY BREAKDOWN */
   const categoryTotals = useMemo(() => {
     const map: Record<string, number> = {};
 
-    (expenses || []).forEach((expense: any) => {
+    filteredExpenses.forEach((expense: any) => {
       const key = expense.category;
       map[key] = (map[key] || 0) + Number(expense.amount || 0);
     });
@@ -136,11 +99,8 @@ export default function Reports() {
 
     map["others"] = others;
 
-    /* Inject Employee Salary into breakdown */
-    map["salary"] = totalEmployeeSalary;
-
     return map as Record<string, number>;
-  }, [expenses, totalEmployeeSalary]);
+  }, [filteredExpenses]);
 
   const revenueTrendData = useMemo(
     () => buildRevenueTrendSmart(filteredData, category),
@@ -186,7 +146,7 @@ export default function Reports() {
       <div className="kb-summary-row">
         <SummaryCard
           title="Total Revenue"
-          value={`₹${(reportSummary?.totalRevenue ?? 0).toLocaleString()}`}
+          value={`₹${salesSummary.totalRevenue.toLocaleString()}`}
           accentColor="#7C4DFF"
           softColor="#F0E9FF"
           icon={<IndianRupee size={22} strokeWidth={2.2} /> as any}
@@ -194,7 +154,7 @@ export default function Reports() {
 
         <SummaryCard
           title="Total Orders"
-          value={String(reportSummary?.totalOrders ?? 0)}
+          value={String(salesSummary.totalOrders)}
           accentColor="#00C853"
           softColor="#E5F9EE"
           icon={<ReceiptText size={22} strokeWidth={2.2} /> as any}
@@ -202,7 +162,7 @@ export default function Reports() {
 
         <SummaryCard
           title="Total Expenses"
-          value={`₹${(reportSummary?.totalExpenses ?? 0).toLocaleString()}`}
+          value={`₹${totalExpenses.toLocaleString()}`}
           accentColor="#FF9100"
           softColor="#FFF3E0"
           icon={<TrendingDown size={22} strokeWidth={2.2} /> as any}
