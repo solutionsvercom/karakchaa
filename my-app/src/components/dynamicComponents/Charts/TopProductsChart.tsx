@@ -80,7 +80,7 @@ export const TopProductsChart: React.FC<TopProductsChartProps> = ({
   fill="var(--accent-9)"
   barSize={barSize}
   radius={[0, 6, 6, 0]}
-  activeBar={<Rectangle fill="var(--gray-8)" radius={[0, 6, 6, 0]} />}
+  activeBar={<Rectangle fill="var(--accent-7)" radius={[0, 6, 6, 0]} />}
 />
           </BarChart>
         </ResponsiveContainer>

@@ -909,7 +909,7 @@
 }
 
 .kb-summary-card {
-    background: var(--card-bg, white);
+    background: var(--card-bg, rgb(234, 215, 244));
     border-radius: 12px;
     padding: 20px;
     display: flex;
@@ -979,7 +979,7 @@
 
 [data-theme="dark"] .kb-summary-card,
 .dark .kb-summary-card {
-    background: #131e2c;
+    background: #2c1413;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
