@@ -589,7 +589,9 @@
     flex-direction: column !important;
 }
 
+
 /* Image area — fixed height, never grows */
+
 .product-card-img {
     height: 140px !important;
     flex-shrink: 0 !important;
@@ -600,7 +602,9 @@
     background: linear-gradient(180deg, #f8fafc, #f1f5f9);
 }
 
+
 /*  Content area — fills remaining space */
+
 .product-card-body {
     flex: 1 !important;
     display: flex !important;
@@ -787,6 +791,7 @@
     color: var(--gray-10);
 }
 
+
 /* =========================
    SUPPLIER CARDS RESPONSIVE
    ========================= */
@@ -798,6 +803,7 @@
         border-radius: 14px !important;
     }
 }
+
 
 /* =========================
    CHART / TABLE RESPONSIVE
@@ -815,10 +821,11 @@
         -webkit-overflow-scrolling: touch;
     }
     /* Tighten gap-4 flex rows on mobile (chart rows etc.) */
-    .kb-content > * > [style*="gap"] {
+    .kb-content>*>[style*="gap"] {
         flex-wrap: wrap;
     }
 }
+
 
 /* =========================
    SMALL SCREEN SUMMARY CARD
@@ -844,7 +851,9 @@
     }
 }
 
+
 /* ===== PRODUCT CARD LAYOUT FIX =====  */
+
 .product-card {
     position: relative;
     overflow: hidden;
@@ -873,7 +882,9 @@
     padding: 12px;
 }
 
+
 /* ===== DASHBOARD CHART CARDS ===== */
+
 .dash-chart-card {
     background: var(--gray-1);
     border-radius: 16px;
@@ -895,4 +906,99 @@
         padding: 12px;
         border-radius: 12px;
     }
+}
+
+.kb-summary-card {
+    background: var(--card-bg, rgb(234, 215, 244));
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.kb-summary-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.kb-summary-card-title {
+    font-size: 14px;
+    color: var(--text-secondary, #6b7280);
+    margin-bottom: 8px;
+}
+
+.kb-summary-card-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary, #111827);
+    margin-bottom: 4px;
+}
+
+.kb-summary-card-subtitle {
+    font-size: 12px;
+    color: var(--text-tertiary, #9ca3af);
+}
+
+.kb-summary-card-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.kb-summary-card:hover .kb-summary-card-icon-wrapper {
+    transform: scale(1.1);
+}
+
+.kb-summary-card-icon-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.kb-summary-card-icon {
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+
+/* Dark theme styles */
+
+[data-theme="dark"] .kb-summary-card,
+.dark .kb-summary-card {
+    background: #2c1413;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .kb-summary-card:hover,
+.dark .kb-summary-card:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .kb-summary-card-title,
+.dark .kb-summary-card-title {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .kb-summary-card-value,
+.dark .kb-summary-card-value {
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .kb-summary-card-subtitle,
+.dark .kb-summary-card-subtitle {
+    color: #6b7280;
 }

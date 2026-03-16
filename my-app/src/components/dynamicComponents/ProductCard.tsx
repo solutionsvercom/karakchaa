@@ -261,6 +261,18 @@ export default function ProductCard({
                   gap: 8,
                 }}
               >
+                
+
+                <span
+                  style={{
+                    fontSize: 11,
+                    color: "var(--gray-9)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  SKU: {sku}
+                </span>
+
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <span
                     style={{
@@ -273,16 +285,6 @@ export default function ProductCard({
                   </span>
                   <Switch checked={isActive} onCheckedChange={onToggleActive} size="1" />
                 </div>
-
-                <span
-                  style={{
-                    fontSize: 11,
-                    color: "var(--gray-9)",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  SKU: {sku}
-                </span>
               </div>
             )}
           </>

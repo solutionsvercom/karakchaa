@@ -9,7 +9,23 @@ type NavbarProps = {
 };
 
 const Navbar: React.FC<NavbarProps> = ({ pageTitle, onMenuClick }) => {
-  const today = new Date().toLocaleDateString("en-GB", {
+  const [currentTime, setCurrentTime] = React.useState(new Date());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const time = currentTime.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+
+  const date = currentTime.toLocaleDateString("en-GB", {
     weekday: "short",
     day: "2-digit",
     month: "short",
@@ -38,8 +54,10 @@ const Navbar: React.FC<NavbarProps> = ({ pageTitle, onMenuClick }) => {
         className="kb-navbar-right"
         style={{ display: "flex", alignItems: "center", gap: 12 }}
       >
-        {/* DATE */}
-        <span className="kb-navbar-date-value">{today}</span>
+        {/* DATE AND TIME */}
+        <span className="kb-navbar-date-value">
+          {date} • {time}
+        </span>
 
         {/* THEME TOGGLE BUTTON */}
         <IconButton
