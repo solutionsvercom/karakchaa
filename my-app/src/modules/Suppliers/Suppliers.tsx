@@ -26,19 +26,22 @@ export default function Suppliers() {
   const [suppliers, setSuppliers] = React.useState<SupplierUI[]>([]);
   const [editingSupplier, setEditingSupplier] = React.useState<SupplierUI | null>(null);
   const [deleteId, setDeleteId] = React.useState<string | null>(null);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
+  const [actionError, setActionError] = React.useState<string | null>(null);
 
   const navigate = useNavigate();
   const location = useLocation();
   const isAddSupplier = location.pathname.endsWith("/add-supplier");
 
   const fetchSuppliers = async () => {
+    setLoadError(null);
     try {
       const res = await fetch(API_SUPPLIERS);
       const json = await res.json();
       const items = json?.items || json?.data || json || [];
       setSuppliers(Array.isArray(items) ? items : []);
-    } catch (e) {
-      console.error("Failed to load suppliers", e);
+    } catch {
+      setLoadError("Could not load suppliers. Check your connection and try again.");
       setSuppliers([]);
     }
   };
@@ -57,8 +60,8 @@ export default function Suppliers() {
       setSuppliers((prev) => prev.filter((s) => s._id !== deleteId));
       if (editingSupplier?._id === deleteId) setEditingSupplier(null);
       setDeleteId(null);
-    } catch (e) {
-      console.error("Delete failed", e);
+    } catch {
+      setActionError("Could not delete supplier. Try again.");
     }
   };
 
@@ -75,6 +78,7 @@ export default function Suppliers() {
       active: !!form.active,
     };
 
+    setActionError(null);
     try {
       if (editingSupplier) {
         const res = await fetch(`${API_SUPPLIERS}/${editingSupplier._id}`, {
@@ -82,6 +86,15 @@ export default function Suppliers() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          setActionError(
+            typeof errJson?.message === "string"
+              ? errJson.message
+              : "Could not update supplier."
+          );
+          return;
+        }
         const json = await res.json();
         const updated = json?.data || json;
         setSuppliers((prev) => prev.map((s) => (s._id === editingSupplier._id ? updated : s)));
@@ -95,12 +108,21 @@ export default function Suppliers() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        setActionError(
+          typeof errJson?.message === "string"
+            ? errJson.message
+            : "Could not create supplier."
+        );
+        return;
+      }
       const json = await res.json();
       const created = json?.data || json;
       setSuppliers((prev) => [created, ...prev]);
       navigate("/dashboard/suppliers");
-    } catch (e) {
-      console.error("Save failed", e);
+    } catch {
+      setActionError("Could not save supplier. Check your connection and try again.");
     }
   };
 
@@ -116,6 +138,13 @@ export default function Suppliers() {
           <Plus size={16} /> Add Supplier
         </Button>
       </Flex>
+
+      {loadError && (
+        <Text color="red" size="2">{loadError}</Text>
+      )}
+      {actionError && (
+        <Text color="red" size="2">{actionError}</Text>
+      )}
 
       <div style={{ maxWidth: 420 }}>
         <Searchbar searchValue={searchValue} onSearchChange={setSearchValue} placeholder="Search suppliers..." />

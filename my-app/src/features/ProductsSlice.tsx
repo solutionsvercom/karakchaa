@@ -83,9 +83,12 @@ export const createProduct = createAsyncThunk<
       });
       return res.data.data;
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.error || "Product already exists"
-      );
+      const data = error.response?.data;
+      const msg =
+        (typeof data?.error === "string" && data.error) ||
+        (typeof data?.message === "string" && data.message) ||
+        "Could not create product. Check all fields and try again.";
+      return thunkAPI.rejectWithValue(msg);
     }
   }
 );
@@ -104,9 +107,12 @@ export const updateProduct = createAsyncThunk<
       });
       return res.data.data;
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Error updating product"
-      );
+      const data = error.response?.data;
+      const msg =
+        (typeof data?.message === "string" && data.message) ||
+        (typeof data?.error === "string" && data.error) ||
+        "Error updating product";
+      return thunkAPI.rejectWithValue(msg);
     }
   }
 );
@@ -191,13 +197,22 @@ const productSlice = createSlice({
       })
 
       /* UPDATE */
+      .addCase(updateProduct.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(updateProduct.fulfilled, (state, action) => {
+        state.loading = false;
         const index = state.products.findIndex(
           (p) => p._id === action.payload._id
         );
         if (index !== -1) {
           state.products[index] = action.payload;
         }
+      })
+      .addCase(updateProduct.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       })
 
       /* TOGGLE STATUS */

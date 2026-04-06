@@ -34,6 +34,7 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
   const navigate = useNavigate();
 
   const [error, setError] = useState<string | null>(null);
+  const [rolesError, setRolesError] = useState<string | null>(null);
   const [roles, setRoles] = useState<any[]>([]);
 
   /*  FETCH ROLES  */
@@ -45,9 +46,10 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
         const res = await axios.get(API_ROLES, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        setRolesError(null);
         setRoles(res.data.roles || []);
-      } catch (err) {
-        console.error("Failed to fetch roles", err);
+      } catch {
+        setRolesError("Could not load roles. Refresh the page or check your connection.");
       }
     };
 
@@ -191,6 +193,11 @@ const AddEmployee = ({ mode, initialValues }: AddEmployeeProps) => {
       {error && (
         <Callout.Root color="red" style={{ marginBottom: 16 }}>
           <Callout.Text>{error}</Callout.Text>
+        </Callout.Root>
+      )}
+      {rolesError && (
+        <Callout.Root color="orange" style={{ marginBottom: 16 }}>
+          <Callout.Text>{rolesError}</Callout.Text>
         </Callout.Root>
       )}
 

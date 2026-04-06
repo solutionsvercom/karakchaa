@@ -1,37 +1,76 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import {
+  Box,
+  Button,
+  Card,
+  Flex,
+  Heading,
+  Separator,
+  Text,
+  TextField,
+} from "@radix-ui/themes";
 import { RootState, AppDispatch } from "../../store/Store";
 import { fetchSettings, updateSettings } from "../../features/SettingsSlice";
-import { Save, Plus, Percent } from "lucide-react";
+import { RotateCcw, Save, Percent } from "lucide-react";
 import { Toast, ToastProvider, ToastViewport } from "../../components/Toast";
+import DynamicAlertDialog from "../../components/dynamicComponents/DynamicAlertDialog";
 
 export default function Settings() {
   const dispatch = useDispatch<AppDispatch>();
-  const {
-    gstRate,
-    discountType,
-    discountValue,
-    loading,
-  } = useSelector((state: RootState) => state.settings);
+  const { gstRate, discountType, discountValue, loading } = useSelector(
+    (state: RootState) => state.settings
+  );
 
   const [localGst, setLocalGst] = useState(gstRate.toString());
-  const [localDiscountType, setLocalDiscountType] = useState<"percentage" | "flat">(discountType);
+  const [localDiscountType, setLocalDiscountType] = useState<
+    "percentage" | "flat"
+  >(discountType);
   const [localDiscount, setLocalDiscount] = useState(discountValue.toString());
 
   const [toastOpen, setToastOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState({ title: "", description: "" });
-  const [toastVariant, setToastVariant] = useState<"success" | "error" | "info">("success");
+  const [toastMessage, setToastMessage] = useState({
+    title: "",
+    description: "",
+  });
+  const [toastVariant, setToastVariant] = useState<
+    "success" | "error" | "info"
+  >("success");
 
   useEffect(() => {
     dispatch(fetchSettings());
   }, [dispatch]);
 
-  // Sync state when redux finishes loading
   useEffect(() => {
     setLocalGst(gstRate.toString());
     setLocalDiscountType(discountType);
     setLocalDiscount(discountValue.toString());
   }, [gstRate, discountType, discountValue]);
+
+  const isDirty = useMemo(() => {
+    const g = Number(localGst) || 0;
+    const d = Number(localDiscount) || 0;
+    return (
+      g !== gstRate ||
+      localDiscountType !== discountType ||
+      d !== discountValue
+    );
+  }, [
+    localGst,
+    localDiscount,
+    localDiscountType,
+    gstRate,
+    discountType,
+    discountValue,
+  ]);
+
+  const handleReset = () => {
+    setLocalGst("0");
+    setLocalDiscount("0");
+  };
+
+  const resetDisabled =
+    (Number(localGst) || 0) === 0 && (Number(localDiscount) || 0) === 0;
 
   const handleSave = async () => {
     try {
@@ -42,170 +81,205 @@ export default function Settings() {
           discountValue: Number(localDiscount) || 0,
         })
       ).unwrap();
-      
+
       setToastVariant("success");
-      setToastMessage({ title: "Success", description: "Settings saved successfully! These rules will now apply globally." });
+      setToastMessage({
+        title: "Success",
+        description:
+          "Settings saved successfully! These rules will now apply globally.",
+      });
       setToastOpen(true);
     } catch (e: any) {
       setToastVariant("error");
-      setToastMessage({ title: "Error", description: e || "Failed to save settings." });
+      setToastMessage({
+        title: "Error",
+        description: e || "Failed to save settings.",
+      });
       setToastOpen(true);
     }
   };
 
+  const inputSurfaceStyle: React.CSSProperties = {
+    maxWidth: 300,
+    fontSize: 15,
+    backgroundColor: "var(--gray-1)",
+    borderColor: "var(--gray-5)",
+    boxShadow: "none",
+    color: "var(--gray-12)",
+  };
+
   return (
     <ToastProvider>
-      <div style={{ padding: "32px", maxWidth: "800px", margin: "0 auto", fontFamily: "var(--font-family, system-ui, sans-serif)" }}>
-        <h1 style={{ fontSize: "28px", fontWeight: 800, margin: "0 0 8px 0", color: "#111827" }}>Global Settings</h1>
-        <p style={{ color: "#6B7280", marginBottom: "32px" }}>
-          Configure standard rules that automatically apply during the checkout process in the POS and Digital Menu.
-        </p>
+      <Box p={{ initial: "4", sm: "6" }} style={{ maxWidth: 800, margin: "0 auto" }}>
+        <Heading size="7" mb="2" style={{ color: "var(--gray-12)" }}>
+          Global Settings
+        </Heading>
+        <Text size="3" color="gray" mb="6" as="p" style={{ maxWidth: 560 }}>
+          Configure standard rules that automatically apply during the checkout
+          process in the POS and Digital Menu.
+        </Text>
 
-        <div style={{
-          background: "white",
-          borderRadius: "16px",
-          border: "1px solid #E5E7EB",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)",
-          padding: "32px"
-        }}>
+        <Card size="3" variant="surface">
           {loading ? (
-            <div style={{ padding: "40px", textAlign: "center", color: "#6B7280" }}>Loading settings...</div>
+            <Box py="6" style={{ textAlign: "center" }}>
+              <Text color="gray">Loading settings…</Text>
+            </Box>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
-              
-              {/* GST Rating */}
-              <div>
-                <label style={{ display: "block", fontSize: "15px", fontWeight: 600, color: "#374151", marginBottom: "8px" }}>
+            <Flex direction="column" gap="6" p={{ initial: "3", sm: "4" }}>
+              <Box>
+                <Text
+                  as="label"
+                  size="2"
+                  weight="medium"
+                  mb="2"
+                  style={{ display: "block", color: "var(--gray-12)" }}
+                >
                   Global GST Rate (%)
-                </label>
-                <div style={{ position: "relative", width: "100%", maxWidth: "300px" }}>
-                  <input
-                    type="text"
-                    value={localGst}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^\d*\.?\d*$/.test(val)) setLocalGst(val);
-                    }}
-                    className="styled-input"
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      paddingRight: "40px",
-                      borderRadius: "8px",
-                      border: "1px solid #D1D5DB",
-                      fontSize: "16px",
-                      outline: "none",
-                      transition: "all 0.2s"
-                    }}
-                  />
-                  <Percent size={18} color="#9CA3AF" style={{ position: "absolute", right: "16px", top: "50%", transform: "translateY(-50%)" }} />
-                </div>
-                <p style={{ fontSize: "13px", color: "#6B7280", marginTop: "6px" }}>This percentage is calculated from the subtotal before discount.</p>
-              </div>
+                </Text>
+                <TextField.Root
+                  value={localGst}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^\d*\.?\d*$/.test(val)) setLocalGst(val);
+                  }}
+                  size="3"
+                  radius="medium"
+                  variant="surface"
+                  style={inputSurfaceStyle}
+                >
+                  <TextField.Slot side="right">
+                    <Percent
+                      size={18}
+                      strokeWidth={2}
+                      style={{ color: "var(--gray-9)" }}
+                    />
+                  </TextField.Slot>
+                </TextField.Root>
+                <Text size="1" color="gray" mt="2" as="p">
+                  This percentage is calculated from the subtotal before
+                  discount.
+                </Text>
+              </Box>
 
-              <hr style={{ border: "none", borderTop: "1px solid #E5E7EB", margin: "0" }} />
+              <Separator size="4" />
 
-              {/* Discount Section */}
-              <div>
-                <label style={{ display: "block", fontSize: "15px", fontWeight: 600, color: "#374151", marginBottom: "12px" }}>
+              <Box>
+                <Text
+                  as="label"
+                  size="2"
+                  weight="medium"
+                  mb="3"
+                  style={{ display: "block", color: "var(--gray-12)" }}
+                >
                   Global Discount Policy
-                </label>
-                
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px", maxWidth: "400px" }}>
-                  <button
+                </Text>
+
+                <Flex gap="3" wrap="wrap" mb="4" style={{ maxWidth: 420 }}>
+                  <Button
+                    type="button"
+                    size="3"
+                    variant={
+                      localDiscountType === "percentage" ? "solid" : "soft"
+                    }
+                    highContrast={localDiscountType === "percentage"}
                     onClick={() => setLocalDiscountType("percentage")}
-                    style={{
-                      padding: "12px",
-                      borderRadius: "8px",
-                      border: localDiscountType === "percentage" ? "2px solid #7c3aed" : "2px solid #E5E7EB",
-                      background: localDiscountType === "percentage" ? "#F5F3FF" : "white",
-                      color: localDiscountType === "percentage" ? "#6d28d9" : "#4B5563",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      transition: "all 0.2s"
-                    }}
+                    style={{ flex: "1 1 140px" }}
                   >
                     Percentage (%)
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    type="button"
+                    size="3"
+                    variant={localDiscountType === "flat" ? "solid" : "soft"}
+                    highContrast={localDiscountType === "flat"}
                     onClick={() => setLocalDiscountType("flat")}
-                    style={{
-                      padding: "12px",
-                      borderRadius: "8px",
-                      border: localDiscountType === "flat" ? "2px solid #7c3aed" : "2px solid #E5E7EB",
-                      background: localDiscountType === "flat" ? "#F5F3FF" : "white",
-                      color: localDiscountType === "flat" ? "#6d28d9" : "#4B5563",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      transition: "all 0.2s"
-                    }}
+                    style={{ flex: "1 1 140px" }}
                   >
                     Flat Amount (₹)
-                  </button>
-                </div>
+                  </Button>
+                </Flex>
 
-                <div style={{ position: "relative", width: "100%", maxWidth: "300px" }}>
-                  <input
-                    type="text"
-                    value={localDiscount}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^\d*\.?\d*$/.test(val)) setLocalDiscount(val);
-                    }}
-                    className="styled-input"
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      paddingLeft: localDiscountType === "flat" ? "32px" : "16px",
-                      paddingRight: localDiscountType === "percentage" ? "40px" : "16px",
-                      borderRadius: "8px",
-                      border: "1px solid #D1D5DB",
-                      fontSize: "16px",
-                      outline: "none",
-                      transition: "all 0.2s"
-                    }}
-                  />
-                  {localDiscountType === "percentage" && (
-                     <Percent size={18} color="#9CA3AF" style={{ position: "absolute", right: "16px", top: "50%", transform: "translateY(-50%)" }} />
-                  )}
+                <TextField.Root
+                  value={localDiscount}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^\d*\.?\d*$/.test(val)) setLocalDiscount(val);
+                  }}
+                  size="3"
+                  radius="medium"
+                  variant="surface"
+                  style={inputSurfaceStyle}
+                >
                   {localDiscountType === "flat" && (
-                    <span style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#6B7280", fontWeight: 600 }}>₹</span>
+                    <TextField.Slot side="left">
+                      <Text weight="bold" style={{ color: "var(--gray-11)" }}>
+                        ₹
+                      </Text>
+                    </TextField.Slot>
                   )}
-                </div>
-                <p style={{ fontSize: "13px", color: "#6B7280", marginTop: "6px" }}>
-                  {localDiscountType === "percentage" 
+                  {localDiscountType === "percentage" && (
+                    <TextField.Slot side="right">
+                      <Percent
+                        size={18}
+                        strokeWidth={2}
+                        style={{ color: "var(--gray-9)" }}
+                      />
+                    </TextField.Slot>
+                  )}
+                </TextField.Root>
+                <Text size="1" color="gray" mt="2" as="p">
+                  {localDiscountType === "percentage"
                     ? "Example: 10% off the entire gross subtotal."
                     : "Example: ₹50 subtracted from the final total."}
-                </p>
-              </div>
+                </Text>
+              </Box>
 
-              {/* Save Button */}
-              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "16px" }}>
-                <button
-                  onClick={handleSave}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "14px 24px",
-                    fontWeight: 600,
-                    fontSize: "16px",
-                    cursor: "pointer",
-                    boxShadow: "0 4px 14px rgba(124, 58, 237, 0.3)"
-                  }}
+              <Flex
+                gap="3"
+                justify="end"
+                wrap="wrap"
+                pt="2"
+                style={{ borderTop: "1px solid var(--gray-5)" }}
+              >
+                <DynamicAlertDialog
+                  title="Reset form values?"
+                  description="This will set the GST rate and discount value to 0 in the form. Nothing is saved until you click Save Global Settings."
+                  cancelText="Cancel"
+                  actionText="Reset"
+                  onAction={handleReset}
                 >
-                  <Save size={20} />
-                  Save Global Settings
-                </button>
-              </div>
-            </div>
+                  <Button
+                    type="button"
+                    size="3"
+                    variant="soft"
+                    disabled={resetDisabled}
+                  >
+                    <RotateCcw size={18} />
+                    Reset
+                  </Button>
+                </DynamicAlertDialog>
+                <DynamicAlertDialog
+                  title="Save global settings?"
+                  description="These GST and discount rules will apply to checkout in the POS and Digital Menu for all users."
+                  cancelText="Cancel"
+                  actionText="Save"
+                  onAction={handleSave}
+                >
+                  <Button
+                    type="button"
+                    size="3"
+                    variant="solid"
+                    disabled={!isDirty}
+                  >
+                    <Save size={18} />
+                    Save Global Settings
+                  </Button>
+                </DynamicAlertDialog>
+              </Flex>
+            </Flex>
           )}
-        </div>
-      </div>
+        </Card>
+      </Box>
 
       <Toast
         open={toastOpen}

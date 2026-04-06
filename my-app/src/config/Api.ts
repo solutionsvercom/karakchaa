@@ -37,6 +37,9 @@ export const API_ORDERS = `${BASE}/api/orders`;
 // Products
 export const API_PRODUCTS = `${BASE}/api/products`;
 
+// Product categories (CRUD; GET is public, mutations require auth)
+export const API_PRODUCT_CATEGORIES = `${BASE}/api/product-categories`;
+
 // Reports
 export const API_REPORTS = `${BASE}/api/reports`;
 

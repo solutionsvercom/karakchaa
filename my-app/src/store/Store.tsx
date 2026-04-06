@@ -10,6 +10,7 @@ import expensesReducer from "../features/ExpensesSlice";
 import suppliersReducer from "../features/SuppliersSlice";
 import ordersReducer from "../features/OrdersSlice";
 import settingsReducer from "../features/SettingsSlice";
+import productCategoriesReducer from "../features/ProductCategoriesSlice";
 
 
 export const store = configureStore({
@@ -24,6 +25,7 @@ export const store = configureStore({
     suppliers: suppliersReducer,
     orders: ordersReducer,
     settings: settingsReducer,
+    productCategories: productCategoriesReducer,
   },
 });
 
