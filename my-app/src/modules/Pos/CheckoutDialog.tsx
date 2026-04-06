@@ -116,7 +116,6 @@ export const CheckoutDialog = ({
       onClose();
     } catch (err: any) {
       setError(err?.message || "Checkout failed. Please try again.");
-      console.error("Checkout failed:", err);
     } finally {
       setLoading(false);
     }

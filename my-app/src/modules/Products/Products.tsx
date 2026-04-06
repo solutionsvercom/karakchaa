@@ -1,32 +1,20 @@
-import { Button, Dialog, Flex, Callout } from "@radix-ui/themes";
+import { Button, Dialog, Flex } from "@radix-ui/themes";
 import { DropdownMenu } from "@radix-ui/themes";
-import { ChevronDown, RefreshCw } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store/Store";
 import { fetchProducts } from "../../features/ProductsSlice";
+import { fetchProductCategories } from "../../features/ProductCategoriesSlice";
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import ProductCard from "../../components/dynamicComponents/ProductCard";
 import AddProducts from "./AddProduct";
+import ManageCategoriesDialog from "./ManageCategoriesDialog";
 import { ProductCardSkeleton } from "../../components/Skeleton";
 import { deleteProduct } from "../../features/ProductsSlice";
 import { toggleProductStatus } from "../../features/ProductsSlice";
-import axios from "axios";
-
-/*  TYPES  */
-
-type Category =
-  | "snacks"
-  | "desserts"
-  | "beverages"
-  | "meals"
-  | "drinks"
-  | "starters"
-  | "breads"
-  | "pizza"
-  | "sandwich"
-  | "other";
+import { categoryLabelForSlug } from "../../utils/categoryDisplay";
 
 /* COMPONENT */
 
@@ -38,10 +26,14 @@ export default function ProductsModule() {
   const { products, loading } = useSelector(
     (state: RootState) => state.product
   );
+  const { categories: productCategories } = useSelector(
+    (state: RootState) => state.productCategories
+  );
 
-  useEffect(() => {
-    dispatch(fetchProducts());
-  }, [dispatch]);
+  const activeCategories = useMemo(
+    () => productCategories.filter((c) => c.isActive),
+    [productCategories]
+  );
 
   /*  URL MODE DETECTION */
 
@@ -52,9 +44,24 @@ export default function ProductsModule() {
   /* STATE  */
 
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<"all" | Category>("all");
+  const [category, setCategory] = useState<string>("all");
   const [stockStatus, setStockStatus] = useState<"all" | "low" | "out" | "active" | "inactive">("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [manageCategoriesOpen, setManageCategoriesOpen] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchProducts());
+    dispatch(fetchProductCategories({ includeInactive: false }));
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (
+      category !== "all" &&
+      !activeCategories.some((c) => c.slug === category)
+    ) {
+      setCategory("all");
+    }
+  }, [category, activeCategories]);
 
   /*  EDIT PRODUCT DATA  */
 
@@ -98,6 +105,10 @@ export default function ProductsModule() {
         </div>
 
         <Flex gap="2" align="center">
+          <Button variant="soft" onClick={() => setManageCategoriesOpen(true)}>
+            <Plus size={16} aria-hidden />
+            Add categories
+          </Button>
           <Button onClick={() => navigate("/dashboard/products/add-product")}>
             + Add Product
           </Button>
@@ -124,6 +135,11 @@ export default function ProductsModule() {
         </Dialog.Content>
       </Dialog.Root>
 
+      <ManageCategoriesDialog
+        open={manageCategoriesOpen}
+        onOpenChange={setManageCategoriesOpen}
+      />
+
       {/*  SEARCH + FILTER  */}
       <Flex justify="between" align="center" gap="3">
         <Flex style={{ flex: 1 }}>
@@ -139,30 +155,21 @@ export default function ProductsModule() {
             <Button variant="soft">
               {category === "all"
                 ? "All Categories"
-                : category.charAt(0).toUpperCase() + category.slice(1)}
+                : categoryLabelForSlug(category, productCategories)}
               <ChevronDown size={16} />
             </Button>
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Content>
-            {[
-              { label: "All Categories", value: "all" },
-              { label: "Snacks", value: "snacks" },
-              { label: "Desserts", value: "desserts" },
-              { label: "Beverages", value: "beverages" },
-              { label: "Meals", value: "meals" },
-              { label: "Drinks", value: "drinks" },
-              { label: "Starters", value: "starters" },
-              { label: "Breads", value: "breads" },
-              { label: "Pizza", value: "pizza" },
-              { label: "Sandwich", value: "sandwich" },
-              { label: "Other", value: "other" },
-            ].map((item) => (
+            <DropdownMenu.Item onSelect={() => setCategory("all")}>
+              All Categories
+            </DropdownMenu.Item>
+            {activeCategories.map((c) => (
               <DropdownMenu.Item
-                key={item.value}
-                onSelect={() => setCategory(item.value as any)}
+                key={c._id}
+                onSelect={() => setCategory(c.slug)}
               >
-                {item.label}
+                {c.label}
               </DropdownMenu.Item>
             ))}
           </DropdownMenu.Content>
@@ -215,6 +222,10 @@ export default function ProductsModule() {
               stock={product.stockQty}
               minStock={product.minStock}
               category={product.category}
+              categoryDisplay={categoryLabelForSlug(
+                product.category,
+                productCategories
+              )}
               image={product.image?.url}
               isActive={product.isActive}
               onToggleActive={async (value: boolean) => {

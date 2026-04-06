@@ -1,6 +1,5 @@
 import {
   Flex,
-  Text,
   Badge,
   IconButton,
   DropdownMenu,
@@ -9,10 +8,12 @@ import {
 } from "@radix-ui/themes";
 import { DotsVerticalIcon, CubeIcon } from "@radix-ui/react-icons";
 import { Pencil, Trash2, Plus } from "lucide-react";
+import {
+  badgeColorForCategorySlug,
+  formatCategorySlugAsLabel,
+} from "../../utils/categoryDisplay";
 
 /*  TYPES  */
-
-type Category = "snacks" | "desserts" | "beverages" | "meals" | "drinks" | "starters" | "breads" | "pizza" | "sandwich" | "other";
 
 export type ProductCardProps = {
   name: string;
@@ -20,7 +21,10 @@ export type ProductCardProps = {
   price: number;
   stock: number;
   minStock?: number;
-  category: Category;
+  /** Stored slug from backend */
+  category: string;
+  /** Optional display label when slug maps to a managed category */
+  categoryDisplay?: string;
   image?: string;
   variant?: "default" | "pos";
   onAdd?: () => void;
@@ -29,27 +33,6 @@ export type ProductCardProps = {
   onEdit?: () => void;
   onDelete?: () => void;
 };
-
-/*  CATEGORY → COLOR MAP */
-
-const categoryColorMap: Record<
-  Category,
-  "amber" | "pink" | "blue" | "green" | "gray" | "orange" | "cyan" | "purple" | "red" | "yellow"
-> = {
-  snacks: "amber",
-  desserts: "pink",
-  beverages: "blue",
-  meals: "green",
-  other: "gray",
-  drinks: "orange",
-  starters: "yellow",
-  breads: "purple",
-  pizza: "pink",
-  sandwich: "cyan",
-};
-
-const formatLabel = (text: string) =>
-  text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
 
 /*  COMPONENT */
 
@@ -60,6 +43,7 @@ export default function ProductCard({
   stock,
   minStock = 0,
   category,
+  categoryDisplay,
   image,
   variant = "default",
   onAdd,
@@ -69,8 +53,10 @@ export default function ProductCard({
   onDelete,
 }: ProductCardProps) {
   const isPOS = variant === "pos";
-  const safeCategory: Category =
-    category && categoryColorMap[category] ? category : "other";
+  const slug = category || "other";
+  const badgeLabel =
+    categoryDisplay ?? formatCategorySlugAsLabel(slug);
+  const badgeColor = badgeColorForCategorySlug(slug);
   const lowStock = stock <= minStock;
   const isOutOfStock = stock <= 0;
 
@@ -218,8 +204,8 @@ export default function ProductCard({
         {!isPOS && (
           <>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Badge radius="full" variant="soft" color={categoryColorMap[safeCategory]}>
-                {formatLabel(safeCategory)}
+              <Badge radius="full" variant="soft" color={badgeColor}>
+                {badgeLabel}
               </Badge>
               <span
                 style={{

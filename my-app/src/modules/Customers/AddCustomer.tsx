@@ -140,8 +140,8 @@ const AddCustomer = ({ mode, initialValues, customerId }: AddCustomerProps) => {
             await dispatch(fetchCustomerStats());
 
             navigate("/dashboard/customer");
-          } catch (error) {
-            console.error("Failed:", error);
+          } catch {
+            /* createCustomer/updateCustomer rejected set state.customer.error */
           }
         }}
       />

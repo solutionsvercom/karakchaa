@@ -12,7 +12,9 @@ import { useCart } from "./CartContext";
 
 import { RootState, AppDispatch } from "../../store/Store";
 import { fetchProducts } from "../../features/ProductsSlice";
+import { fetchProductCategories } from "../../features/ProductCategoriesSlice";
 import { fetchOrders } from "../../features/OrdersSlice";
+import { categoryLabelForSlug } from "../../utils/categoryDisplay";
 
 import DigitalOrdersBoard from "./DigitalOrdersBoard";
 import { ProductCardSkeleton } from "../../components/Skeleton";
@@ -29,6 +31,14 @@ export default function Pos() {
 
   const { products, loading } = useSelector((state: RootState) => state.product);
   const { orders } = useSelector((state: RootState) => state.orders);
+  const { categories: productCategories } = useSelector(
+    (state: RootState) => state.productCategories
+  );
+
+  const activeCategorySlugs = useMemo(
+    () => productCategories.filter((c) => c.isActive).map((c) => c.slug),
+    [productCategories]
+  );
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
@@ -48,7 +58,17 @@ export default function Pos() {
 
   useEffect(() => {
     dispatch(fetchProducts());
+    dispatch(fetchProductCategories({ includeInactive: false }));
   }, [dispatch]);
+
+  useEffect(() => {
+    if (
+      category !== "all" &&
+      !activeCategorySlugs.includes(category)
+    ) {
+      setCategory("all");
+    }
+  }, [category, activeCategorySlugs]);
 
   useEffect(() => {
     dispatch(fetchOrders({ status: "Pending,Accepted,Preparing,Ready", limit: 1000 }));
@@ -260,19 +280,14 @@ export default function Pos() {
                   />
                 </Box>
                 <Select.Root value={category} onValueChange={setCategory}>
-                  <Select.Trigger style={{ width: 180 }} />
+                  <Select.Trigger style={{ width: 200 }} />
                   <Select.Content position="popper" sideOffset={8}>
                     <Select.Item value="all">All Categories</Select.Item>
-                    <Select.Item value="meals">Meals</Select.Item>
-                    <Select.Item value="snacks">Snacks</Select.Item>
-                    <Select.Item value="desserts">Desserts</Select.Item>
-                    <Select.Item value="beverages">Beverages</Select.Item>
-                    <Select.Item value="drinks">Drinks</Select.Item>
-                    <Select.Item value="starters">Starters</Select.Item>
-                    <Select.Item value="breads">Breads</Select.Item>
-                    <Select.Item value="pizza">Pizza</Select.Item>
-                    <Select.Item value="sandwich">Sandwich</Select.Item>
-                    <Select.Item value="other">Other</Select.Item>
+                    {activeCategorySlugs.map((slug) => (
+                      <Select.Item key={slug} value={slug}>
+                        {categoryLabelForSlug(slug, productCategories)}
+                      </Select.Item>
+                    ))}
                   </Select.Content>
                 </Select.Root>
               </Flex>

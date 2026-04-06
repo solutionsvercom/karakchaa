@@ -29,6 +29,7 @@ const expenseRoutes = require("./src/routes/ExpenseRoutes.js");
 const supplierRoutes = require("./src/routes/SupplierRoutes.js");
 const orderRoutes = require("./src/routes/OrderRoutes");
 const productRoutes = require("./src/routes/Product");
+const productCategoryRoutes = require("./src/routes/ProductCategoryRoutes");
 const saleRoutes = require("./src/routes/Sale");
 
 /* ROUTES USE */
@@ -46,6 +47,7 @@ app.use("/api/customers", customerRoutes);
 app.use("/api/stock", stockRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/product-categories", productCategoryRoutes);
 app.use("/api/sales", saleRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/suppliers", supplierRoutes);

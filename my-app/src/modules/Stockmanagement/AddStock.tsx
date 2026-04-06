@@ -240,8 +240,8 @@ export default function AddStock({ mode, productId, product }: AddStockProps) {
             await dispatch(fetchProducts()); //refresh Products page stock numbers
 
             navigate("/dashboard/stockmanagement");
-          } catch (error) {
-            console.error("Failed:", error);
+          } catch {
+            /* addStock/removeStock rejected handlers set state.stock.error */
           }
         }}
         onFieldChange={(fieldName, value) => {
