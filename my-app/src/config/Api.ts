@@ -51,3 +51,6 @@ export const API_STOCK = `${BASE}/api/stock`;
 
 // Suppliers
 export const API_SUPPLIERS = `${BASE}/api/suppliers`;
+
+// Global settings (GST, discount, store name)
+export const API_SETTINGS = `${BASE}/api/settings`;

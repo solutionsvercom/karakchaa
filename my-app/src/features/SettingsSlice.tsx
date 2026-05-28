@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { API_SETTINGS } from "../config/Api";
 
 export interface SettingsState {
   storeName: string;
@@ -19,13 +20,11 @@ const initialState: SettingsState = {
   error: null,
 };
 
-const BASE_URL = "http://localhost:5000/api/settings"; // fallback if missing config
-
 export const fetchSettings = createAsyncThunk<SettingsState, void, { rejectValue: string }>(
   "settings/fetch",
   async (_, thunkAPI) => {
     try {
-      const res = await axios.get(BASE_URL);
+      const res = await axios.get(API_SETTINGS);
       return res.data.data;
     } catch (error: any) {
       return thunkAPI.rejectWithValue(
@@ -46,7 +45,7 @@ export const updateSettings = createAsyncThunk<
   { rejectValue: string }
 >("settings/update", async (payload, thunkAPI) => {
   try {
-    const res = await axios.put(BASE_URL, payload);
+    const res = await axios.put(API_SETTINGS, payload);
     return res.data.data;
   } catch (error: any) {
     return thunkAPI.rejectWithValue(
