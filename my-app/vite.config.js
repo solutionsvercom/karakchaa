@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   base: '/admin/',
   build: {
-    outDir: '../backend/public/admin',
+    outDir: '../backend/dist/admin',
     emptyOutDir: true,
   },
   plugins: [

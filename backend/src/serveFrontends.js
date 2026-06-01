@@ -2,15 +2,30 @@ const path = require("path");
 const fs = require("fs");
 const express = require("express");
 
+function resolveBuildDirs() {
+  const root = path.join(__dirname, "..");
+  const distMenu = path.join(root, "dist");
+  const distAdmin = path.join(root, "dist", "admin");
+  const legacyMenu = path.join(root, "public", "menu");
+  const legacyAdmin = path.join(root, "public", "admin");
+
+  if (fs.existsSync(path.join(distMenu, "index.html"))) {
+    return { menuDir: distMenu, adminDir: distAdmin };
+  }
+  if (fs.existsSync(path.join(legacyMenu, "index.html"))) {
+    return { menuDir: legacyMenu, adminDir: legacyAdmin };
+  }
+  return { menuDir: distMenu, adminDir: distAdmin };
+}
+
 /**
  * Serves production builds:
- *   /         → DigitalMenu (public/menu)
- *   /admin    → my-app CRM (public/admin)
+ *   /         → DigitalMenu (dist/ or public/menu)
+ *   /admin    → my-app CRM (dist/admin or public/admin)
  * API routes must be registered before calling this.
  */
 function serveFrontends(app) {
-  const menuDir = path.join(__dirname, "..", "public", "menu");
-  const adminDir = path.join(__dirname, "..", "public", "admin");
+  const { menuDir, adminDir } = resolveBuildDirs();
   const menuIndex = path.join(menuDir, "index.html");
   const adminIndex = path.join(adminDir, "index.html");
   const hasMenu = fs.existsSync(menuIndex);

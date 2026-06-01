@@ -8,7 +8,10 @@
     "dev": "nodemon server.js",
     "build:menu": "npm install --prefix ../DigitalMenu && npm run build --prefix ../DigitalMenu",
     "build:admin": "npm install --prefix ../my-app && npm run build --prefix ../my-app",
-    "build": "npm run build:menu && npm run build:admin"
+    "build": "npm run build:menu && npm run build:admin && node scripts/postbuild.js"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "keywords": [],
   "author": "",
