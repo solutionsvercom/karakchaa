@@ -36,25 +36,25 @@ function stripCloudinaryVersion(url) {
   return url.replace(/\/upload\/v\d+\//i, "/upload/");
 }
 
-function stripDeliveryExtension(url) {
-  return url.replace(
-    /(\/image\/upload\/(?:v\d+\/)?)(.+)\.(jpe?g|png|gif|webp|avif)$/i,
-    "$1$2"
-  );
-}
+const HAS_IMAGE_EXT = /\.(jpe?g|png|gif|webp|avif)(\?|$)/i;
 
 function normalizeCloudinaryUrl(url) {
-  const https = url.replace(/^http:\/\//i, "https://");
-  return stripDeliveryExtension(stripCloudinaryVersion(https));
+  let https = url.replace(/^http:\/\//i, "https://");
+  https = stripCloudinaryVersion(https);
+  if (https.includes("res.cloudinary.com") && !HAS_IMAGE_EXT.test(https)) {
+    https = `${https}.jpg`;
+  }
+  return https;
 }
 
-function buildDeliveryUrl(publicId) {
+function buildDeliveryUrl(publicId, withExtension = true) {
   const cloudName = getCloudName();
   const id = String(publicId || "")
     .replace(/^\//, "")
     .replace(/\.[a-zA-Z0-9]+$/, "");
   if (!id) return "";
-  return `https://res.cloudinary.com/${cloudName}/image/upload/${id}`;
+  const ext = withExtension ? ".jpg" : "";
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${id}${ext}`;
 }
 
 /** Candidate public_ids to try in Cloudinary (folder vs root, with/without ext) */
@@ -108,7 +108,7 @@ function resolveProductImageUrl(image) {
   const publicId = toPublicId(raw);
   if (!publicId) return "";
 
-  return buildDeliveryUrl(publicId);
+  return buildDeliveryUrl(publicId, true);
 }
 
 /**

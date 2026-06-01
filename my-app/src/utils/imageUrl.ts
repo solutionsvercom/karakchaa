@@ -7,32 +7,32 @@ const cloudName =
 
 const ABSOLUTE_HTTPS = /^https:\/\//i;
 const BARE_PUBLIC_ID = /^[a-z0-9][a-z0-9_-]*$/i;
+const HAS_IMAGE_EXT = /\.(jpe?g|png|gif|webp|avif)(\?|$)/i;
 
 function stripCloudinaryVersion(url: string): string {
   return url.replace(/\/upload\/v\d+\//i, "/upload/");
 }
 
-function stripDeliveryExtension(url: string): string {
-  return url.replace(
-    /(\/image\/upload\/(?:v\d+\/)?)(.+)\.(jpe?g|png|gif|webp|avif)$/i,
-    "$1$2"
-  );
-}
-
 function normalizeCloudinaryUrl(url: string): string {
-  const https = url
+  let https = url
     .replace(/^http:\/\//i, "https://")
     .replace(/^\/\//, "https://");
-  return stripDeliveryExtension(stripCloudinaryVersion(https));
+  https = stripCloudinaryVersion(https);
+
+  if (https.includes("res.cloudinary.com") && !HAS_IMAGE_EXT.test(https)) {
+    https = `${https}.jpg`;
+  }
+  return https;
 }
 
-function deliveryUrl(publicId: string): string {
+function deliveryUrl(publicId: string, withExtension = true): string {
   const id = publicId
     .replace(/^\//, "")
     .replace(/\.[a-zA-Z0-9]+$/, "")
     .trim();
   if (!id) return "";
-  return `https://res.cloudinary.com/${cloudName}/image/upload/${id}`;
+  const ext = withExtension ? ".jpg" : "";
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${id}${ext}`;
 }
 
 function rawFromInput(url?: string | { url?: string } | null): string {
@@ -50,23 +50,27 @@ export function getCloudinaryImageCandidates(
   const trimmed = rawFromInput(url);
   if (!trimmed) return [];
 
+  const out = new Set<string>();
+
   if (trimmed.includes("res.cloudinary.com")) {
-    return [normalizeCloudinaryUrl(trimmed)];
+    out.add(normalizeCloudinaryUrl(trimmed));
+    return [...out];
   }
 
   if (ABSOLUTE_HTTPS.test(trimmed)) {
-    return [trimmed];
+    out.add(trimmed);
+    return [...out];
   }
 
   const base = trimmed.replace(/\.[a-zA-Z0-9]+$/, "");
   if (BARE_PUBLIC_ID.test(base)) {
-    return [
-      deliveryUrl(`${CLOUD_FOLDER}/${base}`),
-      deliveryUrl(base),
-    ];
+    out.add(deliveryUrl(`${CLOUD_FOLDER}/${base}`, true));
+    out.add(deliveryUrl(`${CLOUD_FOLDER}/${base}`, false));
+    out.add(deliveryUrl(base, true));
+    out.add(deliveryUrl(base, false));
   }
 
-  return [];
+  return [...out];
 }
 
 export function displayImageUrl(
