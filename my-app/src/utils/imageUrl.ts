@@ -1,20 +1,38 @@
 const CLOUD_FOLDER = "restaurant/products";
-const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined;
+const DEFAULT_CLOUD_NAME = "djctmnkky";
 
-export function displayImageUrl(url?: string | null): string {
-  if (!url || typeof url !== "string") return "";
-  const trimmed = url.trim();
+const cloudName =
+  (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined)?.trim() ||
+  DEFAULT_CLOUD_NAME;
+
+function stripCloudinaryVersion(url: string): string {
+  return url.replace(/\/upload\/v\d+\//i, "/upload/");
+}
+
+function rawFromInput(url?: string | { url?: string } | null): string {
+  if (!url) return "";
+  if (typeof url === "string") return url.trim();
+  if (typeof url === "object" && typeof url.url === "string") {
+    return url.url.trim();
+  }
+  return "";
+}
+
+export function displayImageUrl(
+  url?: string | { url?: string } | null
+): string {
+  const trimmed = rawFromInput(url);
   if (!trimmed) return "";
 
-  if (trimmed.startsWith("//")) return `https:${trimmed}`;
+  if (trimmed.startsWith("//")) return stripCloudinaryVersion(`https:${trimmed}`);
   if (trimmed.startsWith("http://")) {
-    return trimmed.replace(/^http:\/\//i, "https://");
+    return stripCloudinaryVersion(
+      trimmed.replace(/^http:\/\//i, "https://")
+    );
   }
   if (trimmed.includes("res.cloudinary.com")) {
-    return trimmed;
+    return stripCloudinaryVersion(trimmed);
   }
-
-  if (!cloudName) return "";
 
   let path = trimmed.replace(/^\//, "");
   if (!path.includes("/")) {

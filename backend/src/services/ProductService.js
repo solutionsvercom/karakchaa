@@ -1,6 +1,9 @@
 const Product = require("../models/Product/ProductSchema");
 const Stockmanagement = require("../models/Stockmanagement/StockmanagementSchema");
-const { withResolvedImage } = require("../utils/imageUrl");
+const {
+  withResolvedImageAsync,
+  resolveProductImageUrlAsync,
+} = require("../utils/imageUrl");
 
 function computeStatus(currentStock, minStockLevel) {
   if (currentStock === 0) return "Out of Stock";
@@ -33,12 +36,12 @@ async function createProduct(data) {
     stockHistory: [],
   });
 
-  return withResolvedImage(product);
+  return withResolvedImageAsync(product);
 }
 
 async function getAllProducts() {
   const products = await Product.find().sort({ createdAt: -1 });
-  return products.map((p) => withResolvedImage(p));
+  return Promise.all(products.map((p) => withResolvedImageAsync(p)));
 }
 
 async function getProductById(id) {
@@ -48,7 +51,7 @@ async function getProductById(id) {
     err.statusCode = 404;
     throw err;
   }
-  return withResolvedImage(product);
+  return withResolvedImageAsync(product);
 }
 
 async function updateProduct(id, data) {
@@ -86,7 +89,7 @@ async function updateProduct(id, data) {
     await updated.save();
   }
 
-  return withResolvedImage(updated);
+  return withResolvedImageAsync(updated);
 }
 
 async function toggleProductStatus(id, isActive) {
@@ -98,7 +101,7 @@ async function toggleProductStatus(id, isActive) {
   }
 
   product.isActive = isActive;
-  return withResolvedImage(await product.save());
+  return withResolvedImageAsync(await product.save());
 }
 
 const deleteProduct = async (id) => {
@@ -117,7 +120,7 @@ async function getLowStockProducts() {
     isActive: true,
     $expr: { $lte: ["$stockQty", "$minStock"] },
   }).sort({ stockQty: 1 });
-  return products.map((p) => withResolvedImage(p));
+  return Promise.all(products.map((p) => withResolvedImageAsync(p)));
 }
 
 async function syncAllProductsToStock() {
@@ -177,6 +180,32 @@ async function syncAllProductsToStock() {
   };
 }
 
+async function repairAllProductImages() {
+  const products = await Product.find({
+    "image.url": { $exists: true, $nin: [null, ""] },
+  });
+  let fixed = 0;
+  let missing = 0;
+
+  for (const product of products) {
+    const url = await resolveProductImageUrlAsync(product.image);
+    if (url) {
+      product.image = { url };
+      await product.save();
+      fixed++;
+    } else {
+      missing++;
+    }
+  }
+
+  return {
+    total: products.length,
+    fixed,
+    missing,
+    message: `Repaired ${fixed} image URLs. ${missing} products have no image in Cloudinary (re-upload those photos).`,
+  };
+}
+
 async function syncStockToProducts() {
   const stockItems = await Stockmanagement.find();
   let updated = 0;
@@ -211,4 +240,5 @@ module.exports = {
   deleteProduct,
   syncAllProductsToStock,
   syncStockToProducts,
+  repairAllProductImages,
 };

@@ -227,7 +227,7 @@ export default function ProductsModule() {
                 product.category,
                 productCategories
               )}
-              image={displayImageUrl(product.image?.url) || undefined}
+              image={displayImageUrl(product.image) || undefined}
               isActive={product.isActive}
               onToggleActive={async (value: boolean) => {
                 await dispatch(

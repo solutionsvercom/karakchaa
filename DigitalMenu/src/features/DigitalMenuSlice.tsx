@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import { API_DIGITAL_MENU } from "../config/Api";
+import { displayImageUrl } from "../utils/imageUrl";
 
 export interface MenuProduct {
   _id: string;
@@ -70,7 +71,8 @@ const digitalMenuSlice = createSlice({
 
           const uniqueProducts = action.payload.reduce((acc, product) => {
             if (!acc.find((p) => p._id === product._id)) {
-              acc.push(product);
+              const image = displayImageUrl(product.image) || undefined;
+              acc.push({ ...product, image });
             }
             return acc;
           }, [] as MenuProduct[]);

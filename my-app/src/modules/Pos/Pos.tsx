@@ -313,7 +313,7 @@ export default function Pos() {
                     return (
                       <ProductCard
                         key={product._id}
-                        image={displayImageUrl(product.image?.url) || undefined}
+                        image={displayImageUrl(product.image) || undefined}
                         name={product.name}
                         sku={product.sku}
                         price={product.sellingPrice}

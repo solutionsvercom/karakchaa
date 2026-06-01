@@ -12,6 +12,9 @@ router.post("/sync-stock", productController.syncStock);
 // Sync Stock Management → Products (fixes minStock + stockQty drift)
 router.post("/sync-from-stock", productController.syncStockToProducts);
 
+// Fix product image URLs from Cloudinary (run once after deploy)
+router.post("/repair-images", productController.repairImages);
+
 // Low stock products
 router.get("/low-stock", productController.getLowStockProducts);
 

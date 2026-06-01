@@ -172,6 +172,15 @@ class ProductController {
             next(err);
         }
     }
+
+    async repairImages(req, res, next) {
+        try {
+            const result = await productService.repairAllProductImages();
+            res.json({ success: true, ...result });
+        } catch (err) {
+            next(err);
+        }
+    }
 }
 
 module.exports = new ProductController();
