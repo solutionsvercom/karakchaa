@@ -3,19 +3,24 @@ const fs = require("fs");
 const express = require("express");
 
 function resolveBuildDirs() {
-  const root = path.join(__dirname, "..");
-  const distMenu = path.join(root, "dist");
-  const distAdmin = path.join(root, "dist", "admin");
-  const legacyMenu = path.join(root, "public", "menu");
-  const legacyAdmin = path.join(root, "public", "admin");
+  const backendRoot = path.join(__dirname, "..");
+  const hostingerMenu = path.join(backendRoot, "..", "DigitalMenu", "dist");
+  const hostingerAdmin = path.join(hostingerMenu, "admin");
+  const backendDist = path.join(backendRoot, "dist");
+  const backendDistAdmin = path.join(backendDist, "admin");
+  const legacyMenu = path.join(backendRoot, "public", "menu");
+  const legacyAdmin = path.join(backendRoot, "public", "admin");
 
-  if (fs.existsSync(path.join(distMenu, "index.html"))) {
-    return { menuDir: distMenu, adminDir: distAdmin };
+  if (fs.existsSync(path.join(hostingerMenu, "index.html"))) {
+    return { menuDir: hostingerMenu, adminDir: hostingerAdmin };
+  }
+  if (fs.existsSync(path.join(backendDist, "index.html"))) {
+    return { menuDir: backendDist, adminDir: backendDistAdmin };
   }
   if (fs.existsSync(path.join(legacyMenu, "index.html"))) {
     return { menuDir: legacyMenu, adminDir: legacyAdmin };
   }
-  return { menuDir: distMenu, adminDir: distAdmin };
+  return { menuDir: hostingerMenu, adminDir: hostingerAdmin };
 }
 
 /**
@@ -33,7 +38,7 @@ function serveFrontends(app) {
 
   if (!hasMenu && !hasAdmin) {
     console.warn(
-      "⚠️  Frontend builds not found. Run from backend/: npm run build"
+      "⚠️  Frontend builds not found. Run: cd DigitalMenu && npm run build"
     );
     app.get("/", (req, res) => {
       res.json({

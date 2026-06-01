@@ -1,9 +1,10 @@
 {
-  "comment": "Reference for Hostinger Node.js Git deploy (set these in hPanel if auto-detect fails)",
-  "rootDirectory": ".",
+  "comment": "Hostinger locks root to DigitalMenu — use these values in hPanel",
+  "rootDirectory": "DigitalMenu",
+  "framework": "Other",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "startCommand": "npm start",
-  "entryFile": "backend/server.js",
-  "nodeVersion": "20"
+  "entryFile": "server.cjs",
+  "nodeVersion": "22"
 }

@@ -6,9 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build:menu": "npm install --prefix ../DigitalMenu && npm run build --prefix ../DigitalMenu",
-    "build:admin": "npm install --prefix ../my-app && npm run build --prefix ../my-app",
-    "build": "npm run build:menu && npm run build:admin && node scripts/postbuild.js"
+    "build": "npm run build --prefix ../DigitalMenu"
   },
   "engines": {
     "node": ">=18"
@@ -20,6 +18,7 @@
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.9.0",
     "cors": "^2.8.6",
+    "digitalmenu": "file:../DigitalMenu",
     "dotenv": "^17.3.1",
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
@@ -29,6 +28,7 @@
     "googleapis": "^171.4.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
+    "karakchaa": "file:..",
     "mongoose": "^8.23.0",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",

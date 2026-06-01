@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run build:deps && vite build && npm run build:admin && node scripts/postbuild.cjs",
+    "build:deps": "npm install --prefix ../backend && npm install --prefix ../my-app",
+    "build:admin": "npm run build --prefix ../my-app",
+    "start": "node server.cjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -17,7 +20,6 @@
     "@radix-ui/themes": "^3.3.0",
     "@reduxjs/toolkit": "^2.11.2",
     "axios": "^1.13.6",
-    "backend": "file:../backend",
     "lucide-react": "^0.574.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.0",
