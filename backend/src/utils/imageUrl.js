@@ -27,6 +27,10 @@ function toPublicId(stored) {
   return id.replace(/\.[a-zA-Z0-9]+$/, "");
 }
 
+function stripCloudinaryVersion(url) {
+  return url.replace(/\/upload\/v\d+\//i, "/upload/");
+}
+
 function buildDeliveryUrl(publicId) {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
   if (!cloudName || !publicId) return "";
@@ -73,9 +77,9 @@ function resolveProductImageUrl(image) {
   const raw = extractRaw(image);
   if (!raw) return "";
 
-  if (raw.startsWith("//")) return `https:${raw}`;
+  if (raw.startsWith("//")) return stripCloudinaryVersion(`https:${raw}`);
   if (/^https?:\/\//i.test(raw)) {
-    return raw.replace(/^http:\/\//i, "https://");
+    return stripCloudinaryVersion(raw.replace(/^http:\/\//i, "https://"));
   }
 
   const publicId = toPublicId(raw);
@@ -116,7 +120,7 @@ async function resolveProductImageUrlAsync(image) {
     if (fromApi) return fromApi;
   }
 
-  return "";
+  return resolveProductImageUrl(image);
 }
 
 function withResolvedImage(doc) {

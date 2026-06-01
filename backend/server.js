@@ -130,11 +130,11 @@ app.get("/api/health", async (req, res) => {
   if (dbReady) {
     try {
       const Product = require("./src/models/Product/ProductSchema");
-      const { resolveProductImageUrlAsync } = require("./src/utils/imageUrl");
+      const { resolveProductImageUrl } = require("./src/utils/imageUrl");
       const p = await Product.findOne({ "image.url": { $exists: true, $ne: "" } })
         .select("image")
         .lean();
-      if (p?.image) sampleImage = await resolveProductImageUrlAsync(p.image);
+      if (p?.image) sampleImage = resolveProductImageUrl(p.image);
     } catch {
       sampleImage = null;
     }

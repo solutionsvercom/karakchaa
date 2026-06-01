@@ -1,7 +1,7 @@
 const Product = require("../models/Product/ProductSchema");
 const Stockmanagement = require("../models/Stockmanagement/StockmanagementSchema");
 const {
-  withResolvedImageAsync,
+  withResolvedImage,
   resolveProductImageUrlAsync,
 } = require("../utils/imageUrl");
 
@@ -36,12 +36,12 @@ async function createProduct(data) {
     stockHistory: [],
   });
 
-  return withResolvedImageAsync(product);
+  return withResolvedImage(product);
 }
 
 async function getAllProducts() {
   const products = await Product.find().sort({ createdAt: -1 });
-  return Promise.all(products.map((p) => withResolvedImageAsync(p)));
+  return Promise.all(products.map((p) => withResolvedImage(p)));
 }
 
 async function getProductById(id) {
@@ -51,7 +51,7 @@ async function getProductById(id) {
     err.statusCode = 404;
     throw err;
   }
-  return withResolvedImageAsync(product);
+  return withResolvedImage(product);
 }
 
 async function updateProduct(id, data) {
@@ -89,7 +89,7 @@ async function updateProduct(id, data) {
     await updated.save();
   }
 
-  return withResolvedImageAsync(updated);
+  return withResolvedImage(updated);
 }
 
 async function toggleProductStatus(id, isActive) {
@@ -101,7 +101,7 @@ async function toggleProductStatus(id, isActive) {
   }
 
   product.isActive = isActive;
-  return withResolvedImageAsync(await product.save());
+  return withResolvedImage(await product.save());
 }
 
 const deleteProduct = async (id) => {
@@ -120,7 +120,7 @@ async function getLowStockProducts() {
     isActive: true,
     $expr: { $lte: ["$stockQty", "$minStock"] },
   }).sort({ stockQty: 1 });
-  return Promise.all(products.map((p) => withResolvedImageAsync(p)));
+  return Promise.all(products.map((p) => withResolvedImage(p)));
 }
 
 async function syncAllProductsToStock() {

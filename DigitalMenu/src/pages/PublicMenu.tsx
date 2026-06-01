@@ -49,6 +49,8 @@ export default function PublicMenu() {
   const backendProducts = useAppSelector(
     (state) => state.digitalMenu.products
   );
+  const menuLoading = useAppSelector((state) => state.digitalMenu.loading);
+  const menuError = useAppSelector((state) => state.digitalMenu.error);
 
   useEffect(() => {
     dispatch(fetchDigitalMenuProducts());
@@ -289,8 +291,25 @@ useEffect(() => {
 
       <div className="container">
 
+        {menuLoading && (
+          <p style={{ textAlign: "center", padding: "2rem", opacity: 0.8 }}>
+            Loading menu…
+          </p>
+        )}
 
-        {activeCat === "All" ? (
+        {!menuLoading && menuError && (
+          <p style={{ textAlign: "center", padding: "2rem", color: "#e5484d" }}>
+            {menuError}
+          </p>
+        )}
+
+        {!menuLoading && !menuError && MENU.length === 0 && (
+          <p style={{ textAlign: "center", padding: "2rem", opacity: 0.8 }}>
+            No menu items available. Please try again shortly.
+          </p>
+        )}
+
+        {!menuLoading && MENU.length > 0 && activeCat === "All" ? (
 
           categories
             .filter(cat => cat !== "All")
@@ -342,7 +361,7 @@ useEffect(() => {
 
             })
 
-        ) : (
+        ) : !menuLoading && MENU.length > 0 ? (
 
           <div className="categoryBlock">
 
@@ -374,7 +393,7 @@ useEffect(() => {
 
           </div>
 
-        )}
+        ) : null}
 
 
         <div className="footerHint">

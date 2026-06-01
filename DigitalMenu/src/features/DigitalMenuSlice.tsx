@@ -70,10 +70,10 @@ const digitalMenuSlice = createSlice({
           state.loading = false;
 
           const uniqueProducts = action.payload.reduce((acc, product) => {
-            if (!acc.find((p) => p._id === product._id)) {
-              const image = displayImageUrl(product.image) || undefined;
-              acc.push({ ...product, image });
-            }
+            const id = product._id ? String(product._id) : "";
+            if (!id || acc.find((p) => String(p._id) === id)) return acc;
+            const image = displayImageUrl(product.image) || undefined;
+            acc.push({ ...product, _id: id, image });
             return acc;
           }, [] as MenuProduct[]);
 
