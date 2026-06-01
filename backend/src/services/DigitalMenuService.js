@@ -1,4 +1,5 @@
 const Product = require("../models/Product/ProductSchema");
+const { resolveProductImageUrl } = require("../utils/imageUrl");
 
 exports.getAllDigitalMenuProducts = async () => {
 
@@ -11,7 +12,7 @@ exports.getAllDigitalMenuProducts = async () => {
         name: product.name,
         price: product.sellingPrice,
         category: product.category,
-        image: product.image ? product.image.url : "",
+        image: resolveProductImageUrl(product.image),
         stockQty: product.stockQty,
         isAvailable: product.stockQty > 0,
         isVeg: product.isVeg !== undefined ? product.isVeg : true, 
@@ -33,7 +34,7 @@ exports.getDigitalMenuProductById = async (productId) => {
         name: product.name,
         price: product.sellingPrice,
         category: product.category,
-        image: product.image ? product.image.url : "",
+        image: resolveProductImageUrl(product.image),
         stockQty: product.stockQty,
         isAvailable: product.stockQty > 0,
         isVeg: product.isVeg !== undefined ? product.isVeg : true, 

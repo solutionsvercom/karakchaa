@@ -185,6 +185,10 @@ body {
     object-fit: cover;
 }
 
+.menuCardImgPlaceholder {
+    background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+}
+
 .menuCardBody {
     padding: 12px;
 }

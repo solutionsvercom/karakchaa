@@ -12,6 +12,7 @@ import {
   badgeColorForCategorySlug,
   formatCategorySlugAsLabel,
 } from "../../utils/categoryDisplay";
+import { displayImageUrl } from "../../utils/imageUrl";
 
 /*  TYPES  */
 
@@ -53,6 +54,7 @@ export default function ProductCard({
   onDelete,
 }: ProductCardProps) {
   const isPOS = variant === "pos";
+  const imgSrc = displayImageUrl(image);
   const slug = category || "other";
   const badgeLabel =
     categoryDisplay ?? formatCategorySlugAsLabel(slug);
@@ -125,10 +127,12 @@ export default function ProductCard({
           background: "var(--gray-3)",
         }}
       >
-        {image ? (
+        {imgSrc ? (
           <img
-            src={image}
+            src={imgSrc}
             alt={name}
+            referrerPolicy="no-referrer"
+            loading="lazy"
             style={{
               width: "100%",
               height: "100%",

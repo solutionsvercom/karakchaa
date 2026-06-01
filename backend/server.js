@@ -126,6 +126,19 @@ app.get("/api/health", async (req, res) => {
   }
 
   const dbReady = isDbReady();
+  let sampleImage = null;
+  if (dbReady) {
+    try {
+      const Product = require("./src/models/Product/ProductSchema");
+      const { resolveProductImageUrl } = require("./src/utils/imageUrl");
+      const p = await Product.findOne({ "image.url": { $exists: true, $ne: "" } })
+        .select("image")
+        .lean();
+      if (p?.image) sampleImage = resolveProductImageUrl(p.image);
+    } catch {
+      sampleImage = null;
+    }
+  }
 
   res.status(dbReady ? 200 : 503).json({
     status: dbReady ? "OK" : "DEGRADED",
@@ -133,6 +146,7 @@ app.get("/api/health", async (req, res) => {
     database: dbReady ? "connected" : "disconnected",
     appUrl: process.env.APP_URL || null,
     cloudinary: cloudinaryStatus,
+    sampleProductImageUrl: sampleImage,
     timestamp: new Date().toISOString(),
   });
 });

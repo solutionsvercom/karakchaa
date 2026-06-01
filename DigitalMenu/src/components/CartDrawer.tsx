@@ -161,7 +161,11 @@ const dispatch = useAppDispatch();
                     {/* IMAGE */}
                     <div className="orderThumb">
                       {item.image ? (
-                        <img src={item.image} alt={item.name} />
+                        <img
+                          src={item.image.startsWith("http://") ? item.image.replace(/^http:\/\//i, "https://") : item.image}
+                          alt={item.name}
+                          referrerPolicy="no-referrer"
+                        />
                       ) : (
                         <ShoppingBag size={18} />
                       )}

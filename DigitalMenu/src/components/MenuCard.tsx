@@ -1,6 +1,7 @@
 import type { MenuItem } from "../types/menu";
 import { useCart } from "../context/CartContext";
 import { Minus, Plus } from "lucide-react";
+import { displayImageUrl } from "../utils/imageUrl";
 
 type Props = {
   item: MenuItem;
@@ -11,20 +12,24 @@ export default function MenuCard({ item }: Props) {
 
   const qty = getQty(item.id);
   const disabled = !item.available;
+  const imgSrc = displayImageUrl(item.image);
 
   return (
     <div className="menuCard">
 
       <div className="menuCardMedia">
 
-  <img
-    alt={item.name}
-    src={item.image || undefined}
-    className={`menuCardImg ${!item.available ? "menuCardImgDisabled" : ""}`}
-    onError={(e) => {
-      (e.target as HTMLImageElement).style.display = "none";
-    }}
-  />
+  {imgSrc ? (
+    <img
+      alt={item.name}
+      src={imgSrc}
+      className={`menuCardImg ${!item.available ? "menuCardImgDisabled" : ""}`}
+      loading="lazy"
+      referrerPolicy="no-referrer"
+    />
+  ) : (
+    <div className="menuCardImg menuCardImgPlaceholder" aria-hidden />
+  )}
 
   {!item.available && (
     <div className="menuCardUnavailableOverlay">

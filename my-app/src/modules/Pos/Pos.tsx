@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect, useRef } from "react";
 import { Flex, Box, Select, Card } from "@radix-ui/themes";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
+import { displayImageUrl } from "../../utils/imageUrl";
 import { CheckoutDialog } from "./CheckoutDialog";
 import { ShoppingCart, X, Bell, Monitor, TabletSmartphone } from "lucide-react";
 
@@ -312,7 +313,7 @@ export default function Pos() {
                     return (
                       <ProductCard
                         key={product._id}
-                        image={product.image?.url}
+                        image={displayImageUrl(product.image?.url) || undefined}
                         name={product.name}
                         sku={product.sku}
                         price={product.sellingPrice}
