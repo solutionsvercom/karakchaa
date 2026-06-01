@@ -1,4 +1,23 @@
-node_modules
+node_modules/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# OAuth / Google Drive
 google-oauth-credentials.json
 google-drive-token.json
 
+# Logs & runtime
+logs/
+*.log
+uploads/
+tmp/
+
+# OS & editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
