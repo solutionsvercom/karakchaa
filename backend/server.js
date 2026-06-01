@@ -1,5 +1,9 @@
 const path = require("path");
-require("dotenv").config({ path: path.join(__dirname, ".env") });
+// override: true — use backend/.env even if old CLOUDINARY_* exist in Windows env
+require("dotenv").config({
+  path: path.join(__dirname, ".env"),
+  override: true,
+});
 
 const requiredEnv = [
   "MONGO_URI",
