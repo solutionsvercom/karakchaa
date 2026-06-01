@@ -10,25 +10,28 @@ Use the settings below exactly.
 
 ## Hostinger hPanel settings
 
+### If root directory is **DigitalMenu** (locked default)
+
 | Setting | Value |
 |---------|--------|
-| **Root directory** | `.` (repository root) **OR** leave empty |
-| **Framework** | **Other** (not Vite — do not pick DigitalMenu alone) |
+| **Root directory** | `DigitalMenu` |
+| **Framework** | Other |
 | **Build command** | `npm run build` |
 | **Output directory** | `dist` |
+| **Entry file** | `server.cjs` |
 | **Start command** | `npm start` |
-| **Node.js version** | 20.x |
 
-**Do not** set root to `DigitalMenu` or `my-app` alone — that only builds one frontend and fails the output check.
-
-Alternative (also works):
+### If root directory is **repository root** (`.`)
 
 | Setting | Value |
 |---------|--------|
-| **Root directory** | `backend` |
-| **Build command** | `npm install && npm run build` |
-| **Output directory** | `dist` |
+| **Root directory** | `.` (empty) |
+| **Build command** | `npm run build` |
+| **Output directory** | `DigitalMenu/dist` |
+| **Entry file** | `server.cjs` (at repo root) **OR** `DigitalMenu/server.cjs` |
 | **Start command** | `npm start` |
+
+A `server.cjs` at the **repo root** forwards to `DigitalMenu/server.cjs` → `backend/server.js`.
 
 ---
 

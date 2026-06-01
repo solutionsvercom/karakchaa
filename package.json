@@ -1,10 +1,10 @@
 {
   "name": "karakchaa",
   "private": true,
-  "description": "Hostinger entry — runs API + digital menu + admin from backend/",
+  "description": "Hostinger monorepo entry — builds DigitalMenu, starts API via server.cjs",
   "scripts": {
-    "build": "npm install --prefix backend && npm run build --prefix backend",
-    "start": "npm start --prefix backend"
+    "build": "npm run build --prefix DigitalMenu",
+    "start": "node server.cjs"
   },
   "engines": {
     "node": ">=18"

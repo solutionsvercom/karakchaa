@@ -1,10 +1,27 @@
 {
-  "comment": "Hostinger locks root to DigitalMenu — use these values in hPanel",
-  "rootDirectory": "DigitalMenu",
-  "framework": "Other",
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "startCommand": "npm start",
-  "entryFile": "server.cjs",
-  "nodeVersion": "22"
+  "comment": "Use ONE of these setups in hPanel (whichever matches your locked root directory)",
+
+  "optionA_repoRoot": {
+    "rootDirectory": ".",
+    "buildCommand": "npm run build",
+    "outputDirectory": "DigitalMenu/dist",
+    "entryFile": "server.cjs",
+    "startCommand": "npm start"
+  },
+
+  "optionB_digitalMenuRoot": {
+    "rootDirectory": "DigitalMenu",
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "entryFile": "server.cjs",
+    "startCommand": "npm start"
+  },
+
+  "optionC_repoRoot_explicitEntry": {
+    "rootDirectory": ".",
+    "buildCommand": "npm run build --prefix DigitalMenu",
+    "outputDirectory": "DigitalMenu/dist",
+    "entryFile": "DigitalMenu/server.cjs",
+    "startCommand": "node DigitalMenu/server.cjs"
+  }
 }
