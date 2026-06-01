@@ -26,9 +26,7 @@ function resolveBuildDirs() {
 const hasFileExtension = (urlPath) => /\.[a-zA-Z0-9]+$/.test(urlPath);
 
 /**
- * Serves production builds:
- *   /         → DigitalMenu
- *   /admin    → my-app CRM (no trailing-slash redirects — avoids Hostinger loops)
+ * Serves production builds (Express 5–compatible routes — no bare "*" paths).
  */
 function serveFrontends(app) {
   const { menuDir, adminDir } = resolveBuildDirs();
@@ -66,7 +64,7 @@ function serveFrontends(app) {
 
     app.get("/admin", sendAdminSpa);
     app.get("/admin/", sendAdminSpa);
-    app.get("/admin/*", (req, res, next) => {
+    app.get("/admin/*splat", (req, res, next) => {
       if (req.method !== "GET" && req.method !== "HEAD") return next();
       if (hasFileExtension(req.path)) return next();
       sendAdminSpa(req, res);
@@ -85,7 +83,7 @@ function serveFrontends(app) {
 
     app.get("/", (req, res) => res.sendFile(menuIndex));
 
-    app.get("*", (req, res, next) => {
+    app.get("/*splat", (req, res, next) => {
       if (req.method !== "GET" && req.method !== "HEAD") return next();
       if (req.path.startsWith("/api") || req.path.startsWith("/admin")) {
         return next();

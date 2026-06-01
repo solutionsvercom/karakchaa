@@ -21,6 +21,7 @@ if (missingEnv.length) {
 }
 
 const connectDB = require("./config/db");
+const { isDbReady } = require("./config/db");
 
 //SCHEDULER IMPORT (new)
 const {
@@ -57,6 +58,19 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use("/api", (req, res, next) => {
+  if (req.path === "/health" || req.path.startsWith("/health?")) {
+    return next();
+  }
+  if (!isDbReady()) {
+    return res.status(503).json({
+      success: false,
+      message: "Database is connecting. Please retry in a few seconds.",
+    });
+  }
+  next();
+});
 
 /* ROUTES IMPORT */
 const authRoutes = require("./src/routes/AuthRoutes");
@@ -111,9 +125,12 @@ app.get("/api/health", async (req, res) => {
     cloudinaryStatus = err.message || "error";
   }
 
-  res.status(200).json({
-    status: "OK",
-    message: "Server is healthy",
+  const dbReady = isDbReady();
+
+  res.status(dbReady ? 200 : 503).json({
+    status: dbReady ? "OK" : "DEGRADED",
+    message: dbReady ? "Server is healthy" : "Server up; database not connected",
+    database: dbReady ? "connected" : "disconnected",
     appUrl: process.env.APP_URL || null,
     cloudinary: cloudinaryStatus,
     timestamp: new Date().toISOString(),
@@ -136,20 +153,35 @@ app.use((err, req, res, next) => {
 /* SERVER START */
 const PORT = process.env.PORT || 5000;
 
+const HOST = process.env.HOST || "0.0.0.0";
+
 const startServer = async () => {
-    try {
-        await connectDB(); 
+  const server = app.listen(PORT, HOST, () => {
+    console.log(`🚀 Server listening on ${HOST}:${PORT}`);
+  });
 
-    app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
-
-      // START SCHEDULER AFTER SERVER & DB ARE READY
-      registerCustomerSalesBackup();
-    });
-  } catch (error) {
-    console.error("❌ Failed to connect to database:", error.message);
+  server.on("error", (err) => {
+    console.error("❌ Server failed to start:", err.message);
     process.exit(1);
+  });
+
+  try {
+    await connectDB();
+    registerCustomerSalesBackup();
+  } catch (error) {
+    console.error("❌ MongoDB connection failed:", error.message);
+    console.error(
+      "   API stays up for /api/health — fix MONGO_URI & Atlas IP whitelist, then restart."
+    );
   }
 };
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled rejection:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception:", err);
+});
 
 startServer();
