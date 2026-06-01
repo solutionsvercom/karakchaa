@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
-
+import { API_DIGITAL_MENU } from "../config/Api";
 
 export interface OrderItem {
   productId: string;
@@ -35,9 +35,6 @@ const initialState: OrderState = {
 };
 
 
-const BASE_URL = "http://localhost:5000/api/digital-menu";
-
-
 export const createDigitalOrder = createAsyncThunk<
   DigitalOrder,
   Partial<DigitalOrder>,
@@ -49,7 +46,7 @@ export const createDigitalOrder = createAsyncThunk<
       orderType: "online", // ← Force this to 'online'
     };
     
-    const response = await axios.post(`${BASE_URL}/orders`, payload);
+    const response = await axios.post(`${API_DIGITAL_MENU}/orders`, payload);
     return response.data.data; // Note: Changed from response.data.order
   } catch (error: any) {
     return thunkAPI.rejectWithValue(
@@ -65,7 +62,7 @@ export const fetchOrderStatus = createAsyncThunk<
 >("digitalOrder/status", async (orderRef, thunkAPI) => {
   try {
     const response = await axios.get(
-      `${BASE_URL}/orders/status/${orderRef}`
+      `${API_DIGITAL_MENU}/orders/status/${orderRef}`
     );
 
     return response.data.order;

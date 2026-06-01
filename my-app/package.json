@@ -16,6 +16,7 @@
     "@radix-ui/themes": "^3.2.1",
     "@reduxjs/toolkit": "^2.11.2",
     "axios": "^1.13.5",
+    "backend": "file:../backend",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",

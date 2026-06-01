@@ -1,4 +1,6 @@
 node_modules/
+public/menu/
+public/admin/
 
 # Secrets
 .env

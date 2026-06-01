@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import { API_AUTH } from "../config/Api";
+import { adminPath } from "../config/app";
 
 
 /* ================= TYPES ================= */
@@ -103,7 +104,7 @@ axios.interceptors.response.use(
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('userRole');
         delete axios.defaults.headers.common['Authorization'];
-        window.location.href = '/login';
+        window.location.href = adminPath("login");
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;

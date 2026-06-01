@@ -17,6 +17,7 @@
     "@radix-ui/themes": "^3.3.0",
     "@reduxjs/toolkit": "^2.11.2",
     "axios": "^1.13.6",
+    "backend": "file:../backend",
     "lucide-react": "^0.574.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.0",

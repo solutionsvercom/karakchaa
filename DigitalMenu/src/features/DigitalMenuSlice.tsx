@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
-
+import { API_DIGITAL_MENU } from "../config/Api";
 
 export interface MenuProduct {
   _id: string;
@@ -27,16 +27,13 @@ const initialState: DigitalMenuState = {
 };
 
 
-const BASE_URL = "http://localhost:5000/api/digital-menu";
-
-
 export const fetchDigitalMenuProducts = createAsyncThunk<
   MenuProduct[],
   void,
   { rejectValue: string }
 >("digitalMenu/fetchProducts", async (_, thunkAPI) => {
   try {
-    const response = await axios.get(`${BASE_URL}/products`);
+    const response = await axios.get(`${API_DIGITAL_MENU}/products`);
     return response.data?.products ?? [];
   } catch (error: any) {
     return thunkAPI.rejectWithValue(

@@ -1,0 +1,5 @@
+{
+  "watch": ["server.js", "config", "src"],
+  "ignore": ["exports/**", "node_modules/**", "*.xlsx"],
+  "ext": "js,json"
+}

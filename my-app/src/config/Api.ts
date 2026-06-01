@@ -11,7 +11,8 @@
  *   import { API_AUTH } from "../config/Api";
  */
 
-const BASE = import.meta.env.VITE_API_BASE_URL;
+/** Empty string = same origin (production behind karakcha.in) */
+const BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
 // Auth routes  (login, register, verify-token, refresh-token, change-password)
 export const API_AUTH = `${BASE}/api/auth`;

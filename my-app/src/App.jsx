@@ -1,5 +1,6 @@
 import { useEffect, Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { ADMIN_BASENAME } from "./config/app";
 import "./App.css";
 import { verifyToken, setInitialized } from "./features/AuthSlice";
 
@@ -160,7 +161,7 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={ADMIN_BASENAME}>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />

@@ -1,21 +1,50 @@
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
+
+const requiredEnv = [
+  "MONGO_URI",
+  "JWT_SECRET",
+  "CLOUDINARY_CLOUD_NAME",
+  "CLOUDINARY_API_KEY",
+  "CLOUDINARY_API_SECRET",
+];
+const missingEnv = requiredEnv.filter((key) => !process.env[key]?.trim());
+if (missingEnv.length) {
+  console.error(
+    "❌ Missing or empty in backend/.env:",
+    missingEnv.join(", ")
+  );
+  console.error(
+    "   Copy backend/.env.example → backend/.env and add your MongoDB + Cloudinary values."
+  );
+  process.exit(1);
+}
+
 const connectDB = require("./config/db");
 
 //SCHEDULER IMPORT (new)
 const {
   registerCustomerSalesBackup,
 } = require("./src/scheduler/CustomerSalesBackupScheduler");
-const express = require('express');
-const cors = require('cors');
-// const connectDB = require('./config/db');
+const express = require("express");
+const cors = require("cors");
+const serveFrontends = require("./src/serveFrontends");
 
 const app = express();
 
-/*MIDDLEWARE*/
-console.log(process.env.CLOUDINARY_CLOUD_NAME);
+/* MIDDLEWARE */
+app.set("trust proxy", 1);
 
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
 
-app.use(cors());
+app.use(
+  cors({
+    origin: allowedOrigins?.length ? allowedOrigins : true,
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -62,18 +91,17 @@ app.use("/api/settings", settingsRoutes);
 
 
 
-/* BASIC ROUTES */
-app.get("/", (req, res) => {
-  res.json({ message: "Backend server is running!" });
-});
-
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     status: "OK",
     message: "Server is healthy",
+    appUrl: process.env.APP_URL || null,
     timestamp: new Date().toISOString(),
   });
 });
+
+/* PRODUCTION: Digital menu (/) + Admin (/admin) */
+serveFrontends(app);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
