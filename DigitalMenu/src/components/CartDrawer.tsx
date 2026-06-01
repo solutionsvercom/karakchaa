@@ -162,7 +162,7 @@ const dispatch = useAppDispatch();
                     <div className="orderThumb">
                       {item.image ? (
                         <img
-                          src={item.image.startsWith("http://") ? item.image.replace(/^http:\/\//i, "https://") : item.image}
+                          src={item.image}
                           alt={item.name}
                           referrerPolicy="no-referrer"
                         />
