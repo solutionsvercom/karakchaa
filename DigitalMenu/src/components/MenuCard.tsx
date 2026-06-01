@@ -1,7 +1,7 @@
 import type { MenuItem } from "../types/menu";
 import { useCart } from "../context/CartContext";
 import { Minus, Plus } from "lucide-react";
-import { displayImageUrl } from "../utils/imageUrl";
+import { safeImageSrc } from "../utils/imageUrl";
 
 type Props = {
   item: MenuItem;
@@ -12,7 +12,7 @@ export default function MenuCard({ item }: Props) {
 
   const qty = getQty(item.id);
   const disabled = !item.available;
-  const imgSrc = displayImageUrl(item.image);
+  const imgSrc = safeImageSrc(item.image);
 
   return (
     <div className="menuCard">

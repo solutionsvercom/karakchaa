@@ -92,6 +92,9 @@ const digitalOrderRoutes = require("./src/routes/DigitalOrderRoutes");
 const settingsRoutes = require("./src/routes/settingsRoutes");
 
 
+const normalizeImageUrls = require("./src/middleware/normalizeImageUrls");
+app.use("/api", normalizeImageUrls);
+
 /* ROUTES USE */
 app.use("/api/test-upload", require("./src/routes/testUpload"));
 app.use('/api/auth', authRoutes);

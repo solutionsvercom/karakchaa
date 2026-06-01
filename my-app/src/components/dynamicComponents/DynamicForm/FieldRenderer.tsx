@@ -7,6 +7,7 @@ import {
 import { FormField } from "./types";
 import { DatePicker } from "./DatePicker";
 import "./DatePicker.css";
+import { safeImageSrc } from "../../../utils/imageUrl";
 
 type Props<T extends string> = {
   field: FormField<T>;
@@ -232,7 +233,7 @@ const FieldRenderer = <T extends string>({
     case "file": {
       const imageUrl =
         typeof value === "string" && value !== ""
-          ? value
+          ? safeImageSrc(value)
           : value instanceof File
           ? URL.createObjectURL(value)
           : null;

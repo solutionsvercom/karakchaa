@@ -10,6 +10,7 @@ import {
 import type { MenuItem } from "../types/menu";
 import type { CartItem } from "../types/cart";
 import { fetchSettings } from "../features/SettingsSlice";
+import { safeImageSrc } from "../utils/imageUrl";
 
 type CartContextType = {
   items: Record<string, CartItem>;
@@ -60,7 +61,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           name: reduxItem.name,
           price: reduxItem.price,
           category: reduxItem.category || "",
-          image: reduxItem.image || "",
+          image: safeImageSrc(reduxItem.image) || "",
           description: "",
           veg: reduxItem.veg ?? true,
           available: true,
@@ -87,7 +88,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         productId: item.id,
         name: item.name,
         price: item.price,
-        image: item.image,
+        image: safeImageSrc(item.image) || "",
         category: item.category,
         veg: item.veg,
       })
@@ -109,7 +110,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           productId: existing.productId,
           name: existing.name,
           price: existing.price,
-          image: existing.image,
+          image: safeImageSrc(existing.image) || "",
           category: existing.category,
           veg: existing.veg,
         })

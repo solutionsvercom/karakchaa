@@ -1,6 +1,11 @@
 const cloudinary = require("../../config/cloudinary");
 
 const CLOUDINARY_FOLDER = "restaurant/products";
+const DEFAULT_CLOUD_NAME = "djctmnkky";
+
+function getCloudName() {
+  return process.env.CLOUDINARY_CLOUD_NAME?.trim() || DEFAULT_CLOUD_NAME;
+}
 
 function extractRaw(image) {
   if (!image) return "";
@@ -32,8 +37,8 @@ function stripCloudinaryVersion(url) {
 }
 
 function buildDeliveryUrl(publicId) {
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-  if (!cloudName || !publicId) return "";
+  const cloudName = getCloudName();
+  if (!publicId) return "";
   return `https://res.cloudinary.com/${cloudName}/image/upload/${publicId}`;
 }
 

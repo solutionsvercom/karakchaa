@@ -4,7 +4,7 @@ import { fetchDigitalMenuProducts } from "../features/DigitalMenuSlice";
 
 import CategoryTabs from "../components/CategoryTabs";
 import MenuCard from "../components/MenuCard";
-import { displayImageUrl } from "../utils/imageUrl";
+import { safeImageSrc } from "../utils/imageUrl";
 import CartDrawer from "../components/CartDrawer";
 import { useCart } from "../context/CartContext";
 
@@ -85,7 +85,7 @@ const MENU: MenuItemType[] = useMemo(() => {
 
     category: normalizeCategory(product.category),
 
-  image: displayImageUrl(product.image) || "",
+  image: safeImageSrc(product.image) || "",
 
     description: "",
 

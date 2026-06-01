@@ -12,7 +12,7 @@ import {
   badgeColorForCategorySlug,
   formatCategorySlugAsLabel,
 } from "../../utils/categoryDisplay";
-import { displayImageUrl } from "../../utils/imageUrl";
+import { safeImageSrc } from "../../utils/imageUrl";
 
 /*  TYPES  */
 
@@ -54,7 +54,7 @@ export default function ProductCard({
   onDelete,
 }: ProductCardProps) {
   const isPOS = variant === "pos";
-  const imgSrc = displayImageUrl(image);
+  const imgSrc = safeImageSrc(image);
   const slug = category || "other";
   const badgeLabel =
     categoryDisplay ?? formatCategorySlugAsLabel(slug);

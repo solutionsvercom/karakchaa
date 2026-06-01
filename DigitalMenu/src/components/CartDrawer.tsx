@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../store/hooks";
 import { createDigitalOrder } from "../features/DigitalOrderSlice"; 
 import { useCart } from "../context/CartContext";
-import { displayImageUrl } from "../utils/imageUrl";
+import { safeImageSrc } from "../utils/imageUrl";
 import {
   X,
   ShoppingBag,
@@ -163,7 +163,7 @@ const dispatch = useAppDispatch();
                     <div className="orderThumb">
                       {item.image ? (
                         <img
-                          src={displayImageUrl(item.image)}
+                          src={safeImageSrc(item.image)}
                           alt={item.name}
                           referrerPolicy="no-referrer"
                         />
