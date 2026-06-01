@@ -1,0 +1,9 @@
+{
+  "comment": "Reference for Hostinger Node.js Git deploy (set these in hPanel if auto-detect fails)",
+  "rootDirectory": ".",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "startCommand": "npm start",
+  "entryFile": "backend/server.js",
+  "nodeVersion": "20"
+}

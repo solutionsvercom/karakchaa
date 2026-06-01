@@ -1,73 +1,83 @@
 # Deploy Karakchaa on Hostinger (Node.js)
 
-Single Node app serves:
+## Fix: "No output directory found after build"
 
-| URL | App |
-|-----|-----|
-| `https://karakcha.in/` | Digital menu |
-| `https://karakcha.in/admin` | Admin / CRM (`my-app`) |
-| `https://karakcha.in/api/*` | Backend API |
+Hostinger checks for a **`dist` folder at the project root** after build. This repo builds into `backend/dist`, then **copies it to `/dist`** automatically when you run `npm run build` from the **repository root**.
 
-## Hostinger build settings (important)
+Use the settings below exactly.
 
-In **hPanel → Websites → Deployments → Settings**, use:
+---
+
+## Hostinger hPanel settings
+
+| Setting | Value |
+|---------|--------|
+| **Root directory** | `.` (repository root) **OR** leave empty |
+| **Framework** | **Other** (not Vite — do not pick DigitalMenu alone) |
+| **Build command** | `npm run build` |
+| **Output directory** | `dist` |
+| **Start command** | `npm start` |
+| **Node.js version** | 20.x |
+
+**Do not** set root to `DigitalMenu` or `my-app` alone — that only builds one frontend and fails the output check.
+
+Alternative (also works):
 
 | Setting | Value |
 |---------|--------|
 | **Root directory** | `backend` |
-| **Framework** | Other |
 | **Build command** | `npm install && npm run build` |
 | **Output directory** | `dist` |
-| **Start / Entry command** | `npm start` |
-| **Entry file** | `server.js` |
-| **Node.js version** | 20.x (or 18.x) |
+| **Start command** | `npm start` |
 
-If you deploy from GitHub, the repo root is `Karakchaa/` — set **Root directory** to **`backend`**, not the repo root.
+---
 
-The build creates:
+## URLs after deploy
 
-- `backend/dist/index.html` — digital menu (site home)
-- `backend/dist/admin/index.html` — admin app
+| URL | App |
+|-----|-----|
+| `https://karakcha.in/` | Digital menu |
+| `https://karakcha.in/admin` | Admin / CRM |
+| `https://karakcha.in/api/*` | API |
 
-Hostinger checks that the **Output directory** (`dist`) exists after `npm run build`. If you see *"No output directory found after build"*, the output directory field is wrong or root directory is not `backend`.
+---
 
-## 1. Build locally
+## Environment variables (Hostinger panel)
 
-```bash
-cd backend
-npm install
-npm run build
-```
-
-## 2. Environment variables (Hostinger panel)
-
-Copy from `backend/.env.example`. Minimum:
+Set in hPanel (do not commit `.env`):
 
 - `MONGO_URI`
 - `JWT_SECRET`
-- `CLOUDINARY_*`
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
 - `NODE_ENV=production`
 - `APP_URL=https://karakcha.in`
 - `ALLOWED_ORIGINS=https://karakcha.in,https://www.karakcha.in`
 
-Do not commit `backend/.env` to Git.
+---
 
-## 3. MongoDB Atlas
-
-Network Access → allow Hostinger server IP (or `0.0.0.0/0` for testing).
-
-## 4. After deploy
-
-- Menu: https://karakcha.in/
-- Admin: https://karakcha.in/admin/login
-- Health: https://karakcha.in/api/health
-
-## Local development
-
-Run three terminals (Vite dev servers):
+## Build locally to test
 
 ```bash
-cd backend && npm run dev
-cd my-app && npm run dev
-cd DigitalMenu && npm run dev
+# From repository root (same as Hostinger)
+npm run build
 ```
+
+You should see:
+
+- `backend/dist/index.html`
+- `dist/index.html` (copy at repo root)
+- `✅ Mirrored backend/dist → dist/`
+
+Then:
+
+```bash
+npm start
+```
+
+Open http://localhost:5000/ and http://localhost:5000/admin/login
+
+---
+
+## MongoDB Atlas
+
+Allow Hostinger server IP in **Network Access** (or `0.0.0.0/0` for testing).

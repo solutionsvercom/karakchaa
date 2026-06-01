@@ -31,4 +31,6 @@ fs.writeFileSync(
   )
 );
 
-console.log("✅ dist/ is ready (menu + admin) for Hostinger");
+console.log("✅ backend/dist is ready (menu + admin)");
+
+require("./mirror-dist-to-root");
