@@ -18,11 +18,12 @@ export default function MenuCard({ item }: Props) {
       <div className="menuCardMedia">
 
   <img
-  alt= {
-    item.name
-}
-    src={item.image}
+    alt={item.name}
+    src={item.image || undefined}
     className={`menuCardImg ${!item.available ? "menuCardImgDisabled" : ""}`}
+    onError={(e) => {
+      (e.target as HTMLImageElement).style.display = "none";
+    }}
   />
 
   {!item.available && (

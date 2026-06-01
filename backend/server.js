@@ -39,9 +39,19 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",")
   .map((o) => o.trim())
   .filter(Boolean);
 
+const corsOrigin = (origin, callback) => {
+  if (!origin) return callback(null, true);
+  if (!allowedOrigins.length) return callback(null, true);
+  if (allowedOrigins.includes(origin)) return callback(null, true);
+  if (/^https:\/\/(www\.)?karakcha\.in$/i.test(origin)) {
+    return callback(null, true);
+  }
+  callback(null, false);
+};
+
 app.use(
   cors({
-    origin: allowedOrigins?.length ? allowedOrigins : true,
+    origin: allowedOrigins.length ? corsOrigin : true,
     credentials: true,
   })
 );
@@ -91,11 +101,21 @@ app.use("/api/settings", settingsRoutes);
 
 
 
-app.get("/api/health", (req, res) => {
+app.get("/api/health", async (req, res) => {
+  let cloudinaryStatus = "unknown";
+  try {
+    const cloudinary = require("./config/cloudinary");
+    await cloudinary.api.ping();
+    cloudinaryStatus = "ok";
+  } catch (err) {
+    cloudinaryStatus = err.message || "error";
+  }
+
   res.status(200).json({
     status: "OK",
     message: "Server is healthy",
     appUrl: process.env.APP_URL || null,
+    cloudinary: cloudinaryStatus,
     timestamp: new Date().toISOString(),
   });
 });

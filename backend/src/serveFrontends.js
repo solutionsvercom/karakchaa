@@ -23,11 +23,12 @@ function resolveBuildDirs() {
   return { menuDir: hostingerMenu, adminDir: hostingerAdmin };
 }
 
+const hasFileExtension = (urlPath) => /\.[a-zA-Z0-9]+$/.test(urlPath);
+
 /**
  * Serves production builds:
- *   /         → DigitalMenu (dist/ or public/menu)
- *   /admin    → my-app CRM (dist/admin or public/admin)
- * API routes must be registered before calling this.
+ *   /         → DigitalMenu
+ *   /admin    → my-app CRM (no trailing-slash redirects — avoids Hostinger loops)
  */
 function serveFrontends(app) {
   const { menuDir, adminDir } = resolveBuildDirs();
@@ -44,31 +45,55 @@ function serveFrontends(app) {
       res.json({
         message: "Karakchaa API is running",
         health: "/api/health",
-        hint: "Run npm run build in backend to serve menu and admin UI",
+        hint: "Run npm run build in DigitalMenu to serve menu and admin UI",
       });
     });
     return;
   }
 
   if (hasAdmin) {
-    app.get("/admin", (req, res) => res.redirect(301, "/admin/"));
-    app.use("/admin", express.static(adminDir, { index: "index.html" }));
-    app.get(/^\/admin(\/.*)?$/, (req, res, next) => {
-      if (req.path.startsWith("/admin/api")) return next();
+    app.use(
+      "/admin",
+      express.static(adminDir, {
+        index: false,
+        redirect: false,
+      })
+    );
+
+    const sendAdminSpa = (req, res) => {
       res.sendFile(adminIndex);
+    };
+
+    app.get("/admin", sendAdminSpa);
+    app.get("/admin/", sendAdminSpa);
+    app.get("/admin/*", (req, res, next) => {
+      if (req.method !== "GET" && req.method !== "HEAD") return next();
+      if (hasFileExtension(req.path)) return next();
+      sendAdminSpa(req, res);
     });
+
     console.log("✅ Admin UI → /admin");
   }
 
   if (hasMenu) {
-    app.use(express.static(menuDir, { index: false }));
-    app.get(/^(?!\/api\/|\/admin\/).*/, (req, res, next) => {
+    app.use(
+      express.static(menuDir, {
+        index: false,
+        redirect: false,
+      })
+    );
+
+    app.get("/", (req, res) => res.sendFile(menuIndex));
+
+    app.get("*", (req, res, next) => {
       if (req.method !== "GET" && req.method !== "HEAD") return next();
       if (req.path.startsWith("/api") || req.path.startsWith("/admin")) {
         return next();
       }
+      if (hasFileExtension(req.path)) return next();
       res.sendFile(menuIndex);
     });
+
     console.log("✅ Digital menu → /");
   }
 }
