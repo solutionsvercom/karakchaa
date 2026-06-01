@@ -1,5 +1,5 @@
 import React from "react";
-import Dashboard from "../../modules/Dashboard/dashboard";
+import Dashboard from "../../modules/dashboard/dashboard";
 
 export default function EmployeesPage() {
   return (
