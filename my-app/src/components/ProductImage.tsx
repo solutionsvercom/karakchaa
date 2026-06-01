@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { getCloudinaryImageCandidates } from "../utils/imageUrl";
+import { useState } from "react";
+import { displayImageUrl } from "../utils/imageUrl";
 
 type Props = {
   src?: string | { url?: string } | null;
@@ -16,11 +16,10 @@ export default function ProductImage({
   style,
   fallback = null,
 }: Props) {
-  const candidates = useMemo(() => getCloudinaryImageCandidates(src), [src]);
-  const [index, setIndex] = useState(0);
+  const url = displayImageUrl(src);
+  const [failed, setFailed] = useState(false);
 
-  const url = candidates[index];
-  if (!url) return <>{fallback}</>;
+  if (!url || failed) return <>{fallback}</>;
 
   return (
     <img
@@ -30,9 +29,7 @@ export default function ProductImage({
       style={style}
       loading="lazy"
       referrerPolicy="no-referrer"
-      onError={() => {
-        setIndex((i) => (i + 1 < candidates.length ? i + 1 : candidates.length));
-      }}
+      onError={() => setFailed(true)}
     />
   );
 }

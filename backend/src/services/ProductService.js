@@ -185,24 +185,33 @@ async function repairAllProductImages() {
     "image.url": { $exists: true, $nin: [null, ""] },
   });
   let fixed = 0;
-  let missing = 0;
+  let cleared = 0;
 
   for (const product of products) {
-    const url = await resolveProductImageUrlAsync(product.image);
-    if (url) {
+    let url = "";
+    try {
+      url = await resolveProductImageUrlAsync(product.image);
+    } catch {
+      url = "";
+    }
+
+    if (url && url.includes("res.cloudinary.com")) {
       product.image = { url };
       await product.save();
       fixed++;
     } else {
-      missing++;
+      product.image = undefined;
+      await product.save();
+      cleared++;
     }
   }
 
   return {
     total: products.length,
     fixed,
-    missing,
-    message: `Repaired ${fixed} image URLs. ${missing} products have no image in Cloudinary (re-upload those photos).`,
+    cleared,
+    missing: cleared,
+    message: `Updated ${fixed} image URLs. Cleared ${cleared} broken/missing images — re-upload those product photos in Admin.`,
   };
 }
 

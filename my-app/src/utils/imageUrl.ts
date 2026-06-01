@@ -1,10 +1,3 @@
-const CLOUD_FOLDER = "restaurant/products";
-const DEFAULT_CLOUD_NAME = "djctmnkky";
-
-const cloudName =
-  (import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string | undefined)?.trim() ||
-  DEFAULT_CLOUD_NAME;
-
 const BARE_FILENAME = /^[^/\\]+\.(jpe?g|png|gif|webp|avif)$/i;
 const ABSOLUTE_HTTPS = /^https:\/\//i;
 
@@ -26,12 +19,6 @@ function normalizeCloudinaryUrl(url: string): string {
   return stripDeliveryExtension(stripCloudinaryVersion(https));
 }
 
-function deliveryUrl(publicId: string): string {
-  const id = publicId.replace(/^\//, "").replace(/\.[a-zA-Z0-9]+$/, "");
-  if (!id) return "";
-  return `https://res.cloudinary.com/${cloudName}/image/upload/${id}`;
-}
-
 function rawFromInput(url?: string | { url?: string } | null): string {
   if (!url) return "";
   if (typeof url === "string") return url.trim();
@@ -47,41 +34,24 @@ export function getCloudinaryImageCandidates(
   const trimmed = rawFromInput(url);
   if (!trimmed) return [];
 
-  const out = new Set<string>();
+  if (BARE_FILENAME.test(trimmed)) return [];
 
-  if (trimmed.includes("res.cloudinary.com")) {
-    out.add(normalizeCloudinaryUrl(trimmed));
-    const match = trimmed.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[^./]+)?$/i);
-    if (match) {
-      const pid = match[1].replace(/\.[a-zA-Z0-9]+$/, "");
-      out.add(deliveryUrl(pid));
-      const short = pid.replace(new RegExp(`^${CLOUD_FOLDER}/`), "");
-      if (short !== pid) {
-        out.add(deliveryUrl(short));
-        out.add(deliveryUrl(`${CLOUD_FOLDER}/${short}`));
-      }
-    }
-    return [...out];
+  if (!trimmed.includes("res.cloudinary.com")) {
+    if (ABSOLUTE_HTTPS.test(trimmed)) return [trimmed];
+    return [];
   }
 
-  const base = trimmed.replace(/^\//, "").replace(/\.[a-zA-Z0-9]+$/, "");
-  out.add(deliveryUrl(`${CLOUD_FOLDER}/${base}`));
-  out.add(deliveryUrl(base));
-  return [...out];
+  return [normalizeCloudinaryUrl(trimmed)];
 }
 
 export function displayImageUrl(
   url?: string | { url?: string } | null
 ): string {
-  const candidates = getCloudinaryImageCandidates(url);
-  return candidates[0] || "";
+  return getCloudinaryImageCandidates(url)[0] || "";
 }
 
 export function safeImageSrc(
   url?: string | { url?: string } | null
 ): string {
-  const candidates = getCloudinaryImageCandidates(url);
-  const resolved = candidates.find((u) => ABSOLUTE_HTTPS.test(u)) || "";
-  if (!resolved || BARE_FILENAME.test(resolved)) return "";
-  return resolved;
+  return displayImageUrl(url);
 }

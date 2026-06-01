@@ -99,13 +99,14 @@ function resolveProductImageUrl(image) {
 
   if (raw.startsWith("//")) return normalizeCloudinaryUrl(`https:${raw}`);
   if (/^https?:\/\//i.test(raw)) {
-    return normalizeCloudinaryUrl(raw);
+    if (raw.includes("res.cloudinary.com")) {
+      return normalizeCloudinaryUrl(raw);
+    }
+    return raw.replace(/^http:\/\//i, "https://");
   }
 
-  const publicId = toPublicId(raw);
-  if (!publicId) return "";
-
-  return buildDeliveryUrl(publicId);
+  // Bare filename in DB — do not guess Cloudinary URL (asset may not exist → 404)
+  return "";
 }
 
 /**

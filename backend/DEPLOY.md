@@ -51,7 +51,7 @@ Set in hPanel (do not commit `.env`):
 
 - `MONGO_URI`
 - `JWT_SECRET`
-- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (API key must be **Enabled** in [Cloudinary Console](https://console.cloudinary.com) — a disabled key causes upload/repair failures)
 - `NODE_ENV=production`
 - `APP_URL=https://karakcha.in`
 - `ALLOWED_ORIGINS=https://karakcha.in,https://www.karakcha.in`
@@ -84,3 +84,14 @@ Open http://localhost:5000/ and http://localhost:5000/admin/login
 ## MongoDB Atlas
 
 Allow Hostinger server IP in **Network Access** (or `0.0.0.0/0` for testing).
+
+---
+
+## Product images (Cloudinary)
+
+If the browser shows **404** on `res.cloudinary.com/...` URLs, the file is **not in your Cloudinary account** (deleted, never uploaded, or wrong cloud name).
+
+1. Enable the Cloudinary **API key** in the dashboard.
+2. Redeploy with the env vars above.
+3. Re-upload photos in **Admin → Products** (each upload saves a real `secure_url` in MongoDB).
+4. Optional cleanup after deploy: `POST https://karakcha.in/api/products/repair-images` (removes broken image references from the database).

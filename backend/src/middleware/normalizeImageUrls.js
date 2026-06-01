@@ -4,11 +4,12 @@ function fixImageField(value) {
   if (!value) return value;
   if (typeof value === "string") {
     const fixed = resolveProductImageUrl(value);
-    return fixed || value;
+    return fixed || "";
   }
   if (typeof value === "object" && typeof value.url === "string") {
     const fixed = resolveProductImageUrl(value);
     if (fixed) return { ...value, url: fixed };
+    return { ...value, url: "" };
   }
   return value;
 }
