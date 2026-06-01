@@ -47,11 +47,12 @@ A `server.cjs` at the **repo root** forwards to `DigitalMenu/server.cjs` → `ba
 
 ## Environment variables (Hostinger panel)
 
-Set in hPanel (do not commit `.env`):
+Set in hPanel (do not commit `.env`). See also **[HOSTINGER_ENV.md](../HOSTINGER_ENV.md)** when you rotate Cloudinary keys.
 
 - `MONGO_URI`
 - `JWT_SECRET`
-- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (API key must be **Enabled** in [Cloudinary Console](https://console.cloudinary.com) — a disabled key causes upload/repair failures)
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — after changing keys in Cloudinary, update **all three** in Hostinger and **redeploy** (local `backend/.env` does not affect production)
+- API key must be **Enabled** in [Cloudinary Console](https://console.cloudinary.com) — a disabled key returns `disabled api_key` and uploads fail
 - `NODE_ENV=production`
 - `APP_URL=https://karakcha.in`
 - `ALLOWED_ORIGINS=https://karakcha.in,https://www.karakcha.in`
