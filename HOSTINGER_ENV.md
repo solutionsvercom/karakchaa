@@ -33,4 +33,5 @@ After deploy, verify:
 
 - `GET https://karakcha.in/api/health` → `"cloudinary": "ok"`
 - Upload one product image in Admin
-- Optional: `POST https://karakcha.in/api/products/repair-images`
+- Sync DB from Cloudinary library: `POST https://karakcha.in/api/products/sync-images-from-cloudinary`
+- Or repair broken refs: `POST https://karakcha.in/api/products/repair-images`

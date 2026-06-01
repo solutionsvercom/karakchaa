@@ -2,6 +2,7 @@ import type { MenuItem } from "../types/menu";
 import { useCart } from "../context/CartContext";
 import { Minus, Plus } from "lucide-react";
 import ProductImage from "./ProductImage";
+import { hasDisplayableImage } from "../utils/imageUrl";
 
 type Props = {
   item: MenuItem;
@@ -12,7 +13,7 @@ export default function MenuCard({ item }: Props) {
 
   const qty = getQty(item.id);
   const disabled = !item.available;
-  const hasImage = Boolean(item.image && String(item.image).trim());
+  const hasImage = hasDisplayableImage(item.image);
 
   return (
     <div className="menuCard">

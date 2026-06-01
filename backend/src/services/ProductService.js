@@ -180,6 +180,67 @@ async function syncAllProductsToStock() {
   };
 }
 
+async function syncImagesFromCloudinary() {
+  const cloudinary = require("../../config/cloudinary");
+  const { extractRaw } = require("../utils/imageUrl");
+
+  const allResources = [];
+  let nextCursor;
+
+  do {
+    const batch = await cloudinary.api.resources({
+      type: "upload",
+      resource_type: "image",
+      prefix: "restaurant/products",
+      max_results: 500,
+      next_cursor: nextCursor,
+    });
+    if (batch.resources?.length) allResources.push(...batch.resources);
+    nextCursor = batch.next_cursor;
+  } while (nextCursor);
+
+  const byPublicId = new Map(
+    allResources.map((r) => [r.public_id, r.secure_url])
+  );
+
+  const products = await Product.find({
+    "image.url": { $exists: true, $nin: [null, ""] },
+  });
+
+  let updated = 0;
+  let notFound = 0;
+
+  for (const product of products) {
+    const raw = extractRaw(product.image);
+    if (!raw) continue;
+
+    const base = raw
+      .replace(/\.[a-zA-Z0-9]+$/, "")
+      .replace(/^restaurant\/products\//, "");
+
+    const url =
+      byPublicId.get(`restaurant/products/${base}`) ||
+      byPublicId.get(base) ||
+      byPublicId.get(raw.replace(/\.[a-zA-Z0-9]+$/, ""));
+
+    if (url) {
+      product.image = { url };
+      await product.save();
+      updated++;
+    } else {
+      notFound++;
+    }
+  }
+
+  return {
+    cloudinaryAssets: allResources.length,
+    productsChecked: products.length,
+    updated,
+    notFound,
+    message: `Synced ${updated} products from Cloudinary. ${notFound} DB records had no matching file — re-upload those images.`,
+  };
+}
+
 async function repairAllProductImages() {
   const products = await Product.find({
     "image.url": { $exists: true, $nin: [null, ""] },
@@ -250,4 +311,5 @@ module.exports = {
   syncAllProductsToStock,
   syncStockToProducts,
   repairAllProductImages,
+  syncImagesFromCloudinary,
 };

@@ -105,8 +105,10 @@ function resolveProductImageUrl(image) {
     return raw.replace(/^http:\/\//i, "https://");
   }
 
-  // Bare filename in DB — do not guess Cloudinary URL (asset may not exist → 404)
-  return "";
+  const publicId = toPublicId(raw);
+  if (!publicId) return "";
+
+  return buildDeliveryUrl(publicId);
 }
 
 /**
@@ -165,6 +167,7 @@ async function withResolvedImageAsync(doc) {
 }
 
 module.exports = {
+  extractRaw,
   resolveProductImageUrl,
   resolveProductImageUrlAsync,
   withResolvedImage,

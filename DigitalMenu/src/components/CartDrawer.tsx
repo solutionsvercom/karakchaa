@@ -4,6 +4,7 @@ import { useAppDispatch } from "../store/hooks";
 import { createDigitalOrder } from "../features/DigitalOrderSlice"; 
 import { useCart } from "../context/CartContext";
 import ProductImage from "./ProductImage";
+import { hasDisplayableImage } from "../utils/imageUrl";
 import {
   X,
   ShoppingBag,
@@ -161,7 +162,7 @@ const dispatch = useAppDispatch();
                   <div className="orderRow" key={item.id}>
                     {/* IMAGE */}
                     <div className="orderThumb">
-                      {item.image ? (
+                      {hasDisplayableImage(item.image) ? (
                         <ProductImage src={item.image} alt={item.name} />
                       ) : (
                         <ShoppingBag size={18} />

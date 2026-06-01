@@ -15,6 +15,9 @@ router.post("/sync-from-stock", productController.syncStockToProducts);
 // Fix product image URLs from Cloudinary (run once after deploy)
 router.post("/repair-images", productController.repairImages);
 
+// Match MongoDB image ids to files in Cloudinary Media Library
+router.post("/sync-images-from-cloudinary", productController.syncImagesFromCloudinary);
+
 // Low stock products
 router.get("/low-stock", productController.getLowStockProducts);
 
