@@ -15,7 +15,6 @@ import { ProductCardSkeleton } from "../../components/Skeleton";
 import { deleteProduct } from "../../features/ProductsSlice";
 import { toggleProductStatus } from "../../features/ProductsSlice";
 import { categoryLabelForSlug } from "../../utils/categoryDisplay";
-import { safeImageSrc } from "../../utils/imageUrl";
 
 /* COMPONENT */
 
@@ -227,7 +226,7 @@ export default function ProductsModule() {
                 product.category,
                 productCategories
               )}
-              image={safeImageSrc(product.image) || undefined}
+              image={product.image?.url || product.image || undefined}
               isActive={product.isActive}
               onToggleActive={async (value: boolean) => {
                 await dispatch(

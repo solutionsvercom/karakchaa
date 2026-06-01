@@ -36,10 +36,25 @@ function stripCloudinaryVersion(url) {
   return url.replace(/\/upload\/v\d+\//i, "/upload/");
 }
 
+function stripDeliveryExtension(url) {
+  return url.replace(
+    /(\/image\/upload\/(?:v\d+\/)?)(.+)\.(jpe?g|png|gif|webp|avif)$/i,
+    "$1$2"
+  );
+}
+
+function normalizeCloudinaryUrl(url) {
+  const https = url.replace(/^http:\/\//i, "https://");
+  return stripDeliveryExtension(stripCloudinaryVersion(https));
+}
+
 function buildDeliveryUrl(publicId) {
   const cloudName = getCloudName();
-  if (!publicId) return "";
-  return `https://res.cloudinary.com/${cloudName}/image/upload/${publicId}`;
+  const id = String(publicId || "")
+    .replace(/^\//, "")
+    .replace(/\.[a-zA-Z0-9]+$/, "");
+  if (!id) return "";
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${id}`;
 }
 
 /** Candidate public_ids to try in Cloudinary (folder vs root, with/without ext) */
@@ -82,23 +97,15 @@ function resolveProductImageUrl(image) {
   const raw = extractRaw(image);
   if (!raw) return "";
 
-  if (raw.startsWith("//")) return stripCloudinaryVersion(`https:${raw}`);
+  if (raw.startsWith("//")) return normalizeCloudinaryUrl(`https:${raw}`);
   if (/^https?:\/\//i.test(raw)) {
-    return stripCloudinaryVersion(raw.replace(/^http:\/\//i, "https://"));
+    return normalizeCloudinaryUrl(raw);
   }
 
   const publicId = toPublicId(raw);
   if (!publicId) return "";
 
-  try {
-    return cloudinary.url(publicId, {
-      secure: true,
-      resource_type: "image",
-      force_version: false,
-    });
-  } catch {
-    return buildDeliveryUrl(publicId);
-  }
+  return buildDeliveryUrl(publicId);
 }
 
 /**

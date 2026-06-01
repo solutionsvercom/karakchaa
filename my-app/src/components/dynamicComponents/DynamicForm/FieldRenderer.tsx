@@ -7,7 +7,8 @@ import {
 import { FormField } from "./types";
 import { DatePicker } from "./DatePicker";
 import "./DatePicker.css";
-import { safeImageSrc } from "../../../utils/imageUrl";
+import ProductImage from "../../ProductImage";
+import { displayImageUrl } from "../../../utils/imageUrl";
 
 type Props<T extends string> = {
   field: FormField<T>;
@@ -231,12 +232,10 @@ const FieldRenderer = <T extends string>({
       );
 
     case "file": {
-      const imageUrl =
-        typeof value === "string" && value !== ""
-          ? safeImageSrc(value)
-          : value instanceof File
-          ? URL.createObjectURL(value)
-          : null;
+      const blobUrl =
+        value instanceof File ? URL.createObjectURL(value) : null;
+      const storedUrl =
+        typeof value === "string" && value !== "" ? value : null;
 
       // Shared hidden file input with compression on change
       const fileInput = (
@@ -256,7 +255,7 @@ const FieldRenderer = <T extends string>({
       );
 
       // NO IMAGE: clickable upload box 
-      if (!imageUrl) {
+      if (!blobUrl && !storedUrl) {
         return (
           <>
             {fileInput}
@@ -310,11 +309,19 @@ const FieldRenderer = <T extends string>({
               flexShrink: 0,
             }}
           >
-            <img
-              src={imageUrl}
-              alt="Preview"
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
+            {blobUrl ? (
+              <img
+                src={blobUrl}
+                alt="Preview"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <ProductImage
+                src={storedUrl}
+                alt="Preview"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            )}
           </div>
 
           {/* Buttons stacked vertically beside the image */}
@@ -349,7 +356,7 @@ const FieldRenderer = <T extends string>({
 
             {/* VIEW */}
             <a
-              href={imageUrl}
+              href={blobUrl || displayImageUrl(storedUrl) || "#"}
               target="_blank"
               rel="noopener noreferrer"
               style={{
