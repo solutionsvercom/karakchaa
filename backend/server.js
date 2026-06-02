@@ -25,7 +25,7 @@ if (missingEnv.length) {
 }
 
 const connectDB = require("./config/db");
-const { isDbReady } = require("./config/db");
+const { isDbReady, getLastMongoError } = require("./config/db");
 
 //SCHEDULER IMPORT (new)
 const {
@@ -147,10 +147,12 @@ app.get("/api/health", async (req, res) => {
     }
   }
 
+  const mongoHint = getLastMongoError();
   res.status(dbReady ? 200 : 503).json({
     status: dbReady ? "OK" : "DEGRADED",
     message: dbReady ? "Server is healthy" : "Server up; database not connected",
     database: dbReady ? "connected" : "disconnected",
+    mongoError: dbReady ? null : mongoHint,
     appUrl: process.env.APP_URL || null,
     cloudinary: cloudinaryStatus,
     sampleProductImageUrl: sampleImage,
