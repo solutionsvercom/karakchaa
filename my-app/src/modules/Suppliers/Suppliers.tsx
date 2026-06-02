@@ -21,6 +21,41 @@ type SupplierUI = {
   active: boolean;
 };
 
+/** API / legacy DB may use `name` and `gstNumber` instead of `companyName` / `gst`. */
+function normalizeSupplier(raw: Record<string, unknown>): SupplierUI | null {
+  const id = raw._id;
+  if (typeof id !== "string" || !id) return null;
+
+  const companyName =
+    (typeof raw.companyName === "string" && raw.companyName.trim()) ||
+    (typeof raw.name === "string" && raw.name.trim()) ||
+    "Unnamed supplier";
+
+  const contactPerson =
+    (typeof raw.contactPerson === "string" && raw.contactPerson.trim()) ||
+    "—";
+
+  const gst =
+    (typeof raw.gst === "string" && raw.gst) ||
+    (typeof raw.gstNumber === "string" && raw.gstNumber) ||
+    "";
+
+  return {
+    _id: id,
+    companyName,
+    contactPerson,
+    phone: typeof raw.phone === "string" ? raw.phone : "",
+    email: typeof raw.email === "string" ? raw.email : "",
+    address: typeof raw.address === "string" ? raw.address : "",
+    productsSupplied:
+      typeof raw.productsSupplied === "string" ? raw.productsSupplied : "",
+    gst,
+    paymentTerms:
+      typeof raw.paymentTerms === "string" ? raw.paymentTerms : "",
+    active: raw.active !== false && raw.status !== "Inactive",
+  };
+}
+
 export default function Suppliers() {
   const [searchValue, setSearchValue] = React.useState("");
   const [suppliers, setSuppliers] = React.useState<SupplierUI[]>([]);
@@ -38,8 +73,13 @@ export default function Suppliers() {
     try {
       const res = await fetch(API_SUPPLIERS);
       const json = await res.json();
-      const items = json?.items || json?.data || json || [];
-      setSuppliers(Array.isArray(items) ? items : []);
+      const items = json?.items || json?.data?.items || json?.data || [];
+      const list = Array.isArray(items) ? items : [];
+      setSuppliers(
+        list
+          .map((item) => normalizeSupplier(item as Record<string, unknown>))
+          .filter((s): s is SupplierUI => s !== null)
+      );
     } catch {
       setLoadError("Could not load suppliers. Check your connection and try again.");
       setSuppliers([]);
@@ -96,7 +136,13 @@ export default function Suppliers() {
           return;
         }
         const json = await res.json();
-        const updated = json?.data || json;
+        const updated = normalizeSupplier(
+          (json?.data || json) as Record<string, unknown>
+        );
+        if (!updated) {
+          setActionError("Could not update supplier.");
+          return;
+        }
         setSuppliers((prev) => prev.map((s) => (s._id === editingSupplier._id ? updated : s)));
         setEditingSupplier(null);
         navigate("/dashboard/suppliers");
@@ -118,7 +164,13 @@ export default function Suppliers() {
         return;
       }
       const json = await res.json();
-      const created = json?.data || json;
+      const created = normalizeSupplier(
+        (json?.data || json) as Record<string, unknown>
+      );
+      if (!created) {
+        setActionError("Could not create supplier.");
+        return;
+      }
       setSuppliers((prev) => [created, ...prev]);
       navigate("/dashboard/suppliers");
     } catch {

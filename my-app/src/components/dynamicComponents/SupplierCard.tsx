@@ -49,13 +49,13 @@ export const SupplierCard: React.FC<SupplierCardProps> = ({
             className="kb-supplier-card-avatar"
             style={{ background: accentColor }}
           >
-            {name.charAt(0)}
+            {(name?.trim() || "?").charAt(0).toUpperCase()}
           </div>
 
           <div>
-            <div className="kb-supplier-card-name">{name}</div>
+            <div className="kb-supplier-card-name">{name?.trim() || "Unnamed supplier"}</div>
             <div className="kb-supplier-card-person">
-              {contactPerson}
+              {contactPerson?.trim() || "—"}
             </div>
           </div>
         </div>
