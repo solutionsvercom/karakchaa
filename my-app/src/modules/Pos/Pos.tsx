@@ -15,6 +15,7 @@ import { fetchProducts } from "../../features/ProductsSlice";
 import { fetchProductCategories } from "../../features/ProductCategoriesSlice";
 import { fetchOrders } from "../../features/OrdersSlice";
 import { categoryLabelForSlug } from "../../utils/categoryDisplay";
+import { sortByPrice, type PriceSortOrder } from "../../utils/sortByPrice";
 
 import DigitalOrdersBoard from "./DigitalOrdersBoard";
 import { ProductCardSkeleton } from "../../components/Skeleton";
@@ -42,6 +43,7 @@ export default function Pos() {
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+  const [sortOrder, setSortOrder] = useState<PriceSortOrder>("asc");
   const [activeTab, setActiveTab] = useState<TabType>("pos");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [digitalNewCount, setDigitalNewCount] = useState(0);
@@ -135,7 +137,7 @@ export default function Pos() {
   }, []);
 
   const filteredProducts = useMemo(() => {
-    return products
+    const filtered = products
       .filter((p: any) => p.isActive)
       .filter((p: any) => {
         const matchesSearch =
@@ -145,7 +147,12 @@ export default function Pos() {
           category === "all" ? true : p.category === category;
         return matchesSearch && matchesCategory;
       });
-  }, [products, search, category]);
+    return sortByPrice(
+      filtered,
+      sortOrder,
+      (p) => Number(p.sellingPrice) || 0
+    );
+  }, [products, search, category, sortOrder]);
 
   const getCartQty = (id: string) => {
     const item = items.find((i) => i.id === id);
@@ -271,8 +278,8 @@ export default function Pos() {
         <>
           <Flex gap="4" style={{ flex: 1, minHeight: 0 }} className="pos-desktop-layout">
             <Flex direction="column" gap="4" style={{ flex: 1 }}>
-              <Flex gap="3">
-                <Box style={{ flex: 1 }}>
+              <Flex gap="3" wrap="wrap" align="center">
+                <Box style={{ flex: 1, minWidth: 160 }}>
                   <Searchbar
                     searchValue={search}
                     onSearchChange={setSearch}
@@ -290,6 +297,40 @@ export default function Pos() {
                     ))}
                   </Select.Content>
                 </Select.Root>
+                <Flex gap="2" align="center">
+                  <button
+                    type="button"
+                    onClick={() => setSortOrder("asc")}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: 8,
+                      border: "1px solid var(--gray-6)",
+                      background: sortOrder === "asc" ? "var(--accent-9)" : "var(--gray-1)",
+                      color: sortOrder === "asc" ? "white" : "var(--gray-12)",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Low–High
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSortOrder("desc")}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: 8,
+                      border: "1px solid var(--gray-6)",
+                      background: sortOrder === "desc" ? "var(--accent-9)" : "var(--gray-1)",
+                      color: sortOrder === "desc" ? "white" : "var(--gray-12)",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      cursor: "pointer",
+                    }}
+                  >
+                    High–Low
+                  </button>
+                </Flex>
               </Flex>
 
               <Box

@@ -90,6 +90,7 @@
     display: flex;
     flex-direction: column;
     padding: 16px 12px;
+    overflow: hidden;
 }
 
 .kb-sidebar-header {
@@ -98,6 +99,7 @@
     justify-content: space-between;
     gap: 10px;
     padding: 8px 10px 24px;
+    flex-shrink: 0;
 }
 
 .kb-sidebar-header-left {
@@ -158,10 +160,13 @@
 
 .kb-sidebar-menu {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     gap: 4px;
     margin-top: 8px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .kb-sidebar-item {
@@ -207,6 +212,7 @@
     border-radius: 12px;
     background: color-mix( in srgb, var(--gray-1) 15%, transparent);
     margin-top: 12px;
+    flex-shrink: 0;
 }
 
 .kb-sidebar-user-avatar {
@@ -440,7 +446,7 @@
         position: fixed;
         top: 0;
         left: 0;
-        height: 100vh;
+        height: 100dvh;
         width: 240px;
         max-width: 86vw;
         z-index: 60;
@@ -450,10 +456,6 @@
     }
     .kb-sidebar.is-open {
         transform: translateX(0);
-    }
-    .kb-sidebar-menu {
-        overflow-y: auto;
-        min-height: 0;
     }
     .kb-sidebar-backdrop {
         display: block;

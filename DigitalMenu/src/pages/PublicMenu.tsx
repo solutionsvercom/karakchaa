@@ -5,6 +5,7 @@ import { fetchDigitalMenuProducts } from "../features/DigitalMenuSlice";
 import CategoryTabs from "../components/CategoryTabs";
 import MenuCard from "../components/MenuCard";
 import { safeImageSrc } from "../utils/imageUrl";
+import { sortByPrice, type PriceSortOrder } from "../utils/sortByPrice";
 import CartDrawer from "../components/CartDrawer";
 import { useCart } from "../context/CartContext";
 
@@ -105,6 +106,7 @@ const searchItems = useMemo(() => {
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState("All");
   const [vegOnly, setVegOnly] = useState(false);
+  const [sortOrder, setSortOrder] = useState<PriceSortOrder>("asc");
   const [cartOpen, setCartOpen] = useState(false);
 const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
@@ -178,6 +180,12 @@ useEffect(() => {
     });
 
   }, [MENU, query, activeCat, vegOnly]);
+
+  const sortedFiltered = useMemo(
+    () =>
+      sortByPrice(filtered, sortOrder, (item) => Number(item.price) || 0),
+    [filtered, sortOrder]
+  );
 
 
 
@@ -280,6 +288,26 @@ useEffect(() => {
           onChange={setActiveCat}
         />
 
+        <div className="sortToggleRow">
+          <span className="sortToggleLabel">Sort by price</span>
+          <div className="sortToggleGroup">
+            <button
+              type="button"
+              className={`sortToggleBtn ${sortOrder === "asc" ? "sortToggleBtnActive" : ""}`}
+              onClick={() => setSortOrder("asc")}
+            >
+              Low–High
+            </button>
+            <button
+              type="button"
+              className={`sortToggleBtn ${sortOrder === "desc" ? "sortToggleBtnActive" : ""}`}
+              onClick={() => setSortOrder("desc")}
+            >
+              High–Low
+            </button>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -315,10 +343,11 @@ useEffect(() => {
             .filter(cat => cat !== "All")
             .map(category => {
 
-              const categoryItems =
-                filtered.filter(
-                  item => item.category === category
-                );
+              const categoryItems = sortByPrice(
+                filtered.filter((item) => item.category === category),
+                sortOrder,
+                (item) => Number(item.price) || 0
+              );
 
               if (categoryItems.length === 0)
                 return null;
@@ -380,7 +409,7 @@ useEffect(() => {
 
             <div className="listGrid">
 
-              {filtered.map(item => (
+              {sortedFiltered.map(item => (
 
                 <MenuCard
                   key={item.id}
