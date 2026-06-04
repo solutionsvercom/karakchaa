@@ -3,6 +3,11 @@ const SaleService = require("./SaleService");
 const Counter = require("../models/System/CounterSchema");
 const Settings = require("../models/Settings");
 const { calculatePricing } = require("./PricingService");
+const {
+  reserveStockForOrderItems,
+  releaseStockForOrderItems,
+} = require("./OrderStockService");
+const Product = require("../models/Product/ProductSchema");
 
 async function generateOrderNumber() {
   const counterKey = "order_number";
@@ -77,24 +82,50 @@ async function createOrder(data) {
 
   const initialStatus = orderSource === "POS" ? "Completed" : "Pending";
 
-  const order = await Order.create({
-    orderNumber,
-    items: formattedItems,
-    customerName: customerName || "Walk-in",
-    phone,
-    tableNumber,
-    orderType: finalOrderType,
-    orderSource, 
-    status: initialStatus, 
-    paymentMethod: paymentMethod || "Cash",
-    discount: pricing.discount,
-    subtotal: pricing.subtotal,
-    gstRate: pricing.gstRate,
-    gstAmount: pricing.gstAmount,
-    taxableAmount: pricing.taxableAmount,
-    totalAmount: pricing.totalAmount,
-    notes,
-  });
+  let stockReserved = false;
+
+  if (orderSource === "DIGITAL") {
+    for (const item of formattedItems) {
+      const productId = item.product;
+      if (!productId) {
+        throw new Error(`Invalid product for ${item.name || "item"}`);
+      }
+      const productDoc = await Product.findById(productId);
+      if (!productDoc) {
+        throw new Error(`Product not found: ${item.name || productId}`);
+      }
+    }
+    await reserveStockForOrderItems(formattedItems, orderNumber);
+    stockReserved = true;
+  }
+
+  let order;
+  try {
+    order = await Order.create({
+      orderNumber,
+      items: formattedItems,
+      customerName: customerName || "Walk-in",
+      phone,
+      tableNumber,
+      orderType: finalOrderType,
+      orderSource,
+      status: initialStatus,
+      paymentMethod: paymentMethod || "Cash",
+      discount: pricing.discount,
+      subtotal: pricing.subtotal,
+      gstRate: pricing.gstRate,
+      gstAmount: pricing.gstAmount,
+      taxableAmount: pricing.taxableAmount,
+      totalAmount: pricing.totalAmount,
+      notes,
+      stockReserved,
+    });
+  } catch (createError) {
+    if (stockReserved) {
+      await releaseStockForOrderItems(formattedItems, orderNumber);
+    }
+    throw createError;
+  }
 
   if (orderSource === "POS" && initialStatus === "Completed") {
     await SaleService.createSaleFromOrder(order, order.paymentMethod);
@@ -174,9 +205,42 @@ async function updateOrderStatus(id, status, paymentMethod) {
   }
 
   const updateData = { status };
-  
+
   if (paymentMethod) {
     updateData.paymentMethod = paymentMethod;
+  }
+
+  // Digital complete: create sale first, then mark completed (no double stock deduct if reserved)
+  if (
+    orderBefore.orderSource === "DIGITAL" &&
+    status === "Completed" &&
+    !orderBefore.saleCreated
+  ) {
+    const orderForSale = await Order.findById(id).populate("items.product");
+    if (!orderForSale) throw new Error("Order not found");
+
+    await SaleService.createSaleFromOrder(
+      orderForSale,
+      paymentMethod || orderBefore.paymentMethod,
+      { skipStockDeduction: Boolean(orderBefore.stockReserved) }
+    );
+
+    const order = await Order.findByIdAndUpdate(
+      id,
+      { ...updateData, saleCreated: true },
+      { new: true }
+    ).populate("items.product");
+
+    if (!order) throw new Error("Order not found");
+    return order;
+  }
+
+  if (status === "Cancelled") {
+    if (orderBefore.stockReserved && !orderBefore.saleCreated) {
+      await releaseStockForOrderItems(orderBefore.items, orderBefore.orderNumber);
+    } else if (orderBefore.saleCreated) {
+      await SaleService.reverseSaleFromOrder(orderBefore);
+    }
   }
 
   const order = await Order.findByIdAndUpdate(
@@ -186,14 +250,6 @@ async function updateOrderStatus(id, status, paymentMethod) {
   ).populate("items.product");
 
   if (!order) throw new Error("Order not found");
-
-  if (order.orderSource === "DIGITAL" && status === "Completed") {
-    await SaleService.createSaleFromOrder(order, order.paymentMethod);
-  }
-
-  if (status === "Cancelled") {
-    await SaleService.reverseSaleFromOrder(orderBefore);
-  }
 
   return order;
 }

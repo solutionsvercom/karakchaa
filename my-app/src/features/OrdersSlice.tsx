@@ -34,6 +34,7 @@ export interface Order {
   createdAt: string;
   notes?: string;
   saleCreated?: boolean;
+  stockReserved?: boolean;
 }
 
 interface CreateOrderPayload {
@@ -61,8 +62,9 @@ interface OrdersState {
   pagination: PaginationState | null; 
   loading: boolean;
   error: string | null;
-  // STAFF-LEVEL: Track if we're loading more (for lazy load UX)
   loadingMore: boolean;
+  /** ID of order currently being updated (status change) */
+  updatingOrderId: string | null;
 }
 
 const initialState: OrdersState = {
@@ -71,6 +73,7 @@ const initialState: OrdersState = {
   loading: false,
   error: null,
   loadingMore: false,
+  updatingOrderId: null,
 };
 
 const BASE_URL = API_ORDERS;
@@ -84,6 +87,8 @@ export const fetchOrders = createAsyncThunk<
     status?: string;
     orderSource?: string;
     orderType?: string;
+    /** Background poll — do not set global loading */
+    silent?: boolean;
   } | void,
   { rejectValue: string }
 >("orders/fetch", async (params, thunkAPI) => {
@@ -193,17 +198,26 @@ const ordersSlice = createSlice({
   extraReducers: (builder) => {
     builder
       /* FETCH ORDERS */
-      .addCase(fetchOrders.pending, (state) => {
-        state.loading = true;
+      .addCase(fetchOrders.pending, (state, action) => {
+        const silent = Boolean(action.meta.arg && action.meta.arg.silent);
+        if (!silent) {
+          state.loading = true;
+        }
         state.error = null;
       })
       .addCase(fetchOrders.fulfilled, (state, action) => {
-        state.loading = false;
+        const silent = Boolean(action.meta.arg && action.meta.arg.silent);
+        if (!silent) {
+          state.loading = false;
+        }
         state.orders = action.payload.data;
         state.pagination = action.payload.pagination;
       })
       .addCase(fetchOrders.rejected, (state, action) => {
-        state.loading = false;
+        const silent = Boolean(action.meta.arg && action.meta.arg.silent);
+        if (!silent) {
+          state.loading = false;
+        }
         state.error = action.payload || "Failed to fetch orders";
       })
 
@@ -242,12 +256,12 @@ const ordersSlice = createSlice({
       })
 
       /* UPDATE ORDER STATUS */
-      .addCase(updateOrderStatus.pending, (state) => {
-        state.loading = true;
+      .addCase(updateOrderStatus.pending, (state, action) => {
+        state.updatingOrderId = action.meta.arg.id;
         state.error = null;
       })
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
-        state.loading = false;
+        state.updatingOrderId = null;
         const index = state.orders.findIndex(
           (o) => o._id === action.payload._id
         );
@@ -256,7 +270,7 @@ const ordersSlice = createSlice({
         }
       })
       .addCase(updateOrderStatus.rejected, (state, action) => {
-        state.loading = false;
+        state.updatingOrderId = null;
         state.error = action.payload || "Failed to update order";
       });
   },

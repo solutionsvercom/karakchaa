@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../store/hooks";
-import { createDigitalOrder } from "../features/DigitalOrderSlice"; 
+import { createDigitalOrder } from "../features/DigitalOrderSlice";
+import { fetchDigitalMenuProducts } from "../features/DigitalMenuSlice"; 
 import { useCart } from "../context/CartContext";
 import ProductImage from "./ProductImage";
 import { hasDisplayableImage } from "../utils/imageUrl";
@@ -90,7 +91,9 @@ const dispatch = useAppDispatch();
     console.log("📤 Sending payload:", orderPayload);
 
     const result = await dispatch(createDigitalOrder(orderPayload)).unwrap();
-    
+
+    dispatch(fetchDigitalMenuProducts());
+
     console.log("✅ Order created:", result);
 
     const orderItems = list.map(({ item, qty }: any) => ({

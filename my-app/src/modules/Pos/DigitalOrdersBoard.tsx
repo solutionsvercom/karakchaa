@@ -17,9 +17,8 @@ type FilterMode = "active" | "completed" | "cancelled" | "all";
 
 export default function DigitalOrdersBoard() {
   const dispatch = useDispatch<AppDispatch>();
-  const { orders: allOrders, loading, loadingMore, pagination } = useSelector(
-    (state: RootState) => state.orders
-  );
+  const { orders: allOrders, loading, loadingMore, pagination, updatingOrderId } =
+    useSelector((state: RootState) => state.orders);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -163,8 +162,27 @@ export default function DigitalOrdersBoard() {
       ).unwrap();
 
       await refreshRelatedData(status);
+
+      if (filterMode === "active") {
+        dispatch(
+          fetchOrders({
+            orderSource: "DIGITAL",
+            status: "Pending,Accepted,Preparing,Ready",
+            limit: 1000,
+            silent: true,
+          })
+        );
+      }
     } catch (err) {
       console.error("Failed to update order status:", err);
+      setToastMessage({
+        title: "Update failed",
+        description:
+          (err as { message?: string })?.message ||
+          "Could not update order. Please try again.",
+      });
+      setToastVariant("error");
+      setToastOpen(true);
     }
   };
 
@@ -719,7 +737,11 @@ export default function DigitalOrdersBoard() {
                         );
                     }
                   }}
-                  disabled={!nextStatus || Boolean(isStatusLocked)}
+                  disabled={
+                    !nextStatus ||
+                    Boolean(isStatusLocked) ||
+                    updatingOrderId === selectedOrderId
+                  }
                   style={{
                     background: actionButtonTheme.background,
                     border: actionButtonTheme.border,

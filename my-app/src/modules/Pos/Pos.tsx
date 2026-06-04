@@ -54,7 +54,11 @@ export default function Pos() {
   const toastTimeoutRef = useRef<number | null>(null);
 
   const onlineOrders = useMemo(
-    () => orders.filter((order) => order.orderType === "online"),
+    () =>
+      orders.filter(
+        (order) =>
+          order.orderType === "online" || order.orderSource === "DIGITAL"
+      ),
     [orders]
   );
 
@@ -72,18 +76,27 @@ export default function Pos() {
     }
   }, [category, activeCategorySlugs]);
 
+  const activeDigitalOrderParams = useMemo(
+    () => ({
+      orderSource: "DIGITAL" as const,
+      status: "Pending,Accepted,Preparing,Ready",
+      limit: 1000,
+      silent: true,
+    }),
+    []
+  );
+
   useEffect(() => {
-    dispatch(fetchOrders({ status: "Pending,Accepted,Preparing,Ready", limit: 1000 }));
+    dispatch(fetchOrders(activeDigitalOrderParams));
     const interval = setInterval(() => {
       const mode = (window as any).digitalFilterMode;
-      // Only poll active orders if we are NOT actively browsing completed/cancelled lists
       if (mode !== "completed" && mode !== "cancelled") {
-        dispatch(fetchOrders({ status: "Pending,Accepted,Preparing,Ready", limit: 1000 }));
+        dispatch(fetchOrders(activeDigitalOrderParams));
       }
-    }, 10000);
+    }, 3000);
 
     return () => clearInterval(interval);
-  }, [dispatch]);
+  }, [dispatch, activeDigitalOrderParams]);
 
   //UPDATED: Fix notification to only trigger for NEW ACTIVE orders (#3)
   useEffect(() => {
