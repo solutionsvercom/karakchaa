@@ -88,6 +88,12 @@ const orderSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    /** Digital menu: stock deducted when order was placed */
+    stockReserved: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
