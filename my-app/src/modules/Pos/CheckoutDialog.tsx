@@ -3,11 +3,6 @@ import { Flex, Text, Button, Dialog, TextField, TextArea, Box, Grid } from "@rad
 import { 
   X, 
   Check, 
-  Banknote, 
-  QrCode, 
-  Smartphone, 
-  CreditCard, 
-  Wallet,
   Utensils,
   ShoppingBag,
   Truck,
@@ -19,18 +14,15 @@ import { Toast, ToastProvider, ToastViewport } from "../../components/Toast";
 import { useCart } from "./CartContext";
 import { AppDispatch } from "../../store/Store";
 import { createOrder } from "../../features/OrdersSlice";
-import { fetchSales } from "../../features/SalesSlice";
-import { fetchCustomers } from "../../features/CustomersSlice";
 import { fetchStockItems } from "../../features/StockmanagementSlice";
 import { fetchProducts } from "../../features/ProductsSlice";
 
 type OrderType = "dine-in" | "takeaway" | "delivery" | "online";
-type PaymentMethod = "Cash" | "UPI" | "PhonePe" | "GPay" | "Paytm" | "Card" | "Other";
 
-// discount and gstRate arguments are now optional and mainly satisfied by `useCart().pricing` under the hood
 interface CheckoutDialogProps {
   open: boolean;
   onClose: () => void;
+  onOrderPlaced?: (orderId: string) => void;
   discount?: number;
   gstRate?: number;
 }
@@ -38,6 +30,7 @@ interface CheckoutDialogProps {
 export const CheckoutDialog = ({
   open,
   onClose,
+  onOrderPlaced,
 }: CheckoutDialogProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const { items, pricing, clearCart } = useCart();
@@ -45,7 +38,6 @@ export const CheckoutDialog = ({
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [orderType, setOrderType] = useState<OrderType>("dine-in");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Cash");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,20 +81,17 @@ export const CheckoutDialog = ({
           customerName: customerName.trim(),
           phone: phone.trim(),
           orderType,
-          paymentMethod,
           notes: notes || undefined,
         })
       ).unwrap();
 
       clearCart();
-      dispatch(fetchSales());
-      dispatch(fetchCustomers({ page: 1, limit: 100000 }));
       dispatch(fetchStockItems());
       dispatch(fetchProducts());
 
       setToastMessage({
-        title: "Order Completed!",
-        description: `Invoice generated successfully`,
+        title: "Order placed successfully",
+        description: `${newOrder.orderNumber} is now on the orders board`,
       });
       setToastVariant("success");
       setToastOpen(true);
@@ -111,9 +100,9 @@ export const CheckoutDialog = ({
       setPhone("");
       setNotes("");
       setOrderType("dine-in");
-      setPaymentMethod("Cash");
       setError(null);
       onClose();
+      onOrderPlaced?.(newOrder._id);
     } catch (err: any) {
       setError(err?.message || "Checkout failed. Please try again.");
     } finally {
@@ -126,16 +115,6 @@ export const CheckoutDialog = ({
     { value: "takeaway", label: "Takeaway", icon: <ShoppingBag size={20} strokeWidth={1.5} /> },
     { value: "delivery", label: "Delivery", icon: <Truck size={20} strokeWidth={1.5} /> },
     { value: "online", label: "Online", icon: <Globe size={20} strokeWidth={1.5} /> },
-  ];
-
-  const paymentOptions: { value: PaymentMethod; label: string; icon: React.ReactNode }[] = [
-    { value: "Cash", label: "Cash", icon: <Banknote size={18} strokeWidth={1.5} /> },
-    { value: "UPI", label: "UPI", icon: <QrCode size={18} strokeWidth={1.5} /> },
-    { value: "PhonePe", label: "PhonePe", icon: <Smartphone size={18} strokeWidth={1.5} /> },
-    { value: "GPay", label: "GPay", icon: <Smartphone size={18} strokeWidth={1.5} /> },
-    { value: "Paytm", label: "Paytm", icon: <Smartphone size={18} strokeWidth={1.5} /> },
-    { value: "Card", label: "Card", icon: <CreditCard size={18} strokeWidth={1.5} /> },
-    { value: "Other", label: "Other", icon: <Wallet size={18} strokeWidth={1.5} /> },
   ];
 
   return (
@@ -153,10 +132,10 @@ export const CheckoutDialog = ({
           <Flex justify="between" align="center" mb="5">
             <Box>
               <Dialog.Title style={{ margin: 0, fontSize: "24px", fontWeight: "700", color: "var(--gray-12)", letterSpacing: "-0.01em" }}>
-                Complete Order
+                Place Order
               </Dialog.Title>
               <Text size="2" style={{ color: "var(--gray-10)", marginTop: "4px", display: "block" }}>
-                Review details and finalize the transaction
+                Review details and send the order to the kitchen
               </Text>
             </Box>
             <Dialog.Close>
@@ -364,57 +343,6 @@ export const CheckoutDialog = ({
             </Grid>
           </Box>
 
-          {/* PAYMENT METHOD */}
-          <Box mb="6">
-            <Text as="label" size="2" weight="medium" style={{ marginBottom: "12px", display: "block", color: "var(--gray-12)" }}>
-              Payment Method
-            </Text>
-            <Grid columns="4" gap="3">
-              {paymentOptions.map((btn) => {
-                 const isSelected = paymentMethod === btn.value;
-                 return (
-                  <button
-                    key={btn.value}
-                    type="button"
-                    onClick={() => setPaymentMethod(btn.value)}
-                    style={{
-                      height: 48,
-                      borderRadius: "12px",
-                      border: isSelected ? "1.5px solid var(--accent-9)" : "1px solid var(--gray-5)",
-                      background: isSelected ? "var(--accent-2)" : "var(--gray-1)",
-                      color: isSelected ? "var(--accent-11)" : "var(--gray-11)",
-                      fontWeight: isSelected ? 600 : 500,
-                      fontSize: "13px",
-                      cursor: "pointer",
-                      transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "6px",
-                      boxShadow: isSelected ? "0 4px 12px rgba(var(--accent-a-rgb), 0.1)" : "0 1px 2px rgba(0,0,0,0.02)",
-                      outline: "none"
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.borderColor = "var(--gray-7)";
-                        e.currentTarget.style.background = "var(--gray-2)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.borderColor = "var(--gray-5)";
-                        e.currentTarget.style.background = "var(--gray-1)";
-                      }
-                    }}
-                  >
-                    {btn.icon}
-                    {btn.label}
-                  </button>
-                );
-              })}
-            </Grid>
-          </Box>
-
           {/*  NOTES */}
           <Box mb="6">
             <Text as="label" size="2" weight="medium" style={{ marginBottom: "10px", display: "block", color: "var(--gray-12)" }}>
@@ -480,7 +408,7 @@ export const CheckoutDialog = ({
               onMouseLeave={(e) => { if (!loading) e.currentTarget.style.transform = "scale(1)" }}
             >
               <Check size={18} strokeWidth={2.5} />
-              {loading ? "Processing..." : `Complete Order · ₹${safePricing.total}`}
+              {loading ? "Placing order..." : `Place Order · ₹${safePricing.total}`}
             </Button>
           </Flex>
         </Dialog.Content>

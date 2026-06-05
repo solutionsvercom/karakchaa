@@ -80,24 +80,22 @@ async function createOrder(data) {
   const finalOrderType = orderType || "online";
   const orderSource = finalOrderType === "online" ? "DIGITAL" : "POS";
 
-  const initialStatus = orderSource === "POS" ? "Completed" : "Pending";
+  const initialStatus = "Pending";
 
   let stockReserved = false;
 
-  if (orderSource === "DIGITAL") {
-    for (const item of formattedItems) {
-      const productId = item.product;
-      if (!productId) {
-        throw new Error(`Invalid product for ${item.name || "item"}`);
-      }
-      const productDoc = await Product.findById(productId);
-      if (!productDoc) {
-        throw new Error(`Product not found: ${item.name || productId}`);
-      }
+  for (const item of formattedItems) {
+    const productId = item.product;
+    if (!productId) {
+      throw new Error(`Invalid product for ${item.name || "item"}`);
     }
-    await reserveStockForOrderItems(formattedItems, orderNumber);
-    stockReserved = true;
+    const productDoc = await Product.findById(productId);
+    if (!productDoc) {
+      throw new Error(`Product not found: ${item.name || productId}`);
+    }
   }
+  await reserveStockForOrderItems(formattedItems, orderNumber);
+  stockReserved = true;
 
   let order;
   try {
@@ -125,11 +123,6 @@ async function createOrder(data) {
       await releaseStockForOrderItems(formattedItems, orderNumber);
     }
     throw createError;
-  }
-
-  if (orderSource === "POS" && initialStatus === "Completed") {
-    await SaleService.createSaleFromOrder(order, order.paymentMethod);
-    order.saleCreated = true;
   }
 
   return order;
@@ -200,19 +193,14 @@ async function updateOrderStatus(id, status, paymentMethod) {
   const orderBefore = await Order.findById(id);
   if (!orderBefore) throw new Error("Order not found");
 
-  if (orderBefore.orderSource === "POS" && status === "Pending") {
-    throw new Error("POS orders cannot be moved to Pending status");
-  }
-
   const updateData = { status };
 
   if (paymentMethod) {
     updateData.paymentMethod = paymentMethod;
   }
 
-  // Digital complete: create sale first, then mark completed (no double stock deduct if reserved)
+  // Complete: create sale first, then mark completed (no double stock deduct if reserved)
   if (
-    orderBefore.orderSource === "DIGITAL" &&
     status === "Completed" &&
     !orderBefore.saleCreated
   ) {
