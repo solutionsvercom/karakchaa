@@ -13,9 +13,21 @@ import * as AlertDialog from "@radix-ui/react-alert-dialog";
 type PaymentMethod = "Cash" | "UPI" | "PhonePe" | "GPay" | "Paytm" | "Card" | "Other";
 
 type FilterMode = "active" | "completed" | "cancelled" | "all";
+export type SourceFilter = "all" | "POS" | "DIGITAL";
 
+interface DigitalOrdersBoardProps {
+  sourceFilter?: SourceFilter;
+  onSourceFilterChange?: (filter: SourceFilter) => void;
+  highlightOrderId?: string | null;
+  onHighlightConsumed?: () => void;
+}
 
-export default function DigitalOrdersBoard() {
+export default function DigitalOrdersBoard({
+  sourceFilter = "all",
+  onSourceFilterChange,
+  highlightOrderId,
+  onHighlightConsumed,
+}: DigitalOrdersBoardProps) {
   const dispatch = useDispatch<AppDispatch>();
   const { orders: allOrders, loading, loadingMore, pagination, updatingOrderId } =
     useSelector((state: RootState) => state.orders);
@@ -35,31 +47,34 @@ export default function DigitalOrdersBoard() {
   //STAFF-LEVEL: Lazy loading with intersection observer
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Set window.digitalFilterMode whenever filterMode changes
+  // Set window.ordersFilterMode whenever filterMode changes
   useEffect(() => {
-    (window as any).digitalFilterMode = filterMode;
+    (window as any).ordersFilterMode = filterMode;
   }, [filterMode]);
 
-  // Fetch fresh data whenever filter mode changes
-  useEffect(() => {
-    dispatch(resetOrders()); // Clear old data before fetching new batch!
-    
+  const buildFetchParams = useCallback(() => {
     let statusParams: string | undefined;
 
     if (filterMode === "active") {
-      statusParams = "Pending,Accepted,Preparing,Ready"; 
+      statusParams = "Pending,Accepted,Preparing,Ready";
     } else if (filterMode === "completed") {
       statusParams = "Completed";
     } else if (filterMode === "cancelled") {
       statusParams = "Cancelled";
     }
 
-    dispatch(fetchOrders({ 
-      orderSource: "DIGITAL",
+    return {
+      ...(sourceFilter !== "all" && { orderSource: sourceFilter }),
       ...(statusParams && { status: statusParams }),
-      limit: filterMode === "active" ? 1000 : 15 // Active fetches all, others fetch 15
-    }));
-  }, [dispatch, filterMode]);
+      limit: filterMode === "active" ? 1000 : 15,
+    };
+  }, [filterMode, sourceFilter]);
+
+  // Fetch fresh data whenever filter mode or source filter changes
+  useEffect(() => {
+    dispatch(resetOrders());
+    dispatch(fetchOrders(buildFetchParams()));
+  }, [dispatch, buildFetchParams]);
 
   //STAFF-LEVEL: Intersection Observer for lazy loading
   useEffect(() => {
@@ -74,7 +89,7 @@ export default function DigitalOrdersBoard() {
           dispatch(loadMoreOrders({
             page: pagination.page + 1,
             limit: 15,
-            orderSource: "DIGITAL",
+            ...(sourceFilter !== "all" && { orderSource: sourceFilter }),
             ...(statusParams && { status: statusParams })
           }));
         }
@@ -92,32 +107,30 @@ export default function DigitalOrdersBoard() {
         observer.unobserve(currentTarget);
       }
     };
-  }, [dispatch, pagination, loadingMore]);
+  }, [dispatch, pagination, loadingMore, sourceFilter]);
 
   const orders = useMemo(() => {
-    const onlineOrders = allOrders.filter((order) => 
-      order.orderType === "online" || order.orderSource === "DIGITAL"
-    );
-    
     if (filterMode === "active") {
-      return onlineOrders.filter((order) => 
+      return allOrders.filter((order) =>
         ["Pending", "Accepted", "Preparing", "Ready"].includes(order.status)
       );
     } else if (filterMode === "completed") {
-      return onlineOrders.filter((order) => 
-        ["Completed"].includes(order.status)
-      );
+      return allOrders.filter((order) => order.status === "Completed");
+    } else if (filterMode === "cancelled") {
+      return allOrders.filter((order) => order.status === "Cancelled");
     }
-      else if (filterMode === "cancelled") {
-        return onlineOrders.filter((order) => 
-          order.status === "Cancelled"
-        );
-    }
-    
-    return onlineOrders;
+
+    return allOrders;
   }, [allOrders, filterMode]);
 
   useEffect(() => {
+    if (highlightOrderId && orders.some((o) => o._id === highlightOrderId)) {
+      setSelectedOrderId(highlightOrderId);
+      setMobileView("detail");
+      onHighlightConsumed?.();
+      return;
+    }
+
     if (!orders.length) {
       setSelectedOrderId(null);
       return;
@@ -125,7 +138,7 @@ export default function DigitalOrdersBoard() {
     if (!selectedOrderId || !orders.some((o) => o._id === selectedOrderId)) {
       setSelectedOrderId(orders[0]._id);
     }
-  }, [orders, selectedOrderId]);
+  }, [orders, selectedOrderId, highlightOrderId, onHighlightConsumed]);
 
   const selectedOrder = useMemo(
     () => orders.find((o) => o._id === selectedOrderId),
@@ -166,9 +179,7 @@ export default function DigitalOrdersBoard() {
       if (filterMode === "active") {
         dispatch(
           fetchOrders({
-            orderSource: "DIGITAL",
-            status: "Pending,Accepted,Preparing,Ready",
-            limit: 1000,
+            ...buildFetchParams(),
             silent: true,
           })
         );
@@ -297,6 +308,13 @@ export default function DigitalOrdersBoard() {
 
   const actionButtonTheme = getActionButtonTheme(nextStatus || statusLower);
 
+  const getSourceBadge = (orderSource?: string) => {
+    if (orderSource === "POS") {
+      return { label: "POS", bg: "var(--blue-3)", color: "var(--blue-11)", border: "var(--blue-6)" };
+    }
+    return { label: "Digital", bg: "var(--purple-3)", color: "var(--purple-11)", border: "var(--purple-6)" };
+  };
+
   return (
     <ToastProvider>
       <style>{`
@@ -352,13 +370,51 @@ export default function DigitalOrdersBoard() {
                 margin: 0,
               }}
             >
-              Incoming Orders ({orders.length})
+              Orders ({orders.length})
             </h2>
             {loading && (
               <span style={{ color: "var(--gray-10)", fontSize: 12 }}>
                 Refreshing...
               </span>
             )}
+          </div>
+
+          {/* Source filter */}
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              marginBottom: 12,
+              padding: 4,
+              background: "var(--gray-2)",
+              borderRadius: 8,
+              border: "1px solid var(--gray-5)",
+            }}
+          >
+            {([
+              { value: "all" as SourceFilter, label: "All" },
+              { value: "POS" as SourceFilter, label: "POS" },
+              { value: "DIGITAL" as SourceFilter, label: "Digital" },
+            ]).map((filter) => (
+              <button
+                key={filter.value}
+                onClick={() => onSourceFilterChange?.(filter.value)}
+                style={{
+                  flex: 1,
+                  padding: "6px 10px",
+                  border: "none",
+                  borderRadius: 6,
+                  background: sourceFilter === filter.value ? "var(--gray-12)" : "transparent",
+                  color: sourceFilter === filter.value ? "white" : "var(--gray-11)",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
 
           {/* Filter tabs */}
@@ -409,10 +465,14 @@ export default function DigitalOrdersBoard() {
                   fontSize: 14,
                 }}
               >
-                No online orders yet
+                No orders yet
               </p>
             )}
-            {orders.map((order) => (
+            {orders.map((order) => {
+              const sourceBadge = getSourceBadge(order.orderSource);
+              const isHighlighted = highlightOrderId === order._id;
+
+              return (
               <div
                 key={order._id}
                 onClick={() => handleSelectOrder(order._id)}
@@ -420,7 +480,7 @@ export default function DigitalOrdersBoard() {
                   padding: 12,
                   borderRadius: 12,
                   cursor: "pointer",
-                  background: "var(--gray-2)",
+                  background: isHighlighted ? "var(--accent-2)" : "var(--gray-2)",
                   border:
                     selectedOrderId === order._id
                       ? "1px solid var(--accent-9)"
@@ -449,20 +509,35 @@ export default function DigitalOrdersBoard() {
                   >
                     {order.orderNumber}
                   </p>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      padding: "3px 8px",
-                      borderRadius: 8,
-                      background: statusColor(order.status).bg,
-                      color: statusColor(order.status).color,
-                      border: `1px solid ${statusColor(order.status).border}`,
-                      textTransform: "capitalize",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {order.status}
-                  </span>
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <span
+                      style={{
+                        fontSize: 10,
+                        padding: "2px 6px",
+                        borderRadius: 6,
+                        background: sourceBadge.bg,
+                        color: sourceBadge.color,
+                        border: `1px solid ${sourceBadge.border}`,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {sourceBadge.label}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        padding: "3px 8px",
+                        borderRadius: 8,
+                        background: statusColor(order.status).bg,
+                        color: statusColor(order.status).color,
+                        border: `1px solid ${statusColor(order.status).border}`,
+                        textTransform: "capitalize",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {order.status}
+                    </span>
+                  </div>
                 </div>
                 <p
                   style={{
@@ -494,7 +569,8 @@ export default function DigitalOrdersBoard() {
                   </span>
                 </div>
               </div>
-            ))}
+            );
+            })}
 
             {/*STAFF-LEVEL: Lazy loading indicator */}
             {filterMode !== "active" && pagination?.hasMore && (
@@ -596,20 +672,35 @@ export default function DigitalOrdersBoard() {
                     {new Date(selectedOrder.createdAt).toLocaleString()}
                   </p>
                 </div>
-                <span
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    padding: "6px 12px",
-                    borderRadius: 8,
-                    background: statusColor(selectedOrder.status).bg,
-                    color: statusColor(selectedOrder.status).color,
-                    border: `1px solid ${statusColor(selectedOrder.status).border}`,
-                    textTransform: "capitalize",
-                  }}
-                >
-                  {selectedOrder.status}
-                </span>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: "4px 10px",
+                      borderRadius: 8,
+                      background: getSourceBadge(selectedOrder.orderSource).bg,
+                      color: getSourceBadge(selectedOrder.orderSource).color,
+                      border: `1px solid ${getSourceBadge(selectedOrder.orderSource).border}`,
+                    }}
+                  >
+                    {getSourceBadge(selectedOrder.orderSource).label}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      padding: "6px 12px",
+                      borderRadius: 8,
+                      background: statusColor(selectedOrder.status).bg,
+                      color: statusColor(selectedOrder.status).color,
+                      border: `1px solid ${statusColor(selectedOrder.status).border}`,
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {selectedOrder.status}
+                  </span>
+                </div>
               </div>
 
               {/* Customer details */}

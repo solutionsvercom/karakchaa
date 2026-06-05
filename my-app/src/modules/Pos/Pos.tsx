@@ -17,7 +17,7 @@ import { fetchOrders } from "../../features/OrdersSlice";
 import { categoryLabelForSlug } from "../../utils/categoryDisplay";
 import { sortByPrice, type PriceSortOrder } from "../../utils/sortByPrice";
 
-import DigitalOrdersBoard from "./DigitalOrdersBoard";
+import DigitalOrdersBoard, { type SourceFilter } from "./DigitalOrdersBoard";
 import { ProductCardSkeleton } from "../../components/Skeleton";
 
 type TabType = "pos" | "digital";
@@ -46,18 +46,19 @@ export default function Pos() {
   const [sortOrder, setSortOrder] = useState<PriceSortOrder>("asc");
   const [activeTab, setActiveTab] = useState<TabType>("pos");
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [digitalNewCount, setDigitalNewCount] = useState(0);
+  const [ordersNewCount, setOrdersNewCount] = useState(0);
   const [newOrderToast, setNewOrderToast] = useState("");
+  const [ordersSourceFilter, setOrdersSourceFilter] = useState<SourceFilter>("all");
+  const [highlightOrderId, setHighlightOrderId] = useState<string | null>(null);
 
-  const knownOnlineOrderIdsRef = useRef<Set<string>>(new Set());
+  const knownActiveOrderIdsRef = useRef<Set<string>>(new Set());
   const initializedOrdersRef = useRef(false);
   const toastTimeoutRef = useRef<number | null>(null);
 
-  const onlineOrders = useMemo(
+  const activeOrders = useMemo(
     () =>
-      orders.filter(
-        (order) =>
-          order.orderType === "online" || order.orderSource === "DIGITAL"
+      orders.filter((order) =>
+        ["Pending", "Accepted", "Preparing", "Ready"].includes(order.status)
       ),
     [orders]
   );
@@ -76,9 +77,8 @@ export default function Pos() {
     }
   }, [category, activeCategorySlugs]);
 
-  const activeDigitalOrderParams = useMemo(
+  const activeOrderPollParams = useMemo(
     () => ({
-      orderSource: "DIGITAL" as const,
       status: "Pending,Accepted,Preparing,Ready",
       limit: 1000,
       silent: true,
@@ -87,46 +87,40 @@ export default function Pos() {
   );
 
   useEffect(() => {
-    dispatch(fetchOrders(activeDigitalOrderParams));
+    dispatch(fetchOrders(activeOrderPollParams));
     const interval = setInterval(() => {
-      const mode = (window as any).digitalFilterMode;
+      const mode = (window as any).ordersFilterMode;
       if (mode !== "completed" && mode !== "cancelled") {
-        dispatch(fetchOrders(activeDigitalOrderParams));
+        dispatch(fetchOrders(activeOrderPollParams));
       }
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [dispatch, activeDigitalOrderParams]);
+  }, [dispatch, activeOrderPollParams]);
 
-  //UPDATED: Fix notification to only trigger for NEW ACTIVE orders (#3)
   useEffect(() => {
-    // Filter only ACTIVE orders (not completed/cancelled)
-    const activeOnlineOrders = onlineOrders.filter((order) =>
-      ["Pending", "Accepted", "Preparing", "Ready"].includes(order.status)
-    );
-    const latestIds = new Set(activeOnlineOrders.map((order) => order._id));
+    const latestIds = new Set(activeOrders.map((order) => order._id));
 
     if (!initializedOrdersRef.current) {
-      knownOnlineOrderIdsRef.current = latestIds;
+      knownActiveOrderIdsRef.current = latestIds;
       initializedOrdersRef.current = true;
       return;
     }
 
     let newOrders = 0;
     latestIds.forEach((id) => {
-      if (!knownOnlineOrderIdsRef.current.has(id)) {
+      if (!knownActiveOrderIdsRef.current.has(id)) {
         newOrders += 1;
       }
     });
 
-    // Only notify for NEW active orders
     if (newOrders > 0) {
       if (activeTab !== "digital") {
-        setDigitalNewCount((prev) => prev + newOrders);
+        setOrdersNewCount((prev) => prev + newOrders);
       }
 
       setNewOrderToast(
-        `${newOrders} new digital order${newOrders > 1 ? "s" : ""} received`
+        `${newOrders} new order${newOrders > 1 ? "s" : ""} received`
       );
 
       if (toastTimeoutRef.current) {
@@ -138,8 +132,8 @@ export default function Pos() {
       }, 3500);
     }
 
-    knownOnlineOrderIdsRef.current = latestIds;
-  }, [onlineOrders, activeTab]);
+    knownActiveOrderIdsRef.current = latestIds;
+  }, [activeOrders, activeTab]);
 
   useEffect(() => {
     return () => {
@@ -179,9 +173,16 @@ export default function Pos() {
   const switchToTab = (tab: TabType) => {
     setActiveTab(tab);
     if (tab === "digital") {
-      setDigitalNewCount(0);
+      setOrdersNewCount(0);
       setNewOrderToast("");
     }
+  };
+
+  const handleOrderPlaced = (orderId: string) => {
+    knownActiveOrderIdsRef.current.add(orderId);
+    setOrdersSourceFilter("POS");
+    setHighlightOrderId(orderId);
+    switchToTab("digital");
   };
 
   return (
@@ -263,8 +264,8 @@ export default function Pos() {
             }}
           >
             <TabletSmartphone size={18} strokeWidth={2.5} />
-            <span>Digital Menu Orders</span>
-            {digitalNewCount > 0 && (
+            <span>Orders</span>
+            {ordersNewCount > 0 && (
               <span
                 style={{
                   minWidth: 20,
@@ -280,7 +281,7 @@ export default function Pos() {
                   padding: "0 6px",
                 }}
               >
-                {digitalNewCount}
+                {ordersNewCount}
               </span>
             )}
           </Box>
@@ -530,13 +531,19 @@ export default function Pos() {
             overflow: "hidden",
           }}
         >
-          <DigitalOrdersBoard />
+          <DigitalOrdersBoard
+            sourceFilter={ordersSourceFilter}
+            onSourceFilterChange={setOrdersSourceFilter}
+            highlightOrderId={highlightOrderId}
+            onHighlightConsumed={() => setHighlightOrderId(null)}
+          />
         </div>
       )}
 
       <CheckoutDialog
         open={isCheckoutMode}
         onClose={() => navigate("/dashboard/pos")}
+        onOrderPlaced={handleOrderPlaced}
         discount={discount}
         gstRate={gstRate}
       />
