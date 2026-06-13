@@ -19,6 +19,11 @@ import { sortByPrice, type PriceSortOrder } from "../../utils/sortByPrice";
 
 import DigitalOrdersBoard, { type SourceFilter } from "./DigitalOrdersBoard";
 import { ProductCardSkeleton } from "../../components/Skeleton";
+import {
+  playNewOrderSound,
+  unlockAudioOnUserGesture,
+  registerAudioUnlockHint,
+} from "../../utils/playNotificationSound";
 
 type TabType = "pos" | "digital";
 
@@ -48,6 +53,7 @@ export default function Pos() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [ordersNewCount, setOrdersNewCount] = useState(0);
   const [newOrderToast, setNewOrderToast] = useState("");
+  const [audioUnlockHint, setAudioUnlockHint] = useState("");
   const [ordersSourceFilter, setOrdersSourceFilter] = useState<SourceFilter>("all");
   const [highlightOrderId, setHighlightOrderId] = useState<string | null>(null);
 
@@ -67,6 +73,24 @@ export default function Pos() {
     dispatch(fetchProducts());
     dispatch(fetchProductCategories({ includeInactive: false }));
   }, [dispatch]);
+
+  useEffect(() => {
+    registerAudioUnlockHint(() => {
+      setAudioUnlockHint("Click anywhere on this page to enable order sounds");
+    });
+
+    const unlock = () => {
+      unlockAudioOnUserGesture();
+      setAudioUnlockHint("");
+    };
+    document.addEventListener("click", unlock, { once: true });
+    document.addEventListener("keydown", unlock, { once: true });
+
+    return () => {
+      document.removeEventListener("click", unlock);
+      document.removeEventListener("keydown", unlock);
+    };
+  }, []);
 
   useEffect(() => {
     if (
@@ -122,6 +146,7 @@ export default function Pos() {
       setNewOrderToast(
         `${newOrders} new order${newOrders > 1 ? "s" : ""} received`
       );
+      void playNewOrderSound();
 
       if (toastTimeoutRef.current) {
         window.clearTimeout(toastTimeoutRef.current);
@@ -191,16 +216,16 @@ export default function Pos() {
       gap="4"
       style={{ height: "calc(100vh - 64px)", minHeight: 0, position: "relative" }}
     >
-      {newOrderToast && (
+      {(newOrderToast || audioUnlockHint) && (
         <div
           style={{
             position: "fixed",
             top: 86,
             right: 22,
             zIndex: 800,
-            background: "#14532D",
+            background: newOrderToast ? "#14532D" : "#1E3A8A",
             color: "white",
-            border: "1px solid #22C55E",
+            border: newOrderToast ? "1px solid #22C55E" : "1px solid #60A5FA",
             borderRadius: 10,
             padding: "10px 12px",
             fontSize: 13,
@@ -209,10 +234,15 @@ export default function Pos() {
             display: "flex",
             alignItems: "center",
             gap: 8,
+            maxWidth: 320,
+          }}
+          onClick={() => {
+            unlockAudioOnUserGesture();
+            setAudioUnlockHint("");
           }}
         >
           <Bell size={16} />
-          {newOrderToast}
+          {newOrderToast || audioUnlockHint}
         </div>
       )}
 

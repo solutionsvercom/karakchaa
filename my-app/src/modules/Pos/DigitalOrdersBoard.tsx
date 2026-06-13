@@ -6,11 +6,13 @@ import { fetchSales } from "../../features/SalesSlice";
 import { fetchCustomers } from "../../features/CustomersSlice";
 import { fetchStockItems } from "../../features/StockmanagementSlice";
 import { ArrowLeft } from "lucide-react";
-import { PaymentMethodModal } from "../../components/PaymentMethodModal";
+import {
+  PaymentMethodModal,
+  type PaymentMethod,
+  type CashPaymentDetails,
+} from "../../components/PaymentMethodModal";
 import { Toast, ToastProvider, ToastViewport } from "../../components/Toast";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
-
-type PaymentMethod = "Cash" | "UPI" | "PhonePe" | "GPay" | "Paytm" | "Card" | "Other";
 
 type FilterMode = "active" | "completed" | "cancelled" | "all";
 export type SourceFilter = "all" | "POS" | "DIGITAL";
@@ -197,17 +199,25 @@ export default function DigitalOrdersBoard({
     }
   };
 
-  const handleCompleteWithPayment = async (paymentMethod: PaymentMethod) => {
+  const handleCompleteWithPayment = async (
+    paymentMethod: PaymentMethod,
+    cashDetails?: CashPaymentDetails
+  ) => {
     setPaymentLoading(true);
     try {
       const orderNumber = orders.find(o => o._id === selectedOrderId)?.orderNumber;
-      
+
       await changeStatus("Completed", paymentMethod);
       setShowPaymentModal(false);
-      
+
+      let description = `${orderNumber} Invoice generated successfully`;
+      if (paymentMethod === "Cash" && cashDetails && cashDetails.change > 0) {
+        description = `${orderNumber} completed. Return ₹${cashDetails.change} change to customer.`;
+      }
+
       setToastMessage({
         title: "Order Completed!",
-        description: `${orderNumber} Invoice generated successfully`,
+        description,
       });
       setToastVariant("success");
       setToastOpen(true);
@@ -940,6 +950,7 @@ export default function DigitalOrdersBoard({
         onClose={() => setShowPaymentModal(false)}
         onConfirm={handleCompleteWithPayment}
         loading={paymentLoading}
+        totalDue={selectedOrder?.totalAmount ?? 0}
       />
 
       {/* TOAST NOTIFICATIONS */}
