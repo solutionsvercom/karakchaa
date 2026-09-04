@@ -75,9 +75,14 @@ const saleSchema = new mongoose.Schema({
 
     paymentMethod: {
         type: String,
-        enum: ["Cash", "Card", "UPI", "PhonePe", "GPay", "Paytm", "Other"],
+        enum: ["Cash", "Card", "UPI", "PhonePe", "GPay", "Paytm", "Other", "Split"],
         required: true,
         default: "Cash",
+    },
+
+    splitPayment: {
+        cashAmount: { type: Number, default: 0, min: 0 },
+        upiAmount: { type: Number, default: 0, min: 0 },
     },
 
     paymentStatus: {

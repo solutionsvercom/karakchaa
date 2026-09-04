@@ -16,6 +16,10 @@ export interface Sale {
   gstAmount?: number;
   taxableAmount?: number;
   paymentMethod: string;
+  splitPayment?: {
+    cashAmount: number;
+    upiAmount: number;
+  };
   paymentStatus: string;
   createdAt: string;
   // Added: populated customer object from backend

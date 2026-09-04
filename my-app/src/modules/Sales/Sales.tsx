@@ -39,6 +39,7 @@ type SaleTransaction = {
   items: string;
   saleItems: { name: string; price: number; quantity: number }[];
   type: string;
+  splitPayment?: { cashAmount: number; upiAmount: number };
   orderSource?: string;
   amount: number;
   payment: PaymentStatus;
@@ -120,6 +121,7 @@ export default function Sales() {
         ? (s as any).items
         : [{ name: s.product?.name || "-", price: s.sellingPrice || s.totalAmount, quantity: s.quantity || 1 }],
       type: s.paymentMethod,
+      splitPayment: s.splitPayment,
       orderSource: (s as any).orderSource ||
         (["online", "digital_menu"].includes((s as any).orderType?.toLowerCase()) ? "DIGITAL" : "POS"),
       amount: s.totalAmount,
@@ -170,7 +172,9 @@ export default function Sales() {
     {
       key: "type", header: "Payment Type", accessor: "type",
       render: (value: string) => (
-        <Badge color="blue" variant="soft" style={{ textTransform: "capitalize" }}>{value}</Badge>
+        <Badge color={value === "Split" ? "violet" : "blue"} variant="soft" style={{ textTransform: "capitalize" }}>
+          {value === "Split" ? "Cash + UPI" : value}
+        </Badge>
       ),
     },
     {
@@ -309,7 +313,7 @@ export default function Sales() {
               </Button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Content>
-              {["All Payments", "Cash", "Card", "UPI", "PhonePe", "GPay", "Paytm", "Other"].map((item) => (
+              {["All Payments", "Cash", "Card", "UPI", "Split", "PhonePe", "GPay", "Paytm", "Other"].map((item) => (
                 <DropdownMenu.Item key={item} onSelect={() => setPaymentFilter(item)}>
                   {item}
                 </DropdownMenu.Item>
@@ -515,7 +519,14 @@ export default function Sales() {
                 }}>
                   <InfoCell label="Customer" value={viewSale.customer} />
                   <InfoCell label="Phone" value={viewSale.phone || "—"} />
-                  <InfoCell label="Payment Method" value={viewSale.type} />
+                  <InfoCell
+                    label="Payment Method"
+                    value={
+                      viewSale.type === "Split"
+                        ? "Split (Cash + UPI)"
+                        : viewSale.type
+                    }
+                  />
                   <InfoCell label="Order Source" value={viewSale.orderSource || "POS"} />
                   <InfoCell label="Status" value={viewSale.payment} statusColor={
                     viewSale.payment === "completed" ? "var(--green-9)" :
@@ -556,6 +567,39 @@ export default function Sales() {
                     <span style={{ color: "var(--accent-9)" }}>₹{viewSale.amount.toLocaleString()}</span>
                   </div>
                 </div>
+
+                {viewSale.type === "Split" && (
+                  <div
+                    style={{
+                      background: "var(--accent-2)",
+                      border: "1px solid var(--accent-6)",
+                      borderRadius: 12,
+                      padding: 14,
+                      marginBottom: 20,
+                    }}
+                  >
+                    <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 10, color: "var(--accent-11)" }}>
+                      Split Bill
+                    </div>
+                    <div style={{ fontSize: 13, color: "var(--gray-11)", marginBottom: 10 }}>
+                      {viewSale.customer} paid with Cash + UPI
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                      <div style={{ background: "var(--gray-1)", border: "1px solid var(--gray-5)", borderRadius: 10, padding: "10px 12px" }}>
+                        <div style={{ fontSize: 12, color: "var(--gray-11)", marginBottom: 4 }}>Cash</div>
+                        <div style={{ fontSize: 18, fontWeight: 700 }}>
+                          ₹{(viewSale.splitPayment?.cashAmount ?? 0).toLocaleString()}
+                        </div>
+                      </div>
+                      <div style={{ background: "var(--gray-1)", border: "1px solid var(--gray-5)", borderRadius: 10, padding: "10px 12px" }}>
+                        <div style={{ fontSize: 12, color: "var(--gray-11)", marginBottom: 4 }}>UPI</div>
+                        <div style={{ fontSize: 18, fontWeight: 700 }}>
+                          ₹{(viewSale.splitPayment?.upiAmount ?? 0).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Action Button */}
                 {viewSale.payment === "cancelled" ? (

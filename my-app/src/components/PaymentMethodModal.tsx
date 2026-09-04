@@ -8,21 +8,30 @@ import {
   Smartphone,
   CreditCard,
   Wallet,
+  Split,
 } from "lucide-react";
+import { splitFromCash, type SplitBillHalves } from "../utils/splitBill";
 
-export type PaymentMethod = "Cash" | "UPI" | "PhonePe" | "GPay" | "Paytm" | "Card" | "Other";
+export type PaymentMethod = "Cash" | "UPI" | "PhonePe" | "GPay" | "Paytm" | "Card" | "Other" | "Split";
 
 export type CashPaymentDetails = {
   amountReceived: number;
   change: number;
 };
 
+export type SplitPaymentDetails = SplitBillHalves;
+
 interface PaymentMethodModalProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: (paymentMethod: PaymentMethod, cashDetails?: CashPaymentDetails) => void;
+  onConfirm: (
+    paymentMethod: PaymentMethod,
+    cashDetails?: CashPaymentDetails,
+    splitPayment?: SplitPaymentDetails
+  ) => void;
   loading?: boolean;
   totalDue?: number;
+  preferSplit?: boolean;
 }
 
 const QUICK_TENDER_AMOUNTS = [100, 200, 500, 1000] as const;
@@ -33,9 +42,11 @@ export const PaymentMethodModal = ({
   onConfirm,
   loading = false,
   totalDue = 0,
+  preferSplit = false,
 }: PaymentMethodModalProps) => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Cash");
   const [amountReceivedInput, setAmountReceivedInput] = useState("");
+  const [cashSplitInput, setCashSplitInput] = useState("");
 
   const normalizedTotalDue = Math.max(0, Math.round(Number(totalDue) || 0));
 
@@ -44,36 +55,67 @@ export const PaymentMethodModal = ({
     return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
   }, [amountReceivedInput]);
 
+  const splitCashAmount = useMemo(() => {
+    const parsed = Math.round(Number(cashSplitInput) || 0);
+    return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+  }, [cashSplitInput]);
+
+  const split = useMemo(
+    () => splitFromCash(normalizedTotalDue, splitCashAmount),
+    [normalizedTotalDue, splitCashAmount]
+  );
+
+  const isCash = paymentMethod === "Cash";
+  const isSplit = paymentMethod === "Split";
+
   const change = useMemo(
     () => Math.max(0, amountReceived - normalizedTotalDue),
     [amountReceived, normalizedTotalDue]
   );
 
-  const isCash = paymentMethod === "Cash";
-  const cashInsufficient = isCash && amountReceivedInput !== "" && amountReceived < normalizedTotalDue;
+  const cashInsufficient =
+    isCash && amountReceivedInput !== "" && amountReceived < normalizedTotalDue;
   const cashConfirmBlocked =
     isCash && (amountReceivedInput === "" || amountReceived < normalizedTotalDue);
 
-  const resetCashFields = () => {
+  const splitInvalid =
+    isSplit &&
+    (cashSplitInput === "" ||
+      splitCashAmount <= 0 ||
+      splitCashAmount >= normalizedTotalDue);
+  const confirmBlocked = cashConfirmBlocked || splitInvalid;
+
+  const resetFields = () => {
     setAmountReceivedInput("");
+    setCashSplitInput("");
   };
 
   useEffect(() => {
     if (!open) {
-      resetCashFields();
+      resetFields();
       setPaymentMethod("Cash");
+      return;
     }
-  }, [open]);
+    resetFields();
+    setPaymentMethod(preferSplit ? "Split" : "Cash");
+  }, [open, preferSplit, normalizedTotalDue]);
 
   const handlePaymentMethodChange = (method: PaymentMethod) => {
     setPaymentMethod(method);
-    if (method !== "Cash") {
-      resetCashFields();
-    }
+    if (method !== "Cash") setAmountReceivedInput("");
+    if (method !== "Split") setCashSplitInput("");
   };
 
   const handleConfirm = () => {
-    if (cashConfirmBlocked) return;
+    if (confirmBlocked) return;
+
+    if (isSplit) {
+      onConfirm("Split", undefined, {
+        cashAmount: split.cashAmount,
+        upiAmount: split.upiAmount,
+      });
+      return;
+    }
 
     if (isCash) {
       onConfirm(paymentMethod, { amountReceived, change });
@@ -86,6 +128,7 @@ export const PaymentMethodModal = ({
   const paymentOptions: { value: PaymentMethod; label: string; icon: React.ReactNode }[] = [
     { value: "Cash", label: "Cash", icon: <Banknote size={20} strokeWidth={1.5} /> },
     { value: "UPI", label: "UPI", icon: <QrCode size={20} strokeWidth={1.5} /> },
+    { value: "Split", label: "Split", icon: <Split size={20} strokeWidth={1.5} /> },
     { value: "PhonePe", label: "PhonePe", icon: <Smartphone size={20} strokeWidth={1.5} /> },
     { value: "GPay", label: "GPay", icon: <Smartphone size={20} strokeWidth={1.5} /> },
     { value: "Paytm", label: "Paytm", icon: <Smartphone size={20} strokeWidth={1.5} /> },
@@ -143,7 +186,7 @@ export const PaymentMethodModal = ({
           </Flex>
         </Box>
 
-        <Box mb={isCash ? "4" : "6"}>
+        <Box mb="4">
           <Grid columns="3" gap="3">
             {paymentOptions.map((btn) => {
               const isSelected = paymentMethod === btn.value;
@@ -196,6 +239,97 @@ export const PaymentMethodModal = ({
             })}
           </Grid>
         </Box>
+
+        {isSplit && (
+          <Box mb="6">
+            <Text as="label" size="2" weight="medium" style={{ marginBottom: "8px", display: "block", color: "var(--gray-12)" }}>
+              Cash amount
+            </Text>
+            <TextField.Root
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              placeholder="e.g. 200"
+              value={cashSplitInput}
+              onChange={(e) => setCashSplitInput(e.target.value.replace(/\D/g, ""))}
+              disabled={loading}
+              size="3"
+              radius="medium"
+              variant="surface"
+              style={{
+                fontSize: 16,
+                fontWeight: 600,
+                marginBottom: "12px",
+                boxShadow: "none",
+                backgroundColor: "var(--gray-1)",
+              }}
+            />
+
+            <Flex gap="2" wrap="wrap" mb="4">
+              {QUICK_TENDER_AMOUNTS.filter((amount) => amount < normalizedTotalDue).map((amount) => (
+                <button
+                  key={amount}
+                  type="button"
+                  disabled={loading}
+                  onClick={() => setCashSplitInput(String(amount))}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "10px",
+                    border: cashSplitInput === String(amount) ? "1px solid var(--accent-7)" : "1px solid var(--gray-5)",
+                    background: cashSplitInput === String(amount) ? "var(--accent-2)" : "var(--gray-1)",
+                    color: cashSplitInput === String(amount) ? "var(--accent-11)" : "var(--gray-11)",
+                    fontWeight: 600,
+                    fontSize: "13px",
+                    cursor: loading ? "not-allowed" : "pointer",
+                  }}
+                >
+                  ₹{amount}
+                </button>
+              ))}
+            </Flex>
+
+            {splitInvalid && cashSplitInput !== "" && (
+              <Text size="2" style={{ color: "var(--red-11)", marginBottom: "10px", display: "block" }}>
+                Enter a cash amount greater than ₹0 and less than ₹{normalizedTotalDue}
+              </Text>
+            )}
+
+            <Grid columns="2" gap="3">
+              <Box
+                style={{
+                  background: "var(--gray-2)",
+                  border: "1px solid var(--gray-5)",
+                  borderRadius: 12,
+                  padding: "12px 14px",
+                }}
+              >
+                <Flex align="center" gap="2" mb="1">
+                  <Banknote size={14} />
+                  <Text size="1" weight="medium" style={{ color: "var(--gray-11)" }}>Cash</Text>
+                </Flex>
+                <Text size="5" weight="bold" style={{ color: "var(--gray-12)" }}>
+                  ₹{split.cashAmount}
+                </Text>
+              </Box>
+              <Box
+                style={{
+                  background: "var(--accent-2)",
+                  border: "1px solid var(--accent-6)",
+                  borderRadius: 12,
+                  padding: "12px 14px",
+                }}
+              >
+                <Flex align="center" gap="2" mb="1">
+                  <QrCode size={14} />
+                  <Text size="1" weight="medium" style={{ color: "var(--accent-11)" }}>UPI (remaining)</Text>
+                </Flex>
+                <Text size="5" weight="bold" style={{ color: "var(--accent-11)" }}>
+                  ₹{split.upiAmount}
+                </Text>
+              </Box>
+            </Grid>
+          </Box>
+        )}
 
         {isCash && (
           <Box mb="6">
@@ -317,20 +451,24 @@ export const PaymentMethodModal = ({
               borderRadius: 14,
               fontSize: 15,
               fontWeight: 600,
-              background: loading || cashConfirmBlocked ? "var(--gray-8)" : "var(--accent-9)",
-              color: loading || cashConfirmBlocked ? "var(--gray-1)" : "white",
-              cursor: loading || cashConfirmBlocked ? "not-allowed" : "pointer",
-              boxShadow: loading || cashConfirmBlocked ? "none" : "0 4px 12px rgba(var(--accent-9-rgb), 0.2)",
+              background: loading || confirmBlocked ? "var(--gray-8)" : "var(--accent-9)",
+              color: loading || confirmBlocked ? "var(--gray-1)" : "white",
+              cursor: loading || confirmBlocked ? "not-allowed" : "pointer",
+              boxShadow: loading || confirmBlocked ? "none" : "0 4px 12px rgba(var(--accent-9-rgb), 0.2)",
               transition: "transform 0.1s ease",
             }}
             onClick={handleConfirm}
-            disabled={loading || cashConfirmBlocked}
-            onMouseDown={(e) => { if (!loading && !cashConfirmBlocked) e.currentTarget.style.transform = "scale(0.98)"; }}
-            onMouseUp={(e) => { if (!loading && !cashConfirmBlocked) e.currentTarget.style.transform = "scale(1)"; }}
-            onMouseLeave={(e) => { if (!loading && !cashConfirmBlocked) e.currentTarget.style.transform = "scale(1)"; }}
+            disabled={loading || confirmBlocked}
+            onMouseDown={(e) => { if (!loading && !confirmBlocked) e.currentTarget.style.transform = "scale(0.98)"; }}
+            onMouseUp={(e) => { if (!loading && !confirmBlocked) e.currentTarget.style.transform = "scale(1)"; }}
+            onMouseLeave={(e) => { if (!loading && !confirmBlocked) e.currentTarget.style.transform = "scale(1)"; }}
           >
             <Check size={18} strokeWidth={2.5} />
-            {loading ? "Processing..." : "Confirm & Complete"}
+            {loading
+              ? "Processing..."
+              : isSplit
+                ? `Confirm · Cash ₹${split.cashAmount} + UPI ₹${split.upiAmount}`
+                : "Confirm & Complete"}
           </Button>
         </Flex>
       </Dialog.Content>

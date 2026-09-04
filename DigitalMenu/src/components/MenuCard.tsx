@@ -17,88 +17,66 @@ export default function MenuCard({ item }: Props) {
 
   return (
     <div className="menuCard">
-
       <div className="menuCardMedia">
-
-  {hasImage ? (
-    <ProductImage
-      src={item.image}
-      alt={item.name}
-      className={`menuCardImg ${!item.available ? "menuCardImgDisabled" : ""}`}
-    />
-  ) : (
-    <div className="menuCardImg menuCardImgPlaceholder" aria-hidden />
-  )}
-
-  {!item.available && (
-    <div className="menuCardUnavailableOverlay">
-      <span className="menuCardUnavailableBadge">
-        Not Available
-      </span>
-    </div>
-  )}
-
-</div>
-
-
-      <div className="menuCardBody">
-
-        <div className="menuCardHeaderRow">
-
-          <div className="menuCardTitle">
-            {item.name}
-          </div>
-
-          <div className="menuCardPrice">
-            ₹{item.price}
-          </div>
-
-        </div>
-
-        <div className="menuCardCategory">
-          {item.category}
-        </div>
-
-
-        {qty === 0 ? (
-
-         <button
-  className={`addCartBtn ${!item.available ? "addCartBtnDisabled" : ""}`}
-  onClick={() => add(item)}
-  disabled={!item.available}
->
-  {item.available ? "+ Add to Cart" : "Unavailable"}
-</button>
-
-
+        {hasImage ? (
+          <ProductImage
+            src={item.image}
+            alt={item.name}
+            className={`menuCardImg ${disabled ? "menuCardImgDisabled" : ""}`}
+          />
         ) : (
-
-          <div className="qtyControl">
-
-            <button
-              className="qtyBtn qtyMinus"
-              onClick={() => dec(item.id)}
-              title="Decrease quantity"
-            >
-              <Minus size={14} />
-            </button>
-
-            <div className="qtyNumber">
-              {qty}
-            </div>
-
-            <button
-              className="qtyBtn qtyPlus"
-              onClick={() => inc(item.id)}
-              title="Increase quantity"
-            >
-              <Plus size={14} />
-            </button>
-
-          </div>
-
+          <div className="menuCardImg menuCardImgPlaceholder" aria-hidden />
         )}
 
+        {!item.available && (
+          <div className="menuCardUnavailableOverlay">
+            <span className="menuCardUnavailableBadge">Not Available</span>
+          </div>
+        )}
+
+        {item.available && (
+          <div className="menuCardQtyOverlay">
+            {qty === 0 ? (
+              <button
+                type="button"
+                className="menuCardAddPill"
+                onClick={() => add(item)}
+                aria-label={`Add ${item.name}`}
+              >
+                ADD
+                <Plus size={14} strokeWidth={3} />
+              </button>
+            ) : (
+              <div className="menuCardStepper">
+                <button
+                  type="button"
+                  className="menuCardStepperBtn"
+                  onClick={() => dec(item.id)}
+                  aria-label={`Decrease ${item.name}`}
+                >
+                  <Minus size={16} strokeWidth={3} />
+                </button>
+                <span className="menuCardStepperQty">{qty}</span>
+                <button
+                  type="button"
+                  className="menuCardStepperBtn menuCardStepperPlus"
+                  onClick={() => inc(item.id)}
+                  aria-label={`Increase ${item.name}`}
+                >
+                  <Plus size={16} strokeWidth={3} />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="menuCardBody">
+        <div className="menuCardHeaderRow">
+          <div className="menuCardTitle">{item.name}</div>
+          <div className="menuCardPrice">₹{item.price}</div>
+        </div>
+        <div className="menuCardCategory">{item.category}</div>
       </div>
     </div>
   );

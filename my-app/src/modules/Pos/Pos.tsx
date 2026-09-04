@@ -3,7 +3,7 @@ import { Flex, Box, Select, Card } from "@radix-ui/themes";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CheckoutDialog } from "./CheckoutDialog";
-import { ShoppingCart, X, Bell, Monitor, TabletSmartphone } from "lucide-react";
+import { ShoppingCart, X, Monitor, TabletSmartphone, Volume2 } from "lucide-react";
 
 import Searchbar from "../../components/dynamicComponents/Searchbar";
 import ProductCard from "../../components/dynamicComponents/ProductCard";
@@ -22,8 +22,8 @@ import { ProductCardSkeleton } from "../../components/Skeleton";
 import {
   playNewOrderSound,
   unlockAudioOnUserGesture,
-  registerAudioUnlockHint,
 } from "../../utils/playNotificationSound";
+import { NEW_DIGITAL_ORDER_EVENT } from "../../hooks/useNewOrderAlert";
 
 type TabType = "pos" | "digital";
 
@@ -36,7 +36,6 @@ export default function Pos() {
   const { addItem, items, total, discount, gstRate } = useCart();
 
   const { products, loading } = useSelector((state: RootState) => state.product);
-  const { orders } = useSelector((state: RootState) => state.orders);
   const { categories: productCategories } = useSelector(
     (state: RootState) => state.productCategories
   );
@@ -52,22 +51,12 @@ export default function Pos() {
   const [activeTab, setActiveTab] = useState<TabType>("pos");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [ordersNewCount, setOrdersNewCount] = useState(0);
-  const [newOrderToast, setNewOrderToast] = useState("");
-  const [audioUnlockHint, setAudioUnlockHint] = useState("");
   const [ordersSourceFilter, setOrdersSourceFilter] = useState<SourceFilter>("all");
   const [highlightOrderId, setHighlightOrderId] = useState<string | null>(null);
 
   const knownActiveOrderIdsRef = useRef<Set<string>>(new Set());
-  const initializedOrdersRef = useRef(false);
-  const toastTimeoutRef = useRef<number | null>(null);
-
-  const activeOrders = useMemo(
-    () =>
-      orders.filter((order) =>
-        ["Pending", "Accepted", "Preparing", "Ready"].includes(order.status)
-      ),
-    [orders]
-  );
+  const activeTabRef = useRef<TabType>("pos");
+  activeTabRef.current = activeTab;
 
   useEffect(() => {
     dispatch(fetchProducts());
@@ -75,20 +64,15 @@ export default function Pos() {
   }, [dispatch]);
 
   useEffect(() => {
-    registerAudioUnlockHint(() => {
-      setAudioUnlockHint("Click anywhere on this page to enable order sounds");
-    });
-
-    const unlock = () => {
-      unlockAudioOnUserGesture();
-      setAudioUnlockHint("");
+    const onNewDigitalOrder = (event: Event) => {
+      if (activeTabRef.current === "digital") return;
+      const count = Number((event as CustomEvent<{ count?: number }>).detail?.count) || 1;
+      setOrdersNewCount((prev) => prev + count);
     };
-    document.addEventListener("click", unlock, { once: true });
-    document.addEventListener("keydown", unlock, { once: true });
 
+    window.addEventListener(NEW_DIGITAL_ORDER_EVENT, onNewDigitalOrder);
     return () => {
-      document.removeEventListener("click", unlock);
-      document.removeEventListener("keydown", unlock);
+      window.removeEventListener(NEW_DIGITAL_ORDER_EVENT, onNewDigitalOrder);
     };
   }, []);
 
@@ -122,52 +106,6 @@ export default function Pos() {
     return () => clearInterval(interval);
   }, [dispatch, activeOrderPollParams]);
 
-  useEffect(() => {
-    const latestIds = new Set(activeOrders.map((order) => order._id));
-
-    if (!initializedOrdersRef.current) {
-      knownActiveOrderIdsRef.current = latestIds;
-      initializedOrdersRef.current = true;
-      return;
-    }
-
-    let newOrders = 0;
-    latestIds.forEach((id) => {
-      if (!knownActiveOrderIdsRef.current.has(id)) {
-        newOrders += 1;
-      }
-    });
-
-    if (newOrders > 0) {
-      if (activeTab !== "digital") {
-        setOrdersNewCount((prev) => prev + newOrders);
-      }
-
-      setNewOrderToast(
-        `${newOrders} new order${newOrders > 1 ? "s" : ""} received`
-      );
-      void playNewOrderSound();
-
-      if (toastTimeoutRef.current) {
-        window.clearTimeout(toastTimeoutRef.current);
-      }
-
-      toastTimeoutRef.current = window.setTimeout(() => {
-        setNewOrderToast("");
-      }, 3500);
-    }
-
-    knownActiveOrderIdsRef.current = latestIds;
-  }, [activeOrders, activeTab]);
-
-  useEffect(() => {
-    return () => {
-      if (toastTimeoutRef.current) {
-        window.clearTimeout(toastTimeoutRef.current);
-      }
-    };
-  }, []);
-
   const filteredProducts = useMemo(() => {
     const filtered = products
       .filter((p: any) => p.isActive)
@@ -199,7 +137,6 @@ export default function Pos() {
     setActiveTab(tab);
     if (tab === "digital") {
       setOrdersNewCount(0);
-      setNewOrderToast("");
     }
   };
 
@@ -216,36 +153,6 @@ export default function Pos() {
       gap="4"
       style={{ height: "calc(100vh - 64px)", minHeight: 0, position: "relative" }}
     >
-      {(newOrderToast || audioUnlockHint) && (
-        <div
-          style={{
-            position: "fixed",
-            top: 86,
-            right: 22,
-            zIndex: 800,
-            background: newOrderToast ? "#14532D" : "#1E3A8A",
-            color: "white",
-            border: newOrderToast ? "1px solid #22C55E" : "1px solid #60A5FA",
-            borderRadius: 10,
-            padding: "10px 12px",
-            fontSize: 13,
-            fontWeight: 600,
-            boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            maxWidth: 320,
-          }}
-          onClick={() => {
-            unlockAudioOnUserGesture();
-            setAudioUnlockHint("");
-          }}
-        >
-          <Bell size={16} />
-          {newOrderToast || audioUnlockHint}
-        </div>
-      )}
-
       <Box
         style={{
           background: "var(--gray-2)",
@@ -315,6 +222,28 @@ export default function Pos() {
               </span>
             )}
           </Box>
+          <button
+            type="button"
+            title="Play order received ring"
+            aria-label="Play order received ring"
+            onClick={() => {
+              unlockAudioOnUserGesture();
+              void playNewOrderSound();
+            }}
+            style={{
+              width: 42,
+              borderRadius: 10,
+              border: "1px solid var(--gray-5)",
+              background: "var(--gray-1)",
+              color: "var(--gray-12)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Volume2 size={18} />
+          </button>
         </Flex>
       </Box>
 

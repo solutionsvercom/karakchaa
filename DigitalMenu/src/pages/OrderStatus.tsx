@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Clock3,
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useAppDispatch } from "../store/hooks";
 import { fetchOrderStatus } from "../features/DigitalOrderSlice";
+import { playOrderReadySound } from "../utils/playOrderSound";
 import "../App.css";
 
 type CartItem = {
@@ -42,6 +43,7 @@ export default function OrderStatusPage() {
   const [stepIndex, setStepIndex] = useState(0);
   const [terminalStatus, setTerminalStatus] = useState<TerminalStatus>("none");
   const [liveOrderNumber, setLiveOrderNumber] = useState<string>("");
+  const readySoundPlayedRef = useRef(false);
 
   // Map backend status → timeline step index
   const statusToStepIndex = (status: string): number => {
@@ -81,6 +83,10 @@ export default function OrderStatusPage() {
         if (status === "ready") {
           // Show inline "ready" banner — do NOT navigate yet
           setTerminalStatus("ready");
+          if (!readySoundPlayedRef.current) {
+            readySoundPlayedRef.current = true;
+            void playOrderReadySound(state.backendOrderId);
+          }
           return;
         }
 

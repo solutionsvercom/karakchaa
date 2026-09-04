@@ -5,6 +5,7 @@ const Counter = require("../models/System/CounterSchema");
 const Customer = require("../models/Customers/CustomerSchema");
 const Stockmanagement = require("../models/Stockmanagement/StockmanagementSchema");
 const mongoose = require("mongoose");
+const { normalizeSplitPayment } = require("../utils/splitBill");
 
 // Utility to sync Product.stockQty with Stockmanagement (read-only cache)
 async function syncProductStock(productDoc) {
@@ -240,7 +241,7 @@ async function createSale(data) {
 }
 
 async function createSaleFromOrder(order, paymentMethod = "Cash", options = {}) {
-  const { skipStockDeduction = false } = options;
+  const { skipStockDeduction = false, splitPayment } = options;
 
   if (!order || !order.items?.length) {
     throw new Error("Invalid order for sale conversion");
@@ -309,13 +310,21 @@ async function createSaleFromOrder(order, paymentMethod = "Cash", options = {}) 
     }
 
     const normalizePayment = (method) => {
-      const valid = ["Cash", "Card", "UPI", "PhonePe", "GPay", "Paytm", "Other"];
+      const valid = ["Cash", "Card", "UPI", "PhonePe", "GPay", "Paytm", "Other", "Split"];
       const match = valid.find(v => v.toLowerCase() === (method || "Cash").toLowerCase());
       return match || "Cash";
     };
 
     const discount = order.discount || 0;
     const discountedTotal = Math.max(totalAmount - discount, 0);
+    const resolvedMethod = normalizePayment(paymentMethod || order.paymentMethod);
+    const resolvedSplit =
+      resolvedMethod === "Split"
+        ? normalizeSplitPayment(
+            discountedTotal,
+            splitPayment || order.splitPayment
+          )
+        : undefined;
 
     const sale = await Sale.create([{
       invoiceNumber,
@@ -326,7 +335,8 @@ async function createSaleFromOrder(order, paymentMethod = "Cash", options = {}) 
       totalAmount: discountedTotal,
       discount,
       customer: customerId,
-      paymentMethod: normalizePayment(paymentMethod || order.paymentMethod),
+      paymentMethod: resolvedMethod,
+      ...(resolvedSplit ? { splitPayment: resolvedSplit } : {}),
       paymentStatus: "Completed",
       orderSource: order.orderSource || "POS",
     }], { session });

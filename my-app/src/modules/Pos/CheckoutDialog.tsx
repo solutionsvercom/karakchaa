@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Flex, Text, Button, Dialog, TextField, TextArea, Box, Grid } from "@radix-ui/themes";
 import { 
   X, 
@@ -8,6 +8,7 @@ import {
   Truck,
   Globe
 } from "lucide-react";
+import axios from "axios";
 import { useDispatch } from "react-redux";
 import { Toast, ToastProvider, ToastViewport } from "../../components/Toast";
 
@@ -16,6 +17,7 @@ import { AppDispatch } from "../../store/Store";
 import { createOrder } from "../../features/OrdersSlice";
 import { fetchStockItems } from "../../features/StockmanagementSlice";
 import { fetchProducts } from "../../features/ProductsSlice";
+import { API_ORDERS } from "../../config/Api";
 
 type OrderType = "dine-in" | "takeaway" | "delivery" | "online";
 
@@ -35,12 +37,12 @@ export const CheckoutDialog = ({
   const dispatch = useDispatch<AppDispatch>();
   const { items, pricing, clearCart } = useCart();
 
-  const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
   const [orderType, setOrderType] = useState<OrderType>("dine-in");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nextToken, setNextToken] = useState<string>("");
 
   // Custom Toast state
   const [toastOpen, setToastOpen] = useState(false);
@@ -50,19 +52,31 @@ export const CheckoutDialog = ({
   // Fallback to defaults in case pricing is not yet calculated or items logic is missing 
   const safePricing = pricing || { subtotal: 0, discount: 0, gstAmount: 0, total: 0 };
 
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    axios
+      .get(`${API_ORDERS}/next-token`)
+      .then((res) => {
+        if (!cancelled) setNextToken(String(res.data?.tokenNumber || ""));
+      })
+      .catch(() => {
+        if (!cancelled) setNextToken("");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
   const handleCompleteOrder = async () => {
     if (!items.length) return;
 
-    if (!customerName.trim()) {
-      setError("Customer name is required.");
-      return;
-    }
     if (!phone.trim()) {
-      setError("Phone number is required.");
+      setError("Contact number is required.");
       return;
     }
     if (!/^\d{10}$/.test(phone.trim())) {
-      setError("Please enter a valid 10-digit phone number.");
+      setError("Please enter a valid 10-digit contact number.");
       return;
     }
 
@@ -78,7 +92,6 @@ export const CheckoutDialog = ({
             price: item.price,
             quantity: item.quantity,
           })),
-          customerName: customerName.trim(),
           phone: phone.trim(),
           orderType,
           notes: notes || undefined,
@@ -91,12 +104,11 @@ export const CheckoutDialog = ({
 
       setToastMessage({
         title: "Order placed successfully",
-        description: `${newOrder.orderNumber} is now on the orders board`,
+        description: `Token ${newOrder.tokenNumber} · ${newOrder.orderNumber} is now on the orders board`,
       });
       setToastVariant("success");
       setToastOpen(true);
 
-      setCustomerName("");
       setPhone("");
       setNotes("");
       setOrderType("dine-in");
@@ -238,58 +250,49 @@ export const CheckoutDialog = ({
             </Box>
           </Box>
 
-          {/* CUSTOMER FIELDS - Grid Layout like DynamicForm */}
-          <Grid columns="2" gap="4" mb="5">
-            <Box>
-              <Text as="label" size="2" weight="medium" style={{ marginBottom: "8px", display: "block", color: "var(--gray-12)" }}>
-                Customer Name <Text color="red">*</Text>
+          {/* CUSTOMER DETAILS — contact only; token is the next queue number */}
+          <Box mb="5">
+            <Text as="label" size="2" weight="medium" style={{ marginBottom: "8px", display: "block", color: "var(--gray-12)" }}>
+              Customer contact number <Text color="red">*</Text>
+            </Text>
+            <TextField.Root
+              type="tel"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={10}
+              placeholder="Enter 10-digit contact number"
+              value={phone}
+              onChange={(e) => {
+                setPhone(e.target.value.replace(/\D/g, ""));
+                if (error) setError(null);
+              }}
+              size="3"
+              radius="medium"
+              variant="surface"
+              style={{
+                fontSize: 14,
+                borderColor: error && (!phone.trim() || !/^\d{10}$/.test(phone.trim())) ? "var(--red-7)" : "var(--gray-5)",
+                boxShadow: "none",
+                backgroundColor: "var(--gray-1)",
+              }}
+            />
+            <Box
+              mt="3"
+              style={{
+                background: "var(--accent-2)",
+                border: "1px solid var(--accent-6)",
+                borderRadius: 12,
+                padding: "12px 14px",
+              }}
+            >
+              <Text size="1" weight="medium" style={{ color: "var(--gray-11)", display: "block", marginBottom: 4 }}>
+                Token number (next in queue)
               </Text>
-              <TextField.Root
-                placeholder="Enter name"
-                value={customerName}
-                onChange={(e) => {
-                  setCustomerName(e.target.value);
-                  if (error) setError(null);
-                }}
-                size="3"
-                radius="medium"
-                variant="surface"
-                style={{
-                  fontSize: 14,
-                  borderColor: error && !customerName.trim() ? "var(--red-7)" : "var(--gray-5)",
-                  boxShadow: "none",
-                  backgroundColor: "var(--gray-1)"
-                }}
-              />
-            </Box>
-
-            <Box>
-              <Text as="label" size="2" weight="medium" style={{ marginBottom: "8px", display: "block", color: "var(--gray-12)" }}>
-                Phone <Text color="red">*</Text>
+              <Text size="6" weight="bold" style={{ color: "var(--gray-12)", letterSpacing: "0.04em" }}>
+                {nextToken ? `Token ${nextToken}` : "Assigning…"}
               </Text>
-              <TextField.Root
-                type="tel"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={10}
-                placeholder="10-digit number"
-                value={phone}
-                onChange={(e) => {
-                  setPhone(e.target.value.replace(/\D/g, ''));
-                  if (error) setError(null);
-                }}
-                size="3"
-                radius="medium"
-                variant="surface"
-                style={{
-                  fontSize: 14,
-                  borderColor: error && (!phone.trim() || !/^\d{10}$/.test(phone.trim())) ? "var(--red-7)" : "var(--gray-5)",
-                  boxShadow: "none",
-                  backgroundColor: "var(--gray-1)"
-                }}
-              />
             </Box>
-          </Grid>
+          </Box>
 
           {/* ORDER TYPE */}
           <Box mb="5">

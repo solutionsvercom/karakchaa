@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../store/hooks";
 import { createDigitalOrder } from "../features/DigitalOrderSlice";
@@ -6,6 +6,7 @@ import { fetchDigitalMenuProducts } from "../features/DigitalMenuSlice";
 import { useCart } from "../context/CartContext";
 import ProductImage from "./ProductImage";
 import { hasDisplayableImage } from "../utils/imageUrl";
+import { playOrderPlacedSound, unlockCustomerAudio } from "../utils/playOrderSound";
 import {
   X,
   ShoppingBag,
@@ -38,20 +39,68 @@ const dispatch = useAppDispatch();
   const [table, setTable] = useState("");
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<{ name?: string; phone?: string; table?: string }>({});
+  const [dragY, setDragY] = useState(0);
+  const dragStartY = useRef<number | null>(null);
+  const dragYRef = useRef(0);
+  const dragging = useRef(false);
 
   useEffect(() => {
     if (open) {
       document.body.classList.add("cart-open");
+      setDragY(0);
+      dragYRef.current = 0;
     } else {
       document.body.classList.remove("cart-open");
+      setDragY(0);
+      dragYRef.current = 0;
     }
 
     return () => document.body.classList.remove("cart-open");
   }, [open]);
 
+  const beginDrag = (clientY: number) => {
+    dragStartY.current = clientY;
+    dragging.current = true;
+    dragYRef.current = 0;
+  };
+
+  const moveDrag = (clientY: number) => {
+    if (!dragging.current || dragStartY.current == null) return;
+    const delta = Math.max(0, clientY - dragStartY.current);
+    dragYRef.current = delta;
+    setDragY(delta);
+  };
+
+  const endDrag = () => {
+    if (!dragging.current) return;
+    const shouldClose = dragYRef.current > 90;
+    dragging.current = false;
+    dragStartY.current = null;
+    setDragY(0);
+    dragYRef.current = 0;
+    if (shouldClose) onClose();
+  };
+
+  const onHandlePointerDown = (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest("button")) return;
+    e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    beginDrag(e.clientY);
+  };
+
+  const onHandlePointerMove = (e: React.PointerEvent) => {
+    if (!dragging.current) return;
+    moveDrag(e.clientY);
+  };
+
+  const onHandlePointerUp = () => {
+    endDrag();
+  };
+
   const currencySubtotal = useMemo(() => `₹${Math.round(subtotal)}`, [subtotal]);
 
   const handlePlaceOrder = async () => {
+  void unlockCustomerAudio();
   if (!list.length) return;
 
   // Validate required fields
@@ -92,6 +141,7 @@ const dispatch = useAppDispatch();
 
     const result = await dispatch(createDigitalOrder(orderPayload)).unwrap();
 
+    void playOrderPlacedSound();
     dispatch(fetchDigitalMenuProducts());
 
     console.log("✅ Order created:", result);
@@ -140,8 +190,28 @@ const dispatch = useAppDispatch();
       <aside
         className={`cartDrawer ${open ? "cartDrawerOpen" : ""}`}
         onClick={(e) => e.stopPropagation()}
+        style={
+          open && dragY > 0
+            ? { transform: `translate(-50%, ${dragY}px)`, transition: "none" }
+            : undefined
+        }
       >
-        <div className="cartHeader">
+        <div
+          className="cartDragHandleWrap"
+          onPointerDown={onHandlePointerDown}
+          onPointerMove={onHandlePointerMove}
+          onPointerUp={onHandlePointerUp}
+          onPointerCancel={onHandlePointerUp}
+        >
+          <div className="cartDragHandle" />
+        </div>
+        <div
+          className="cartHeader cartHeaderDraggable"
+          onPointerDown={onHandlePointerDown}
+          onPointerMove={onHandlePointerMove}
+          onPointerUp={onHandlePointerUp}
+          onPointerCancel={onHandlePointerUp}
+        >
           <div>
             <div className="cartTitle">Your Order</div>
             <div className="cartSub">{totalQty} item(s)</div>
@@ -249,6 +319,7 @@ const dispatch = useAppDispatch();
                   placeholder="Your Name *"
                   value={name}
                   onChange={(e) => { setName(e.target.value); setErrors(p => ({ ...p, name: undefined })); }}
+                  onFocus={(e) => e.currentTarget.scrollIntoView({ block: "center", behavior: "smooth" })}
                 />
               </div>
               {errors.name && <div style={{ color: "#dc2626", fontSize: 12, marginTop: -4 }}>{errors.name}</div>}
@@ -261,6 +332,7 @@ const dispatch = useAppDispatch();
                   value={phone}
                   maxLength={10}
                   onChange={(e) => { setPhone(e.target.value); setErrors(p => ({ ...p, phone: undefined })); }}
+                  onFocus={(e) => e.currentTarget.scrollIntoView({ block: "center", behavior: "smooth" })}
                 />
               </div>
               {errors.phone && <div style={{ color: "#dc2626", fontSize: 12, marginTop: -4 }}>{errors.phone}</div>}

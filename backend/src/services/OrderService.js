@@ -8,6 +8,11 @@ const {
   releaseStockForOrderItems,
 } = require("./OrderStockService");
 const Product = require("../models/Product/ProductSchema");
+const { normalizeSplitPayment } = require("../utils/splitBill");
+const {
+  generateNextTokenNumber,
+  peekNextTokenNumber,
+} = require("../utils/customerToken");
 
 async function generateOrderNumber() {
   const counterKey = "order_number";
@@ -45,6 +50,8 @@ async function createOrder(data) {
     paymentMethod,
     notes,
   } = data;
+
+  const tokenNumber = await generateNextTokenNumber();
 
   const orderNumber = await generateOrderNumber();
 
@@ -102,8 +109,9 @@ async function createOrder(data) {
     order = await Order.create({
       orderNumber,
       items: formattedItems,
-      customerName: customerName || "Walk-in",
+      customerName: customerName || `Token ${tokenNumber}`,
       phone,
+      tokenNumber,
       tableNumber,
       orderType: finalOrderType,
       orderSource,
@@ -176,7 +184,7 @@ async function getOrders(options = {}) {
   };
 }
 
-async function updateOrderStatus(id, status, paymentMethod) {
+async function updateOrderStatus(id, status, paymentMethod, splitPayment) {
   const allowedStatuses = [
     "Pending",
     "Accepted",
@@ -199,6 +207,13 @@ async function updateOrderStatus(id, status, paymentMethod) {
     updateData.paymentMethod = paymentMethod;
   }
 
+  if (paymentMethod === "Split") {
+    updateData.splitPayment = normalizeSplitPayment(
+      orderBefore.totalAmount,
+      splitPayment
+    );
+  }
+
   // Complete: create sale first, then mark completed (no double stock deduct if reserved)
   if (
     status === "Completed" &&
@@ -210,7 +225,13 @@ async function updateOrderStatus(id, status, paymentMethod) {
     await SaleService.createSaleFromOrder(
       orderForSale,
       paymentMethod || orderBefore.paymentMethod,
-      { skipStockDeduction: Boolean(orderBefore.stockReserved) }
+      {
+        skipStockDeduction: Boolean(orderBefore.stockReserved),
+        splitPayment:
+          paymentMethod === "Split"
+            ? updateData.splitPayment
+            : splitPayment || orderBefore.splitPayment,
+      }
     );
 
     const order = await Order.findByIdAndUpdate(
@@ -246,4 +267,5 @@ module.exports = {
   createOrder,
   getOrders,
   updateOrderStatus,
+  peekNextTokenNumber,
 };

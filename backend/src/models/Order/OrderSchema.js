@@ -23,6 +23,7 @@ const orderSchema = new mongoose.Schema(
 
     customerName: String,
     phone: String,
+    tokenNumber: String,
     tableNumber: String,
 
     orderType: {
@@ -46,8 +47,13 @@ const orderSchema = new mongoose.Schema(
 
     paymentMethod: {
       type: String,
-      enum: ["Cash", "Card", "UPI", "PhonePe", "GPay", "Paytm", "Other"],
+      enum: ["Cash", "Card", "UPI", "PhonePe", "GPay", "Paytm", "Other", "Split"],
       default: "Cash",
+    },
+
+    splitPayment: {
+      cashAmount: { type: Number, default: 0, min: 0 },
+      upiAmount: { type: Number, default: 0, min: 0 },
     },
 
     discount: {

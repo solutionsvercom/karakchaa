@@ -44,12 +44,25 @@ class OrderController {
         }
     }
 
+    async getNextToken(req, res, next) {
+        try {
+            const tokenNumber = await orderService.peekNextTokenNumber();
+            res.json({
+                success: true,
+                tokenNumber,
+            });
+        } catch (err) {
+            next(err);
+        }
+    }
+
     async updateStatus(req, res, next) {
         try {
             const order = await orderService.updateOrderStatus(
                 req.params.id,
                 req.body.status,
-                req.body.paymentMethod
+                req.body.paymentMethod,
+                req.body.splitPayment
             );
 
             res.json({

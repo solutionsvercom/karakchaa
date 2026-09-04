@@ -10,7 +10,9 @@ import {
   PaymentMethodModal,
   type PaymentMethod,
   type CashPaymentDetails,
+  type SplitPaymentDetails,
 } from "../../components/PaymentMethodModal";
+import { formatSplitPaymentLabel } from "../../utils/splitBill";
 import { Toast, ToastProvider, ToastViewport } from "../../components/Toast";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 
@@ -36,6 +38,7 @@ export default function DigitalOrdersBoard({
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [preferSplitBill, setPreferSplitBill] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   
   // Toast state
@@ -52,6 +55,9 @@ export default function DigitalOrdersBoard({
   // Set window.ordersFilterMode whenever filterMode changes
   useEffect(() => {
     (window as any).ordersFilterMode = filterMode;
+    return () => {
+      (window as any).ordersFilterMode = "active";
+    };
   }, [filterMode]);
 
   const buildFetchParams = useCallback(() => {
@@ -163,7 +169,8 @@ export default function DigitalOrdersBoard({
 
   const changeStatus = async (
     status: "Accepted" | "Preparing" | "Ready" | "Cancelled" | "Completed",
-    paymentMethod?: PaymentMethod
+    paymentMethod?: PaymentMethod,
+    splitPayment?: SplitPaymentDetails
   ) => {
     if (!selectedOrderId) return;
 
@@ -172,7 +179,8 @@ export default function DigitalOrdersBoard({
         updateOrderStatus({ 
           id: selectedOrderId, 
           status,
-          ...(paymentMethod && { paymentMethod })
+          ...(paymentMethod && { paymentMethod }),
+          ...(splitPayment && { splitPayment }),
         })
       ).unwrap();
 
@@ -201,17 +209,24 @@ export default function DigitalOrdersBoard({
 
   const handleCompleteWithPayment = async (
     paymentMethod: PaymentMethod,
-    cashDetails?: CashPaymentDetails
+    cashDetails?: CashPaymentDetails,
+    splitPayment?: SplitPaymentDetails
   ) => {
     setPaymentLoading(true);
     try {
       const orderNumber = orders.find(o => o._id === selectedOrderId)?.orderNumber;
 
-      await changeStatus("Completed", paymentMethod);
+      await changeStatus("Completed", paymentMethod, splitPayment);
       setShowPaymentModal(false);
+      setPreferSplitBill(false);
 
       let description = `${orderNumber} Invoice generated successfully`;
-      if (paymentMethod === "Cash" && cashDetails && cashDetails.change > 0) {
+      if (paymentMethod === "Split" && splitPayment) {
+        description = `${orderNumber} split · Cash ₹${splitPayment.cashAmount} + UPI ₹${splitPayment.upiAmount}`;
+        if (cashDetails && cashDetails.change > 0) {
+          description += `. Return ₹${cashDetails.change} cash change.`;
+        }
+      } else if (paymentMethod === "Cash" && cashDetails && cashDetails.change > 0) {
         description = `${orderNumber} completed. Return ₹${cashDetails.change} change to customer.`;
       }
 
@@ -235,7 +250,8 @@ export default function DigitalOrdersBoard({
     }
   };
 
-  const handleMarkAsCompleted = () => {
+  const handleMarkAsCompleted = (useSplit = false) => {
+    setPreferSplitBill(useSplit);
     setShowPaymentModal(true);
   };
 
@@ -556,7 +572,7 @@ export default function DigitalOrdersBoard({
                     fontSize: 13,
                   }}
                 >
-                  {order.customerName || "Walk-in"} · {order.items.length} item(s)
+                  {order.tokenNumber || order.customerName || "Walk-in"} · {order.items.length} item(s)
                 </p>
                 <div
                   style={{
@@ -731,8 +747,8 @@ export default function DigitalOrdersBoard({
                 >
                   Customer Details
                 </p>
-                <p style={{ margin: "0 0 4px 0", color: "var(--gray-12)" }}>
-                  {selectedOrder.customerName || "Walk-in"}
+                <p style={{ margin: "0 0 4px 0", color: "var(--gray-12)", fontSize: 18, fontWeight: 700, letterSpacing: "0.03em" }}>
+                  Token {selectedOrder.tokenNumber || selectedOrder.customerName || "—"}
                 </p>
                 <p
                   style={{
@@ -741,7 +757,7 @@ export default function DigitalOrdersBoard({
                     fontSize: 14,
                   }}
                 >
-                  {selectedOrder.phone || "-"}
+                  Contact: {selectedOrder.phone || "-"}
                 </p>
                 <p style={{ margin: 0, color: "var(--gray-10)", fontSize: 14 }}>
                   Order Type: {selectedOrder.orderType}
@@ -819,6 +835,107 @@ export default function DigitalOrdersBoard({
                 <span>Total</span>
                 <span>₹{selectedOrder.totalAmount}</span>
               </div>
+
+              {/* Split Bill for this customer */}
+              {(() => {
+                const alreadySplit =
+                  selectedOrder.paymentMethod === "Split" &&
+                  Boolean(selectedOrder.splitPayment);
+                if (isStatusLocked && !alreadySplit) return null;
+                const split = alreadySplit ? selectedOrder.splitPayment : null;
+                return (
+                  <div
+                    style={{
+                      background: "var(--accent-2)",
+                      border: "1px solid var(--accent-6)",
+                      borderRadius: 12,
+                      padding: 14,
+                    }}
+                  >
+                    <p
+                      style={{
+                        margin: "0 0 6px 0",
+                        color: "var(--accent-11)",
+                        fontWeight: 700,
+                        fontSize: 14,
+                      }}
+                    >
+                      Split Bill
+                    </p>
+                    <p
+                      style={{
+                        margin: "0 0 12px 0",
+                        color: "var(--gray-11)",
+                        fontSize: 13,
+                      }}
+                    >
+                      {alreadySplit
+                        ? formatSplitPaymentLabel(split)
+                        : "Enter how much is paid in cash. The rest is shown as UPI."}
+                    </p>
+                    {alreadySplit && split && (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: 10,
+                        }}
+                      >
+                        <div
+                          style={{
+                            background: "var(--gray-1)",
+                            border: "1px solid var(--gray-5)",
+                            borderRadius: 10,
+                            padding: "10px 12px",
+                          }}
+                        >
+                          <div style={{ fontSize: 12, color: "var(--gray-11)", marginBottom: 4 }}>
+                            Cash
+                          </div>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: "var(--gray-12)" }}>
+                            ₹{split.cashAmount}
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            background: "var(--gray-1)",
+                            border: "1px solid var(--gray-5)",
+                            borderRadius: 10,
+                            padding: "10px 12px",
+                          }}
+                        >
+                          <div style={{ fontSize: 12, color: "var(--gray-11)", marginBottom: 4 }}>
+                            UPI
+                          </div>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: "var(--gray-12)" }}>
+                            ₹{split.upiAmount}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {!alreadySplit && !isStatusLocked && (
+                      <button
+                        type="button"
+                        onClick={() => handleMarkAsCompleted(true)}
+                        disabled={updatingOrderId === selectedOrderId}
+                        style={{
+                          width: "100%",
+                          background: "var(--accent-9)",
+                          color: "white",
+                          border: "none",
+                          borderRadius: 10,
+                          fontWeight: 600,
+                          padding: "10px 12px",
+                          cursor: "pointer",
+                          fontSize: 14,
+                        }}
+                      >
+                        Payment Options
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Action buttons */}
               <div
@@ -947,10 +1064,14 @@ export default function DigitalOrdersBoard({
       {/* PAYMENT METHOD MODAL */}
       <PaymentMethodModal
         open={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setPreferSplitBill(false);
+        }}
         onConfirm={handleCompleteWithPayment}
         loading={paymentLoading}
         totalDue={selectedOrder?.totalAmount ?? 0}
+        preferSplit={preferSplitBill}
       />
 
       {/* TOAST NOTIFICATIONS */}

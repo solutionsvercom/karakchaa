@@ -15,9 +15,14 @@ export interface Order {
   items: OrderItem[];
   customerName?: string;
   phone?: string;
+  tokenNumber?: string;
   orderType: "dine-in" | "takeaway" | "delivery" | "online";
   orderSource?: "POS" | "DIGITAL"; 
   paymentMethod?: string;
+  splitPayment?: {
+    cashAmount: number;
+    upiAmount: number;
+  };
   status:
   | "Pending"
   | "Accepted"
@@ -168,13 +173,19 @@ export const createOrder = createAsyncThunk<
 
 export const updateOrderStatus = createAsyncThunk<
   Order,
-  { id: string; status: Order["status"]; paymentMethod?: string },
+  {
+    id: string;
+    status: Order["status"];
+    paymentMethod?: string;
+    splitPayment?: { cashAmount: number; upiAmount: number };
+  },
   { rejectValue: string }
->("orders/updateStatus", async ({ id, status, paymentMethod }, thunkAPI) => {
+>("orders/updateStatus", async ({ id, status, paymentMethod, splitPayment }, thunkAPI) => {
   try {
     const res = await axios.put(`${BASE_URL}/${id}/status`, {
       status,
-      ...(paymentMethod && { paymentMethod })
+      ...(paymentMethod && { paymentMethod }),
+      ...(splitPayment && { splitPayment }),
     });
     return res.data.data;
   } catch (error: any) {

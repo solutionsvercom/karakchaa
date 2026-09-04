@@ -13,6 +13,11 @@ const customerSchema = new mongoose.Schema({
         trim: true 
     },
 
+    tokenNumber: {
+        type: String,
+        trim: true,
+    },
+
     address: {
         type: String
     },

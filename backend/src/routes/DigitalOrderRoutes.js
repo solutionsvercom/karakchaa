@@ -42,6 +42,7 @@ router.get("/orders/status/:orderRef", async(req, res) => {
                 gstAmount: order.gstAmount,
                 customerName: order.customerName,
                 phone: order.phone,
+                tokenNumber: order.tokenNumber,
             }
         });
     } catch (error) {
