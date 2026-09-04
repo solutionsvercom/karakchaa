@@ -9,7 +9,7 @@
     "build": "npm run build:deps && npm run build:menu && npm run build:admin && node scripts/postbuild.cjs",
     "build:deps": "npm install --prefix ../backend && npm install --include=dev --prefix ../my-app",
     "build:menu": "vite build",
-    "build:admin": "npm exec --prefix ../my-app -- vite build",
+    "build:admin": "npm run build --prefix ../my-app",
     "start": "node server.cjs",
     "lint": "eslint .",
     "preview": "vite preview"
