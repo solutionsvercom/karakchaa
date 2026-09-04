@@ -1,18 +1,22 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   base: '/admin/',
   build: {
     outDir: '../DigitalMenu/dist/admin',
     emptyOutDir: true,
+    reportCompressedSize: false,
   },
   plugins: [
-    react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler']],
-      },
-    }),
+    react(
+      command === 'serve'
+        ? {
+            babel: {
+              plugins: [['babel-plugin-react-compiler']],
+            },
+          }
+        : undefined
+    ),
   ],
-})
+}))
