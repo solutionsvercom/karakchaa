@@ -21,8 +21,13 @@
 
 ## Redeploy on Hostinger
 
+Vite 7 needs **Node.js 20.19+ or 22.12+**. Hostinger is currently using **18.20.8**, which will fail the build.
+
+In hPanel, set **Node.js version** to **20.x** or **22.x** (not 18.x), then Redeploy. Hostinger reads this from `engines.node` in `package.json` (`>=20.19.0`); you can also pick it on the deploy settings screen.
+
 | Setting | Value |
 |---------|--------|
+| Node.js version | `20.x` or `22.x` (required) |
 | Root directory | `DigitalMenu` |
 | Build command | `npm run build` |
 | Output directory | `dist` |

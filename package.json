@@ -7,6 +7,6 @@
     "start": "node server.cjs"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.19.0"
   }
 }

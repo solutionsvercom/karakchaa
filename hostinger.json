@@ -1,5 +1,5 @@
 {
-  "comment": "Use ONE of these setups in hPanel (whichever matches your locked root directory)",
+  "comment": "Use ONE of these setups in hPanel (whichever matches your locked root directory). Set Node.js version to 20.x or 22.x (Vite 7 will not build on 18.x).",
 
   "optionA_repoRoot": {
     "rootDirectory": ".",
